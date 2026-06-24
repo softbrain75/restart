@@ -616,13 +616,13 @@ button {
 
 .table-balance col:nth-child(n + 3),
 .table-income col:nth-child(n + 3) {
-  width: var(--amount-width);
+  width: auto;
 }
 
 .table-balance,
 .table-income {
-  min-width: 1072px;
-  width: 1072px;
+  min-width: 100%;
+  width: 100%;
 }
 
 .empty-state {
