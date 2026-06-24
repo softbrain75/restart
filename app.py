@@ -26,6 +26,15 @@ DOCUMENT_FIELDS = (
 app = Flask(__name__)
 app.config["MAX_CONTENT_LENGTH"] = 40 * 1024 * 1024
 
+
+@app.after_request
+def prevent_html_cache(response):
+    if response.content_type.startswith("text/html"):
+        response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+        response.headers["Pragma"] = "no-cache"
+        response.headers["Expires"] = "0"
+    return response
+
 CASE_STORE: dict[str, dict[str, Any]] = {}
 NON_EDITABLE_ACCOUNT_RE = re.compile(r"^[\dIVXLCDMivxlcdm\u2160-\u217F\u2460-\u24FF]")
 PREPAID_ACCOUNTS = {"선급금", "선급비용"}
