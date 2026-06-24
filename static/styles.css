@@ -445,45 +445,6 @@ button {
   opacity: 0.65;
 }
 
-.analysis-complete {
-  align-items: center;
-  background: #ffffff;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  display: flex;
-  flex: 0 0 auto;
-  gap: 18px;
-  margin-bottom: 14px;
-  padding: 18px;
-}
-
-.analysis-complete__icon {
-  align-items: center;
-  background: #163832;
-  border-radius: 999px;
-  color: #ffffff;
-  display: inline-flex;
-  flex: 0 0 auto;
-  height: 48px;
-  justify-content: center;
-  width: 48px;
-}
-
-.analysis-complete__icon svg {
-  height: 24px;
-  width: 24px;
-}
-
-.analysis-complete h1 {
-  font-size: 20px;
-  margin: 0 0 4px;
-}
-
-.analysis-complete p {
-  color: var(--color-muted);
-  margin: 0;
-}
-
 @keyframes upload-spin {
   to {
     transform: rotate(360deg);

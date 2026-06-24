@@ -12,27 +12,6 @@
 
 {% block content %}
   {% if workbook %}
-    <section class="analysis-complete" aria-label="업로드 완료">
-      <span class="analysis-complete__icon" aria-hidden="true">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="m5 13 4 4L19 7" />
-        </svg>
-      </span>
-      <div>
-        <h1>업로드 완료</h1>
-        <p>정리된 데이터를 확인한 뒤 재무 입력 단계로 이동하세요.</p>
-      </div>
-    </section>
-
-    <section class="summary-grid" aria-label="업로드 파일 요약">
-      {% for file in workbook.files %}
-        <div class="summary-card">
-          <span class="summary-card__label">{{ file.label }}</span>
-          <strong>{{ file.name }}</strong>
-        </div>
-      {% endfor %}
-    </section>
-
     {% if case %}
       <section class="workflow-panel" aria-label="다음 작업">
         <div class="stepper" aria-label="작업 단계">
