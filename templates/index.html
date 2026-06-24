@@ -1,0 +1,167 @@
+{% extends "base.html" %}
+
+{% block title %}Excel 업로드 - 기업회생 분석{% endblock %}
+
+{% block header_subtitle %}
+  {% if workbook %}{{ workbook.files|length }}개 파일 처리됨{% else %}재무제표와 손익계산서를 업로드하세요{% endif %}
+{% endblock %}
+
+{% block header_actions %}
+  <form class="toolbar-form" action="{{ url_for('upload') }}" method="post" enctype="multipart/form-data">
+    <label class="file-control" for="balance_file">
+      <input id="balance_file" name="balance_file" type="file" accept=".xls,.xlsx" required>
+      <span data-selected-file="balance_file">재무제표 선택</span>
+    </label>
+    <label class="file-control" for="income_file">
+      <input id="income_file" name="income_file" type="file" accept=".xls,.xlsx" required>
+      <span data-selected-file="income_file">손익계산서 선택</span>
+    </label>
+    <button class="button button-primary" type="submit">업로드</button>
+  </form>
+{% endblock %}
+
+{% block content %}
+  {% if error %}
+    <section class="notice notice-error" role="alert">{{ error }}</section>
+  {% endif %}
+
+  {% if workbook %}
+    <section class="summary-grid" aria-label="업로드 파일 요약">
+      {% for file in workbook.files %}
+        <div class="summary-card">
+          <span class="summary-card__label">{{ file.label }}</span>
+          <strong>{{ file.name }}</strong>
+        </div>
+      {% endfor %}
+    </section>
+
+    {% if case %}
+      <section class="workflow-panel" aria-label="다음 작업">
+        <div class="stepper" aria-label="작업 단계">
+          <span class="step is-active">업로드</span>
+          <span class="step">재무</span>
+          <span class="step">부채</span>
+          <span class="step">손익</span>
+          <span class="step">담보</span>
+          <span class="step">결과</span>
+        </div>
+        <a class="button button-primary" href="{{ url_for('financial', case_id=case.case_id) }}">
+          재무 입력으로 이동
+        </a>
+      </section>
+    {% endif %}
+
+    <nav class="tabs" aria-label="시트 선택">
+      {% for sheet in workbook.sheets %}
+        <button
+          class="tab-button{% if loop.first %} is-active{% endif %}"
+          type="button"
+          data-sheet-tab="{{ loop.index0 }}"
+          aria-selected="{{ 'true' if loop.first else 'false' }}"
+        >
+          {{ sheet.name }}
+        </button>
+      {% endfor %}
+    </nav>
+
+    {% for sheet in workbook.sheets %}
+      <section
+        class="tab-panel{% if loop.first %} is-active{% endif %}"
+        data-sheet-panel="{{ loop.index0 }}"
+        aria-label="{{ sheet.name }}"
+      >
+        <div class="section-header">
+          <div>
+            <h2>{{ sheet.name }}</h2>
+            <p>
+              {{ sheet.filename }} · 원본 시트 {{ sheet.source_sheet_name }} ·
+              {{ sheet.row_count }}행 표시 · 원본 {{ sheet.original_row_count }}행
+              {% if sheet.removed_row_count %} · {{ sheet.removed_row_count }}행 정리{% endif %}
+              · {{ sheet.col_count }}열
+            </p>
+          </div>
+        </div>
+
+        <div class="table-frame">
+          <table class="spreadsheet-table table-{{ 'income' if sheet.name == '손익계산서' else 'balance' }}">
+            <colgroup>
+              <col>
+              {% for column in sheet.columns %}
+                <col>
+              {% endfor %}
+            </colgroup>
+            <thead>
+              <tr>
+                <th class="corner-cell"></th>
+                {% for column in sheet.columns %}
+                  <th class="column-heading">{{ column }}</th>
+                {% endfor %}
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in sheet.rows %}
+                <tr>
+                  <th class="row-heading">{{ row.index }}</th>
+                  {% for cell in row.cells %}
+                    <td
+                      class="cell cell-{{ cell.kind }}{% if cell.source_col == 0 %} cell-subject{% endif %}"
+                      {% if cell.rowspan > 1 %}rowspan="{{ cell.rowspan }}"{% endif %}
+                      {% if cell.colspan > 1 %}colspan="{{ cell.colspan }}"{% endif %}
+                    >
+                      {{ cell.text }}
+                    </td>
+                  {% endfor %}
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </section>
+    {% endfor %}
+  {% else %}
+    <section class="empty-state">
+      <h2>Excel 미리보기</h2>
+      <p>재무제표와 손익계산서 파일을 업로드하면 정리된 표가 표시됩니다.</p>
+    </section>
+  {% endif %}
+{% endblock %}
+
+{% block scripts %}
+  <script>
+    document.querySelectorAll('input[type="file"]').forEach((fileInput) => {
+      const selectedFile = document.querySelector(
+        `[data-selected-file="${fileInput.id}"]`
+      );
+
+      if (!selectedFile) return;
+
+      selectedFile.dataset.defaultLabel = selectedFile.textContent;
+      fileInput.addEventListener("change", () => {
+        selectedFile.textContent =
+          fileInput.files?.[0]?.name || selectedFile.dataset.defaultLabel;
+      });
+    });
+
+    const tabs = document.querySelectorAll("[data-sheet-tab]");
+    const panels = document.querySelectorAll("[data-sheet-panel]");
+
+    tabs.forEach((tab) => {
+      tab.addEventListener("click", () => {
+        const sheetIndex = tab.getAttribute("data-sheet-tab");
+
+        tabs.forEach((item) => {
+          const active = item === tab;
+          item.classList.toggle("is-active", active);
+          item.setAttribute("aria-selected", active ? "true" : "false");
+        });
+
+        panels.forEach((panel) => {
+          panel.classList.toggle(
+            "is-active",
+            panel.getAttribute("data-sheet-panel") === sheetIndex
+          );
+        });
+      });
+    });
+  </script>
+{% endblock %}

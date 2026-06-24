@@ -1,0 +1,168 @@
+{% extends "base.html" %}
+
+{% block title %}재무 입력 - 기업회생 분석{% endblock %}
+
+{% block header_subtitle %}
+  {% if case %}{{ case.company_name }} · 재무 입력{% else %}재무 입력{% endif %}
+{% endblock %}
+
+{% block header_actions %}
+  <a class="button button-secondary" href="{{ url_for('index') }}">새 파일 업로드</a>
+{% endblock %}
+
+{% block content %}
+  {% if error %}
+    <section class="notice notice-error" role="alert">{{ error }}</section>
+  {% endif %}
+
+  {% if message %}
+    <section class="notice notice-success" role="status">{{ message }}</section>
+  {% endif %}
+
+  {% if case %}
+    <section class="workflow-panel" aria-label="작업 단계">
+      <div class="stepper">
+        <span class="step">업로드</span>
+        <span class="step is-active">재무</span>
+        <span class="step">부채</span>
+        <span class="step">손익</span>
+        <span class="step">담보</span>
+        <span class="step">결과</span>
+      </div>
+      <div class="workflow-panel__meta">
+        <strong>{{ case.company_name }}</strong>
+        <span>{{ rows|length }}개 계정</span>
+      </div>
+    </section>
+
+    <section class="section-header">
+      <div>
+        <h2>재무 입력</h2>
+        <p>실사가치와 청산가치를 입력합니다. 청산가치는 실사가치보다 클 수 없습니다.</p>
+      </div>
+    </section>
+
+    <form method="post" action="{{ url_for('save_financial', case_id=case.case_id) }}" data-financial-form>
+      <div class="table-frame financial-frame">
+        <table class="data-table financial-table">
+          <thead>
+            <tr>
+              <th class="col-account">계정과목</th>
+              <th class="col-amount">장부금액</th>
+              <th class="col-amount">실사가치</th>
+              <th class="col-amount">청산가치</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in rows %}
+              <tr class="{% if not row.is_editable %}row-heading-data{% endif %}">
+                <td class="account-cell">{{ row.account }}</td>
+                <td class="amount-cell">{{ row.amount }}</td>
+                <td class="input-cell">
+                  {% if row.is_editable %}
+                    <input
+                      class="input numeric"
+                      name="audit_value_{{ loop.index0 }}"
+                      type="text"
+                      inputmode="numeric"
+                      value="{{ row.audit_value }}"
+                      data-audit-input
+                      data-row-index="{{ loop.index0 }}"
+                    >
+                  {% endif %}
+                </td>
+                <td class="input-cell">
+                  {% if row.is_editable %}
+                    <input
+                      class="input numeric"
+                      name="liquidation_value_{{ loop.index0 }}"
+                      type="text"
+                      inputmode="numeric"
+                      value="{{ row.liquidation_value }}"
+                      data-liquidation-input
+                      data-row-index="{{ loop.index0 }}"
+                    >
+                  {% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <div class="action-row">
+        <a class="button button-secondary" href="{{ url_for('index') }}">이전</a>
+        <button class="button button-primary" type="submit">저장</button>
+        <button class="button button-primary" type="submit" name="next" value="debt">저장 후 부채 입력</button>
+      </div>
+    </form>
+  {% endif %}
+{% endblock %}
+
+{% block scripts %}
+  <script>
+    function parseNumber(value) {
+      const normalized = String(value || "").replace(/,/g, "").trim();
+      if (!normalized) return null;
+      const number = Number(normalized);
+      return Number.isFinite(number) ? number : null;
+    }
+
+    function formatNumber(value) {
+      const number = parseNumber(value);
+      if (number === null) return "";
+      return Math.trunc(number).toLocaleString("ko-KR");
+    }
+
+    function normalizeNumericInput(input) {
+      input.value = input.value.replace(/[^\d,-]/g, "");
+    }
+
+    document.querySelectorAll("[data-financial-form] input.numeric").forEach((input) => {
+      input.addEventListener("focus", () => input.select());
+      input.addEventListener("input", () => normalizeNumericInput(input));
+      input.addEventListener("blur", () => {
+        input.value = formatNumber(input.value);
+      });
+    });
+
+    document.querySelectorAll("[data-audit-input]").forEach((auditInput) => {
+      auditInput.addEventListener("input", () => {
+        const rowIndex = auditInput.dataset.rowIndex;
+        const liquidationInput = document.querySelector(
+          `[data-liquidation-input][data-row-index="${rowIndex}"]`
+        );
+        if (liquidationInput) {
+          liquidationInput.value = auditInput.value;
+        }
+      });
+    });
+
+    document.querySelector("[data-financial-form]")?.addEventListener("submit", (event) => {
+      let hasError = false;
+
+      document.querySelectorAll("[data-liquidation-input]").forEach((liquidationInput) => {
+        const rowIndex = liquidationInput.dataset.rowIndex;
+        const auditInput = document.querySelector(
+          `[data-audit-input][data-row-index="${rowIndex}"]`
+        );
+        const auditValue = parseNumber(auditInput?.value);
+        const liquidationValue = parseNumber(liquidationInput.value);
+
+        if (
+          auditValue !== null &&
+          liquidationValue !== null &&
+          liquidationValue > auditValue
+        ) {
+          liquidationInput.focus();
+          hasError = true;
+        }
+      });
+
+      if (hasError) {
+        event.preventDefault();
+        alert("청산가치는 실사가치보다 클 수 없습니다.");
+      }
+    });
+  </script>
+{% endblock %}

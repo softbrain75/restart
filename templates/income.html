@@ -1,0 +1,240 @@
+{% extends "base.html" %}
+
+{% block title %}손익 입력 - 기업회생 분석{% endblock %}
+
+{% block header_subtitle %}
+  {% if case %}{{ case.company_name }} · 손익 입력{% else %}손익 입력{% endif %}
+{% endblock %}
+
+{% block header_actions %}
+  <a class="button button-secondary" href="{{ url_for('index') }}">새 파일 업로드</a>
+{% endblock %}
+
+{% block content %}
+  {% if error %}
+    <section class="notice notice-error" role="alert">{{ error }}</section>
+  {% endif %}
+
+  {% if message %}
+    <section class="notice notice-success" role="status">{{ message }}</section>
+  {% endif %}
+
+  {% if case %}
+    <section class="workflow-panel" aria-label="작업 단계">
+      <div class="stepper">
+        <span class="step">업로드</span>
+        <span class="step">재무</span>
+        <span class="step">부채</span>
+        <span class="step is-active">손익</span>
+        <span class="step">담보</span>
+        <span class="step">결과</span>
+      </div>
+      <div class="workflow-panel__meta">
+        <strong>{{ case.company_name }}</strong>
+        <span>{{ (sales_rows|length) + (expense_rows|length) }}개 항목</span>
+      </div>
+    </section>
+
+    <section class="section-header">
+      <div>
+        <h2>손익 입력</h2>
+        <p>매출은 성장률/원가율, 비용은 고정비/변동비 기준으로 최종 추정값을 입력합니다.</p>
+      </div>
+    </section>
+
+    <form method="post" action="{{ url_for('save_income', case_id=case.case_id) }}" data-income-form>
+      <div class="table-frame income-frame">
+        <section class="income-table-section">
+          <h3>매출</h3>
+          <table class="data-table income-table">
+            <thead>
+              <tr>
+                <th class="col-account">구분</th>
+                <th class="col-amount">전전년도(Y-2)</th>
+                <th class="col-amount">전년도(Y-1)</th>
+                <th class="col-rate">성장률/원가율</th>
+                <th class="col-amount">월평균(기본값)</th>
+                <th class="col-amount">최종입력값</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in sales_rows %}
+                {% set row_index = row.row - 1 %}
+                <tr class="{% if not row.is_editable %}row-heading-data{% endif %}">
+                  <td class="account-cell">{{ row.account }}</td>
+                  <td class="amount-cell">{{ row.y_minus_1 }}</td>
+                  <td class="amount-cell">{{ row.y }}</td>
+                  <td class="amount-cell">{{ row.metric_display }}</td>
+                  <td class="amount-cell">{{ row.monthly_average_display }}</td>
+                  <td class="input-cell">
+                    {% if row.is_editable %}
+                      <input
+                        class="input numeric"
+                        name="final_value_{{ row_index }}"
+                        type="text"
+                        inputmode="decimal"
+                        value="{{ row.final_value }}"
+                        data-final-input
+                        data-value-kind="percent"
+                      >
+                      <input type="hidden" name="value_kind_{{ row_index }}" value="percent" data-value-kind-hidden>
+                      <input type="hidden" name="monthly_average_display_{{ row_index }}" value="{{ row.monthly_average_display }}">
+                    {% endif %}
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </section>
+
+        <section class="income-table-section">
+          <h3>판매비와 관리비</h3>
+          <table class="data-table income-table">
+            <thead>
+              <tr>
+                <th class="col-account">구분</th>
+                <th class="col-amount">전전년도(Y-2)</th>
+                <th class="col-amount">전년도(Y-1)</th>
+                <th class="col-rate">고정/변동</th>
+                <th class="col-amount">월평균(기본값)</th>
+                <th class="col-amount">최종입력값</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in expense_rows %}
+                {% set row_index = row.row - 1 %}
+                <tr
+                  class="{% if not row.is_editable %}row-heading-data{% endif %}"
+                  data-income-row
+                  data-average="{{ row.average_number }}"
+                  data-sales-average="{{ row.sales_average_number or 0 }}"
+                >
+                  <td class="account-cell">{{ row.account }}</td>
+                  <td class="amount-cell">{{ row.y_minus_1 }}</td>
+                  <td class="amount-cell">{{ row.y }}</td>
+                  <td class="input-cell">
+                    {% if row.is_editable %}
+                      <select
+                        class="select"
+                        name="cost_type_{{ row_index }}"
+                        data-cost-type
+                      >
+                        <option value="fixed"{% if row.cost_type == "fixed" %} selected{% endif %}>고정비</option>
+                        <option value="variable"{% if row.cost_type == "variable" %} selected{% endif %}>변동비</option>
+                      </select>
+                    {% endif %}
+                  </td>
+                  <td class="amount-cell" data-monthly-cell>{{ row.monthly_average_display }}</td>
+                  <td class="input-cell">
+                    {% if row.is_editable %}
+                      <input
+                        class="input numeric"
+                        name="final_value_{{ row_index }}"
+                        type="text"
+                        inputmode="decimal"
+                        value="{{ row.final_value }}"
+                        data-final-input
+                        data-value-kind="{{ row.value_kind }}"
+                      >
+                      <input type="hidden" name="value_kind_{{ row_index }}" value="{{ row.value_kind }}" data-value-kind-hidden>
+                      <input type="hidden" name="monthly_average_display_{{ row_index }}" value="{{ row.monthly_average_display }}" data-monthly-hidden>
+                    {% endif %}
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </section>
+      </div>
+
+      <div class="action-row">
+        <a class="button button-secondary" href="{{ url_for('debt', case_id=case.case_id) }}">이전</a>
+        <button class="button button-primary" type="submit">저장</button>
+        <button class="button button-primary" type="submit" name="next" value="collateral">저장 후 담보 입력</button>
+      </div>
+    </form>
+  {% endif %}
+{% endblock %}
+
+{% block scripts %}
+  <script>
+    function parseNumber(value) {
+      const normalized = String(value || "").replace(/,/g, "").replace("%", "").trim();
+      if (!normalized) return null;
+      const number = Number(normalized);
+      return Number.isFinite(number) ? number : null;
+    }
+
+    function formatNumber(value) {
+      const number = parseNumber(value);
+      if (number === null) return "";
+      return Math.trunc(number).toLocaleString("ko-KR");
+    }
+
+    function formatPercent(value) {
+      const number = parseNumber(value);
+      if (number === null) return "";
+      return `${number.toFixed(2)}%`;
+    }
+
+    function normalizeFinalInput(input) {
+      if (input.dataset.valueKind === "percent") {
+        input.value = input.value.replace(/[^\d,.-]/g, "");
+        return;
+      }
+      input.value = input.value.replace(/[^\d,-]/g, "");
+    }
+
+    function formatFinalInput(input) {
+      if (input.dataset.valueKind === "percent") {
+        input.value = formatPercent(input.value);
+        return;
+      }
+      input.value = formatNumber(input.value);
+    }
+
+    function updateExpenseRow(row) {
+      const select = row.querySelector("[data-cost-type]");
+      const finalInput = row.querySelector("[data-final-input]");
+      const valueKindHidden = row.querySelector("[data-value-kind-hidden]");
+      const monthlyCell = row.querySelector("[data-monthly-cell]");
+      const monthlyHidden = row.querySelector("[data-monthly-hidden]");
+
+      if (!select || !finalInput || !valueKindHidden || !monthlyCell || !monthlyHidden) return;
+
+      const average = Number(row.dataset.average || 0);
+      const salesAverage = Number(row.dataset.salesAverage || 0);
+
+      if (select.value === "variable") {
+        const percent = salesAverage ? (average / salesAverage) * 100 : 0;
+        const display = formatPercent(percent);
+        finalInput.dataset.valueKind = "percent";
+        finalInput.value = display;
+        valueKindHidden.value = "percent";
+        monthlyCell.textContent = display;
+        monthlyHidden.value = display;
+        return;
+      }
+
+      const monthly = average / 12;
+      const display = formatNumber(monthly);
+      finalInput.dataset.valueKind = "amount";
+      finalInput.value = display;
+      valueKindHidden.value = "amount";
+      monthlyCell.textContent = display;
+      monthlyHidden.value = display;
+    }
+
+    document.querySelectorAll("[data-income-form] [data-final-input]").forEach((input) => {
+      input.addEventListener("focus", () => input.select());
+      input.addEventListener("input", () => normalizeFinalInput(input));
+      input.addEventListener("blur", () => formatFinalInput(input));
+    });
+
+    document.querySelectorAll("[data-income-row]").forEach((row) => {
+      const select = row.querySelector("[data-cost-type]");
+      if (!select) return;
+      select.addEventListener("change", () => updateExpenseRow(row));
+    });
+  </script>
+{% endblock %}

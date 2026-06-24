@@ -1,0 +1,262 @@
+{% extends "base.html" %}
+
+{% block title %}결과 확인 - 기업회생 분석{% endblock %}
+
+{% block header_subtitle %}
+  {% if case %}{{ case.company_name }} · 결과 확인{% else %}결과 확인{% endif %}
+{% endblock %}
+
+{% block header_actions %}
+  <a class="button button-secondary" href="{{ url_for('index') }}">새 파일 업로드</a>
+{% endblock %}
+
+{% block content %}
+  {% if error %}
+    <section class="notice notice-error" role="alert">{{ error }}</section>
+  {% endif %}
+
+  {% if case and calculation_result %}
+    {% set result = calculation_result %}
+    {% set fmt = result.display %}
+
+    <section class="workflow-panel" aria-label="작업 단계">
+      <div class="stepper">
+        <span class="step">업로드</span>
+        <span class="step">재무</span>
+        <span class="step">부채</span>
+        <span class="step">손익</span>
+        <span class="step">담보</span>
+        <button class="step step-button is-active" type="button" data-result-tab="summary" aria-selected="true">결과</button>
+        <button class="step step-button" type="button" data-result-tab="worksheet" aria-selected="false">작업시트 확인</button>
+      </div>
+      <div class="workflow-panel__meta">
+        <strong>{{ case.company_name }}</strong>
+        <span>{{ result.dates.today }} 기준</span>
+      </div>
+    </section>
+
+    <section class="result-workbench" aria-label="결과와 작업시트 확인">
+      <div class="result-pane tab-panel is-active" data-result-panel="summary">
+        <section class="section-header">
+          <div>
+            <h2>결과 확인</h2>
+            <p>작업시트 수식을 Python 계산식으로 재구현한 1차 결과입니다.</p>
+          </div>
+          <a class="button button-secondary" href="{{ url_for('collateral', case_id=case.case_id) }}">담보 입력으로 돌아가기</a>
+        </section>
+
+        <section class="summary-grid" aria-label="핵심 결과">
+          <div class="summary-card">
+            <span class="summary-card__label">청산가치</span>
+            <strong>{{ fmt.number(result.summary.liquidation_value) }}</strong>
+          </div>
+          <div class="summary-card">
+            <span class="summary-card__label">계속기업가치</span>
+            <strong>{{ fmt.number(result.summary.going_concern_value) }}</strong>
+          </div>
+          <div class="summary-card">
+            <span class="summary-card__label">가치 차이</span>
+            <strong>{{ fmt.number(result.summary.value_difference) }}</strong>
+          </div>
+          <div class="summary-card">
+            <span class="summary-card__label">총 채무</span>
+            <strong>{{ fmt.number(result.summary.total_debt) }}</strong>
+          </div>
+        </section>
+
+        <div class="result-pane__header">
+          <div>
+            <h3>결과</h3>
+            <p>고객에게 보여줄 요약 결과입니다.</p>
+          </div>
+        </div>
+
+        <div class="table-frame result-frame">
+          <section class="result-section">
+            <h3>자산평가 요약</h3>
+            <table class="data-table result-table">
+              <thead>
+                <tr>
+                  <th class="col-account">구분</th>
+                  <th class="col-amount">재무제표상 금액</th>
+                  <th class="col-amount">실사가치</th>
+                  <th class="col-amount">청산가치</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="account-cell">유동자산</td>
+                  <td class="amount-cell">{{ fmt.number(result.assets.sections.current.statement) }}</td>
+                  <td class="amount-cell">{{ fmt.number(result.assets.sections.current.audit) }}</td>
+                  <td class="amount-cell">{{ fmt.number(result.assets.sections.current.liquidation) }}</td>
+                </tr>
+                <tr>
+                  <td class="account-cell">비유동자산</td>
+                  <td class="amount-cell">{{ fmt.number(result.assets.sections.non_current.statement) }}</td>
+                  <td class="amount-cell">{{ fmt.number(result.assets.sections.non_current.audit) }}</td>
+                  <td class="amount-cell">{{ fmt.number(result.assets.sections.non_current.liquidation) }}</td>
+                </tr>
+                <tr class="row-heading-data">
+                  <td class="account-cell">자산 총계</td>
+                  <td class="amount-cell">{{ fmt.number(result.summary.asset_statement_total) }}</td>
+                  <td class="amount-cell">{{ fmt.number(result.summary.asset_audit_total) }}</td>
+                  <td class="amount-cell">{{ fmt.number(result.summary.asset_liquidation_total) }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </section>
+
+          <section class="result-section">
+            <h3>청산가치와 계속기업가치 비교</h3>
+            <table class="data-table result-table">
+              <thead>
+                <tr>
+                  <th class="col-account">구분</th>
+                  <th class="col-amount">금액</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="account-cell">영업활동현금흐름 현재가치</td>
+                  <td class="amount-cell">{{ fmt.number(result.enterprise_value.pv_10_years + result.enterprise_value.terminal_value) }}</td>
+                </tr>
+                <tr>
+                  <td class="account-cell">비영업용자산 처분가치</td>
+                  <td class="amount-cell">{{ fmt.number(result.enterprise_value.non_business_asset_value) }}</td>
+                </tr>
+                <tr>
+                  <td class="account-cell">계속기업가치</td>
+                  <td class="amount-cell">{{ fmt.number(result.summary.going_concern_value) }}</td>
+                </tr>
+                <tr>
+                  <td class="account-cell">청산가치</td>
+                  <td class="amount-cell">{{ fmt.number(result.summary.liquidation_value) }}</td>
+                </tr>
+                <tr class="row-heading-data">
+                  <td class="account-cell">차이</td>
+                  <td class="amount-cell">{{ fmt.number(result.summary.value_difference) }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </section>
+
+          <section class="result-section">
+            <h3>채무상환 예정액 비교</h3>
+            <table class="data-table result-comparison-table">
+              <thead>
+                <tr>
+                  <th class="col-account">구분</th>
+                  <th class="col-amount">채무금액</th>
+                  <th class="col-amount">청산 시 변제금액</th>
+                  <th class="col-rate">청산 시 변제율</th>
+                  <th class="col-amount">계속기업 변제금액</th>
+                  <th class="col-rate">계속기업 변제율</th>
+                  <th class="col-amount">변제금액 차이</th>
+                  <th class="col-rate">변제율 차이</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for row in result.comparison_rows %}
+                  <tr>
+                    <td class="account-cell">{{ row.label }}</td>
+                    <td class="amount-cell">{{ fmt.number(row.debt) }}</td>
+                    <td class="amount-cell">{{ fmt.number(row.liquidation_repayment) }}</td>
+                    <td class="amount-cell">{{ fmt.percent(row.liquidation_rate) }}</td>
+                    <td class="amount-cell">{{ fmt.number(row.going_repayment) }}</td>
+                    <td class="amount-cell">{{ fmt.percent(row.going_rate) }}</td>
+                    <td class="amount-cell">{{ fmt.number(row.repayment_difference) }}</td>
+                    <td class="amount-cell">{{ fmt.percent(row.rate_difference) }}</td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </section>
+
+          <section class="result-section">
+            <h3>진단 결과</h3>
+            <div class="diagnosis-list">
+              <article class="diagnosis-item{% if result.diagnosis.value_positive %} is-positive{% else %} is-negative{% endif %}">
+                <strong>가치 비교</strong>
+                <p>{{ result.diagnosis.value_message }}</p>
+              </article>
+              <article class="diagnosis-item{% if result.diagnosis.repayment_positive %} is-positive{% else %} is-negative{% endif %}">
+                <strong>변제율 비교</strong>
+                <p>{{ result.diagnosis.repayment_message }}</p>
+              </article>
+              {% if result.diagnosis.consent_message %}
+                <article class="diagnosis-item{% if result.diagnosis.consent_positive %} is-positive{% else %} is-negative{% endif %}">
+                  <strong>채권자 동의 가능성</strong>
+                  <p>{{ result.diagnosis.consent_message }}</p>
+                </article>
+              {% endif %}
+              <article class="diagnosis-item{% if result.diagnosis.overall_positive %} is-positive{% else %} is-negative{% endif %}">
+                <strong>종합 결론</strong>
+                <p>{{ result.diagnosis.overall_message }}</p>
+              </article>
+            </div>
+          </section>
+        </div>
+      </div>
+
+      <aside class="result-pane result-pane--worksheet tab-panel" data-result-panel="worksheet">
+        <div class="result-pane__header">
+          <div>
+            <h3>작업시트 확인</h3>
+            <p>기존 작업시트의 주요 행 번호 기준으로 Python 계산값을 임시 표시합니다.</p>
+          </div>
+        </div>
+
+        <div class="table-frame worksheet-frame">
+          <table class="data-table worksheet-review-table">
+            <thead>
+              <tr>
+                <th class="col-row">행</th>
+                <th class="col-account">작업시트 항목</th>
+                {% for column in result.worksheet_review.columns %}
+                  <th>{{ column }}</th>
+                {% endfor %}
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in result.worksheet_review.rows %}
+                <tr class="worksheet-row-{{ row['type'] }}{% if row['type'] == 'section' %} row-heading-data{% endif %}">
+                  <td class="row-number-cell">{{ row["row_number"] }}</td>
+                  <td class="account-cell">{{ row["label"] }}</td>
+                  {% for value in row["values"] %}
+                    <td class="amount-cell worksheet-value-cell">{{ value }}</td>
+                  {% endfor %}
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </aside>
+    </section>
+  {% endif %}
+{% endblock %}
+
+{% block scripts %}
+  <script>
+    const resultTabs = document.querySelectorAll("[data-result-tab]");
+    const resultPanels = document.querySelectorAll("[data-result-panel]");
+
+    resultTabs.forEach((tab) => {
+      tab.addEventListener("click", () => {
+        const target = tab.getAttribute("data-result-tab");
+
+        resultTabs.forEach((item) => {
+          const active = item === tab;
+          item.classList.toggle("is-active", active);
+          item.setAttribute("aria-selected", active ? "true" : "false");
+        });
+
+        resultPanels.forEach((panel) => {
+          panel.classList.toggle(
+            "is-active",
+            panel.getAttribute("data-result-panel") === target
+          );
+        });
+      });
+    });
+  </script>
+{% endblock %}
