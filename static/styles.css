@@ -117,15 +117,12 @@ button {
 }
 
 .upload-field__label {
-  color: #6b6b6b;
+  color: #1a1a1a;
   display: block;
-  font-size: 14px;
+  font-size: 20px;
   font-weight: 700;
-  margin-bottom: 12px;
-}
-
-.upload-field__label small {
-  font-weight: 500;
+  line-height: 1.25;
+  margin-bottom: 14px;
 }
 
 .drop-zone {
@@ -197,7 +194,8 @@ button {
   max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
+  white-space: normal;
+  word-break: keep-all;
 }
 
 .drop-zone__idle > span:last-child,
