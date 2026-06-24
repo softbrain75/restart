@@ -51,7 +51,7 @@ svg {
   margin: 0 auto;
   max-width: 1280px;
   min-width: 0;
-  padding: 0 32px;
+  padding: 0 24px;
   position: relative;
   width: 100%;
 }
@@ -568,26 +568,6 @@ svg {
 }
 
 @media (max-width: 900px) {
-  .site-nav__inner {
-    gap: 16px;
-    height: 72px;
-    padding: 0 20px;
-  }
-
-  .landing-page {
-    height: calc(100vh - 72px);
-  }
-
-  .site-nav__links {
-    display: none;
-  }
-
-  .site-nav__cta {
-    height: 40px;
-    min-width: 92px;
-    padding: 0 18px;
-  }
-
   .landing-nav__inner {
     gap: 16px;
     height: auto;
@@ -627,6 +607,38 @@ svg {
 
   .process-indicator li:not(:last-child)::after {
     display: none;
+  }
+}
+
+@media (max-width: 760px) {
+  .site-nav__inner {
+    gap: 16px;
+    height: 72px;
+    padding: 0 16px;
+  }
+
+  .landing-page {
+    height: calc(100vh - 72px);
+  }
+
+  .site-brand {
+    font-size: 18px;
+    gap: 10px;
+  }
+
+  .site-brand__icon {
+    height: 40px;
+    width: 40px;
+  }
+
+  .site-nav__links {
+    display: none;
+  }
+
+  .site-nav__cta {
+    height: 40px;
+    min-width: 92px;
+    padding: 0 18px;
   }
 }
 
