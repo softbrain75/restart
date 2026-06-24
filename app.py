@@ -1068,7 +1068,7 @@ def build_document_workbook(uploaded_files: Any) -> dict[str, Any]:
 
 @app.get("/")
 def index():
-    return render_template("landing.html")
+    return render_template("landing.html", active_page="home")
 
 
 @app.get("/analysis")

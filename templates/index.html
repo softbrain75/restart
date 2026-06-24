@@ -2,30 +2,28 @@
 
 {% block title %}Excel 업로드 - 기업회생 분석{% endblock %}
 
+{% block page_toolbar %}{% endblock %}
+
+{% block main_class %}analysis-main{% if workbook %} analysis-main--preview{% endif %}{% endblock %}
+
 {% block header_subtitle %}
   {% if workbook %}{{ workbook.files|length }}개 파일 처리됨{% else %}재무제표와 손익계산서를 업로드하세요{% endif %}
 {% endblock %}
 
-{% block header_actions %}
-  <form class="toolbar-form" action="{{ url_for('upload') }}" method="post" enctype="multipart/form-data">
-    <label class="file-control" for="balance_file">
-      <input id="balance_file" name="balance_file" type="file" accept=".xls,.xlsx" required>
-      <span data-selected-file="balance_file">재무제표 선택</span>
-    </label>
-    <label class="file-control" for="income_file">
-      <input id="income_file" name="income_file" type="file" accept=".xls,.xlsx" required>
-      <span data-selected-file="income_file">손익계산서 선택</span>
-    </label>
-    <button class="button button-primary" type="submit">업로드</button>
-  </form>
-{% endblock %}
-
 {% block content %}
-  {% if error %}
-    <section class="notice notice-error" role="alert">{{ error }}</section>
-  {% endif %}
-
   {% if workbook %}
+    <section class="analysis-complete" aria-label="업로드 완료">
+      <span class="analysis-complete__icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="m5 13 4 4L19 7" />
+        </svg>
+      </span>
+      <div>
+        <h1>업로드 완료</h1>
+        <p>정리된 데이터를 확인한 뒤 재무 입력 단계로 이동하세요.</p>
+      </div>
+    </section>
+
     <section class="summary-grid" aria-label="업로드 파일 요약">
       {% for file in workbook.files %}
         <div class="summary-card">
@@ -119,28 +117,201 @@
       </section>
     {% endfor %}
   {% else %}
-    <section class="empty-state">
-      <h2>Excel 미리보기</h2>
-      <p>재무제표와 손익계산서 파일을 업로드하면 정리된 표가 표시됩니다.</p>
+    <section class="analysis-hero">
+      <h1>기업회생 재무분석 시스템</h1>
+      <p>엑셀 파일을 업로드하여 재무 분석을 시작하세요</p>
+    </section>
+
+    <section class="upload-card" aria-label="재무 분석 파일 업로드">
+      <h2>재무 분석 파일 업로드</h2>
+
+      {% if error %}
+        <div class="upload-error" role="alert">{{ error }}</div>
+      {% endif %}
+
+      <form class="drop-upload-form" action="{{ url_for('upload') }}" method="post" enctype="multipart/form-data" data-upload-form>
+        <div class="upload-error upload-error--client" role="alert" data-upload-error hidden></div>
+
+        <div class="upload-drop-grid">
+          <div class="upload-field">
+            <span class="upload-field__label">재무상태표 <small>Balance Sheet</small></span>
+            <label class="drop-zone" for="balance_file" data-drop-zone>
+              <input id="balance_file" name="balance_file" type="file" accept=".xls,.xlsx" required data-file-input>
+              <span class="drop-zone__idle" data-drop-idle>
+                <span class="drop-zone__icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 0 1-.88-7.9A5 5 0 0 1 15.9 6H16a5 5 0 0 1 1 9.9M15 13l-3-3m0 0-3 3m3-3v12" />
+                  </svg>
+                </span>
+                <strong>파일을 드래그하거나 클릭하세요</strong>
+                <span>.xlsx, .xls</span>
+              </span>
+              <span class="drop-zone__selected" data-drop-selected hidden>
+                <span class="drop-zone__icon drop-zone__icon--selected" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m5 13 4 4L19 7" />
+                  </svg>
+                </span>
+                <strong data-file-name></strong>
+                <span data-file-size></span>
+              </span>
+            </label>
+          </div>
+
+          <div class="upload-field">
+            <span class="upload-field__label">손익계산서 <small>Income Statement</small></span>
+            <label class="drop-zone" for="income_file" data-drop-zone>
+              <input id="income_file" name="income_file" type="file" accept=".xls,.xlsx" required data-file-input>
+              <span class="drop-zone__idle" data-drop-idle>
+                <span class="drop-zone__icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 0 1-.88-7.9A5 5 0 0 1 15.9 6H16a5 5 0 0 1 1 9.9M15 13l-3-3m0 0-3 3m3-3v12" />
+                  </svg>
+                </span>
+                <strong>파일을 드래그하거나 클릭하세요</strong>
+                <span>.xlsx, .xls</span>
+              </span>
+              <span class="drop-zone__selected" data-drop-selected hidden>
+                <span class="drop-zone__icon drop-zone__icon--selected" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m5 13 4 4L19 7" />
+                  </svg>
+                </span>
+                <strong data-file-name></strong>
+                <span data-file-size></span>
+              </span>
+            </label>
+          </div>
+        </div>
+
+        <div class="upload-progress" data-upload-progress hidden>
+          <span class="upload-spinner" aria-hidden="true"></span>
+          <span>파일을 업로드하고 분석 데이터를 정리하는 중입니다.</span>
+        </div>
+
+        <p class="upload-help">두 파일 모두 첫 번째 시트만 사용합니다. 업로드 후 재무제표와 손익계산서 미리보기를 확인할 수 있습니다.</p>
+
+        <button class="button upload-submit" type="submit" data-upload-submit>
+          업로드 및 분석 시작
+        </button>
+      </form>
     </section>
   {% endif %}
 {% endblock %}
 
 {% block scripts %}
   <script>
-    document.querySelectorAll('input[type="file"]').forEach((fileInput) => {
-      const selectedFile = document.querySelector(
-        `[data-selected-file="${fileInput.id}"]`
-      );
+    const uploadForm = document.querySelector("[data-upload-form]");
+    const uploadError = document.querySelector("[data-upload-error]");
+    const uploadProgress = document.querySelector("[data-upload-progress]");
+    const uploadSubmit = document.querySelector("[data-upload-submit]");
+    const fileInputs = document.querySelectorAll("[data-file-input]");
+    const excelFilePattern = /\.(xlsx|xls)$/i;
 
-      if (!selectedFile) return;
+    const formatFileSize = (bytes) => {
+      if (!bytes) return "0 KB";
+      const units = ["B", "KB", "MB", "GB"];
+      const index = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1);
+      return `${(bytes / Math.pow(1024, index)).toFixed(index === 0 ? 0 : 1)} ${units[index]}`;
+    };
 
-      selectedFile.dataset.defaultLabel = selectedFile.textContent;
+    const showUploadError = (message) => {
+      if (!uploadError) return;
+      uploadError.textContent = message;
+      uploadError.hidden = false;
+    };
+
+    const clearUploadError = () => {
+      if (!uploadError) return;
+      uploadError.textContent = "";
+      uploadError.hidden = true;
+    };
+
+    const updateDropZone = (fileInput) => {
+      const zone = fileInput.closest("[data-drop-zone]");
+      if (!zone) return;
+
+      const file = fileInput.files && fileInput.files[0];
+      const idle = zone.querySelector("[data-drop-idle]");
+      const selected = zone.querySelector("[data-drop-selected]");
+      const fileName = zone.querySelector("[data-file-name]");
+      const fileSize = zone.querySelector("[data-file-size]");
+
+      zone.classList.toggle("has-file", Boolean(file));
+      if (idle) idle.hidden = Boolean(file);
+      if (selected) selected.hidden = !file;
+      if (fileName) fileName.textContent = file ? file.name : "";
+      if (fileSize) fileSize.textContent = file ? formatFileSize(file.size) : "";
+    };
+
+    const assignDroppedFile = (fileInput, file) => {
+      const transfer = new DataTransfer();
+      transfer.items.add(file);
+      fileInput.files = transfer.files;
+      fileInput.dispatchEvent(new Event("change", { bubbles: true }));
+    };
+
+    fileInputs.forEach((fileInput) => {
+      const zone = fileInput.closest("[data-drop-zone]");
+      if (!zone) return;
+
       fileInput.addEventListener("change", () => {
-        selectedFile.textContent =
-          fileInput.files?.[0]?.name || selectedFile.dataset.defaultLabel;
+        const file = fileInput.files && fileInput.files[0];
+        if (file && !excelFilePattern.test(file.name)) {
+          fileInput.value = "";
+          updateDropZone(fileInput);
+          showUploadError("엑셀 파일(.xlsx, .xls)만 업로드 가능합니다.");
+          return;
+        }
+
+        updateDropZone(fileInput);
+        clearUploadError();
+      });
+
+      zone.addEventListener("dragover", (event) => {
+        event.preventDefault();
+        zone.classList.add("is-dragging");
+      });
+
+      zone.addEventListener("dragleave", (event) => {
+        event.preventDefault();
+        zone.classList.remove("is-dragging");
+      });
+
+      zone.addEventListener("drop", (event) => {
+        event.preventDefault();
+        zone.classList.remove("is-dragging");
+
+        const files = Array.from(event.dataTransfer.files || []);
+        const excelFile = files.find((file) => excelFilePattern.test(file.name));
+
+        if (!excelFile) {
+          showUploadError("엑셀 파일(.xlsx, .xls)만 업로드 가능합니다.");
+          return;
+        }
+
+        assignDroppedFile(fileInput, excelFile);
       });
     });
+
+    if (uploadForm) {
+      uploadForm.addEventListener("submit", (event) => {
+        const missing = Array.from(fileInputs).some((fileInput) => !fileInput.files.length);
+
+        if (missing) {
+          event.preventDefault();
+          showUploadError("재무상태표와 손익계산서 파일을 모두 첨부해 주세요.");
+          return;
+        }
+
+        clearUploadError();
+        if (uploadProgress) uploadProgress.hidden = false;
+        if (uploadSubmit) {
+          uploadSubmit.disabled = true;
+          uploadSubmit.textContent = "업로드 중...";
+        }
+      });
+    }
 
     const tabs = document.querySelectorAll("[data-sheet-tab]");
     const panels = document.querySelectorAll("[data-sheet-panel]");

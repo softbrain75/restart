@@ -8,25 +8,8 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='landing.css') }}?v=1">
   </head>
   <body>
-    <nav class="landing-nav">
-      <div class="landing-nav__inner">
-        <a class="landing-brand" href="{{ url_for('index') }}" aria-label="Re-Start 홈">
-          <span class="landing-brand__icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2Zm0 0V9a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v10m-6 0a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2m0 0V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-2a2 2 0 0 1-2-2Z" />
-            </svg>
-          </span>
-          <span class="landing-brand__text">Re-Start</span>
-        </a>
-
-        <div class="landing-nav__links" aria-label="주요 메뉴">
-          <a class="landing-nav__link is-active" href="{{ url_for('index') }}">사용안내</a>
-          <a class="landing-nav__link" href="{{ url_for('analysis_index') }}">재무분석</a>
-        </div>
-
-        <a class="landing-nav__cta" href="{{ url_for('analysis_index') }}">진단 시작</a>
-      </div>
-    </nav>
+    {% set active_page = "home" %}
+    {% include "_top_nav.html" %}
 
     <main class="landing-page">
       <section class="landing-hero">
