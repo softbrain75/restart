@@ -1068,7 +1068,17 @@ def build_document_workbook(uploaded_files: Any) -> dict[str, Any]:
 
 @app.get("/")
 def index():
+    return render_template("landing.html")
+
+
+@app.get("/analysis")
+def analysis_index():
     return render_template("index.html", workbook=None, case=None, error=None)
+
+
+@app.get("/upload")
+def upload_form():
+    return redirect(url_for("analysis_index"))
 
 
 @app.post("/upload")
@@ -1117,7 +1127,7 @@ def financial(case_id: str):
 def save_financial(case_id: str):
     case = CASE_STORE.get(case_id)
     if case is None:
-        return redirect(url_for("index"))
+        return redirect(url_for("analysis_index"))
 
     rows = case["financial_rows"]
     errors: list[str] = []
@@ -1187,7 +1197,7 @@ def debt(case_id: str):
 def save_debt(case_id: str):
     case = CASE_STORE.get(case_id)
     if case is None:
-        return redirect(url_for("index"))
+        return redirect(url_for("analysis_index"))
 
     rows = case["debt_rows"]
     for index, row in enumerate(rows):
@@ -1238,7 +1248,7 @@ def income(case_id: str):
 def save_income(case_id: str):
     case = CASE_STORE.get(case_id)
     if case is None:
-        return redirect(url_for("index"))
+        return redirect(url_for("analysis_index"))
 
     rows = case["income_rows"]
     for index, row in enumerate(rows):
@@ -1301,7 +1311,7 @@ def collateral(case_id: str):
 def save_collateral(case_id: str):
     case = CASE_STORE.get(case_id)
     if case is None:
-        return redirect(url_for("index"))
+        return redirect(url_for("analysis_index"))
 
     collateral_rows = case["collateral_rows"]
     rent_rows = case["rent_rows"]
