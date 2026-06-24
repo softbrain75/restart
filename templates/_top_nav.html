@@ -15,6 +15,8 @@
       <a class="site-nav__link{% if current_page == 'analysis' %} is-active{% endif %}" href="{{ url_for('analysis_index') }}">재무분석</a>
     </div>
 
-    <a class="site-nav__cta" href="{{ url_for('analysis_index') }}">진단 시작</a>
+    {% if current_page == "home" %}
+      <a class="site-nav__cta" href="{{ url_for('analysis_index') }}">진단 시작</a>
+    {% endif %}
   </div>
 </nav>

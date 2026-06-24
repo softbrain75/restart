@@ -1119,7 +1119,7 @@ def financial(case_id: str):
         case=case,
         rows=case["financial_rows"],
         error=None,
-        message="재무 데이터를 불러왔습니다." if not case["financial_saved"] else "저장된 재무 데이터입니다.",
+        message=None,
     )
 
 
@@ -1189,7 +1189,7 @@ def debt(case_id: str):
         case=case,
         rows=case["debt_rows"],
         error=None,
-        message="부채 데이터를 입력해 주세요." if not case["debt_saved"] else "저장된 부채 데이터입니다.",
+        message=None,
     )
 
 
@@ -1240,7 +1240,7 @@ def income(case_id: str):
         sales_rows=[row for row in rows if row["section"] == "sales"],
         expense_rows=[row for row in rows if row["section"] == "expense"],
         error=None,
-        message="손익 데이터를 입력해 주세요." if not case["income_saved"] else "저장된 손익 데이터입니다.",
+        message=None,
     )
 
 
@@ -1301,9 +1301,7 @@ def collateral(case_id: str):
         collateral_rows=case["collateral_rows"],
         rent_rows=case["rent_rows"],
         error=None,
-        message="담보등자산 데이터를 입력해 주세요."
-        if not case["collateral_saved"]
-        else "저장된 담보등자산 데이터입니다.",
+        message=None,
     )
 
 

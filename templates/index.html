@@ -2,13 +2,7 @@
 
 {% block title %}Excel 업로드 - 기업회생 분석{% endblock %}
 
-{% block page_toolbar %}{% endblock %}
-
 {% block main_class %}analysis-main{% if workbook %} analysis-main--preview{% endif %}{% endblock %}
-
-{% block header_subtitle %}
-  {% if workbook %}{{ workbook.files|length }}개 파일 처리됨{% else %}재무제표와 손익계산서를 업로드하세요{% endif %}
-{% endblock %}
 
 {% block content %}
   {% if workbook %}

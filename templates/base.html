@@ -4,23 +4,11 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{% block title %}기업회생 분석{% endblock %}</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}?v=16">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}?v=17">
   </head>
   <body>
     {% include "_top_nav.html" %}
     <div class="app-shell">
-      {% block page_toolbar %}
-        <header class="page-toolbar">
-          <div class="page-toolbar__text">
-            <h1>{% block header_title %}기업회생 분석{% endblock %}</h1>
-            <p>{% block header_subtitle %}Excel 업로드 대기{% endblock %}</p>
-          </div>
-          <div class="page-toolbar__actions">
-            {% block header_actions %}{% endblock %}
-          </div>
-        </header>
-      {% endblock %}
-
       <main class="app-main {% block main_class %}{% endblock %}">
         {% block content %}{% endblock %}
       </main>

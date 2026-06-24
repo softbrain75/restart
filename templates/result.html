@@ -2,14 +2,6 @@
 
 {% block title %}결과 확인 - 기업회생 분석{% endblock %}
 
-{% block header_subtitle %}
-  {% if case %}{{ case.company_name }} · 결과 확인{% else %}결과 확인{% endif %}
-{% endblock %}
-
-{% block header_actions %}
-  <a class="button button-secondary" href="{{ url_for('analysis_index') }}">새 파일 업로드</a>
-{% endblock %}
-
 {% block content %}
   {% if error %}
     <section class="notice notice-error" role="alert">{{ error }}</section>

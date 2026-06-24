@@ -166,44 +166,6 @@ button {
   overflow: hidden;
 }
 
-.page-toolbar {
-  align-items: center;
-  background: var(--color-surface);
-  border-bottom: 1px solid var(--color-border);
-  box-shadow: var(--shadow-sticky);
-  display: flex;
-  flex: 0 0 auto;
-  gap: 24px;
-  justify-content: space-between;
-  min-height: 76px;
-  padding: 14px 24px;
-  z-index: 10;
-}
-
-.page-toolbar__text {
-  min-width: 0;
-}
-
-.page-toolbar h1 {
-  font-size: 18px;
-  line-height: 1.2;
-  margin: 0;
-}
-
-.page-toolbar p {
-  color: var(--color-muted);
-  font-size: 13px;
-  margin: 3px 0 0;
-  max-width: min(52vw, 560px);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.page-toolbar__actions {
-  min-width: 0;
-}
-
 .app-main {
   display: flex;
   flex: 1 1 auto;
@@ -451,15 +413,6 @@ button {
   }
 }
 
-.toolbar-form {
-  align-items: center;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  justify-content: flex-end;
-  min-width: 0;
-}
-
 .button {
   align-items: center;
   border: 1px solid transparent;
@@ -493,32 +446,6 @@ button {
 
 .button-secondary:hover {
   background: #e3ecea;
-}
-
-.file-control {
-  align-items: center;
-  background: var(--color-surface-muted);
-  border: 1px solid #cbd8d6;
-  border-radius: var(--radius-md);
-  color: #243b3a;
-  cursor: pointer;
-  display: inline-flex;
-  font-size: 14px;
-  height: 40px;
-  justify-content: center;
-  max-width: min(48vw, 420px);
-  min-width: 220px;
-  padding: 0 14px;
-}
-
-.file-control input {
-  display: none;
-}
-
-[data-selected-file] {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .notice {
@@ -1231,17 +1158,6 @@ form[data-collateral-form] {
     height: calc(100vh - 72px);
   }
 
-  .page-toolbar {
-    align-items: stretch;
-    flex-direction: column;
-    gap: 12px;
-    padding: 12px 14px;
-  }
-
-  .page-toolbar p {
-    max-width: calc(100vw - 100px);
-  }
-
   .analysis-main {
     padding: 42px 16px;
   }
@@ -1282,19 +1198,8 @@ form[data-collateral-form] {
     white-space: normal;
   }
 
-  .toolbar-form {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr);
-    width: 100%;
-  }
-
   .button {
     width: 100%;
-  }
-
-  .file-control {
-    max-width: none;
-    min-width: 0;
   }
 
   .app-main {
