@@ -434,11 +434,11 @@ button {
 }
 
 .result-table {
-  min-width: 860px;
+  min-width: 0;
 }
 
 .result-comparison-table {
-  min-width: 1280px;
+  min-width: 0;
 }
 
 .worksheet-review-table {
@@ -501,9 +501,19 @@ button {
   width: 24%;
 }
 
-.result-comparison-table .col-amount,
+.result-comparison-table .col-amount {
+  width: 12%;
+}
+
 .result-comparison-table .col-rate {
-  width: 10.857%;
+  width: 7.2%;
+}
+
+.result-comparison-table th,
+.result-comparison-table td {
+  font-size: 12.5px;
+  padding-left: 6px;
+  padding-right: 6px;
 }
 
 .debt-table .col-account {
