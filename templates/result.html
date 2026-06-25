@@ -16,7 +16,6 @@
     {% set current_step = "result" %}
     {% set show_worksheet_tab = consultation_submitted %}
     {% set workflow_meta_label = case.company_name %}
-    {% set workflow_meta_value = result.dates.today ~ " 기준" %}
     {% include "_workflow_steps.html" %}
 
     <section class="result-workbench" aria-label="{{ '결과와 작업시트 확인' if consultation_submitted else '결과와 상담 신청' }}">

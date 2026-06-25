@@ -10,7 +10,6 @@
   {% if case %}
     {% set current_step = "financial" %}
     {% set workflow_meta_label = case.company_name %}
-    {% set workflow_meta_value = rows|length ~ "개 계정" %}
     {% include "_workflow_steps.html" %}
 
     <section class="section-header">

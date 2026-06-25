@@ -10,7 +10,6 @@
   {% if case %}
     {% set current_step = "collateral" %}
     {% set workflow_meta_label = case.company_name %}
-    {% set workflow_meta_value = collateral_rows|length ~ "개 담보 · " ~ rent_rows|length ~ "개 재임차" %}
     {% include "_workflow_steps.html" %}
 
     <section class="section-header">

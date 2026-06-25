@@ -10,8 +10,6 @@
   {% if case %}
     {% set current_step = "income" %}
     {% set workflow_meta_label = case.company_name %}
-    {% set workflow_row_count = (sales_rows|length) + (expense_rows|length) %}
-    {% set workflow_meta_value = workflow_row_count ~ "개 항목" %}
     {% include "_workflow_steps.html" %}
 
     <section class="section-header">

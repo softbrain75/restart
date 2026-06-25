@@ -9,7 +9,6 @@
     {% if case %}
       {% set current_step = "upload" %}
       {% set workflow_meta_label = case.company_name %}
-      {% set workflow_meta_value = "업로드 미리보기" %}
       {% include "_workflow_steps.html" %}
     {% endif %}
 

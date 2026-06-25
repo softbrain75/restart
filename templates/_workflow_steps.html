@@ -48,10 +48,9 @@
       >작업시트 확인</button>
     {% endif %}
   </nav>
-  {% if workflow_meta_label or workflow_meta_value %}
+  {% if workflow_meta_label %}
     <div class="workflow-panel__meta">
-      {% if workflow_meta_label %}<strong>{{ workflow_meta_label }}</strong>{% endif %}
-      {% if workflow_meta_value %}<span>{{ workflow_meta_value }}</span>{% endif %}
+      <strong>{{ workflow_meta_label }}</strong>
     </div>
   {% endif %}
 </section>
