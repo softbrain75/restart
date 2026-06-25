@@ -330,13 +330,13 @@ button {
 }
 
 .toast-stack {
-  bottom: 28px;
   display: grid;
   gap: 10px;
   max-width: min(420px, calc(100vw - 32px));
   position: fixed;
   left: 50%;
-  transform: translateX(-50%);
+  top: 50%;
+  transform: translate(-50%, -50%);
   width: max-content;
   z-index: 20;
 }
@@ -360,7 +360,7 @@ button {
 @keyframes toast-in {
   from {
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateY(8px);
   }
   to {
     opacity: 1;
@@ -1209,9 +1209,9 @@ form[data-collateral-form] {
   }
 
   .toast-stack {
-    bottom: 14px;
     left: 50%;
     max-width: none;
+    top: 50%;
     width: calc(100vw - 28px);
   }
 
