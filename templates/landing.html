@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Re-Start - 기업회생 재무분석 시스템</title>
     <meta name="description" content="기업회생 재무분석을 위한 시스템">
-    <link rel="stylesheet" href="{{ url_for('static', filename='top-nav.css') }}?v=1">
-    <link rel="stylesheet" href="{{ url_for('static', filename='landing.css') }}?v=4">
+    <link rel="stylesheet" href="{{ url_for('static', filename='top-nav.css') }}?v=2">
+    <link rel="stylesheet" href="{{ url_for('static', filename='landing.css') }}?v=5">
   </head>
   <body>
     {% set active_page = "home" %}
@@ -16,8 +16,8 @@
       <section class="landing-hero">
         <div class="landing-container landing-container--narrow">
           <div class="landing-hero__copy">
-            <h1>기업회생 진단</h1>
-            <p>정량적 지표 기반의 법인회생 가능성 분석</p>
+            <h1>기업회생 예비진단</h1>
+            <p>재무자료 기반의 법인회생 가능성 예비 분석</p>
           </div>
 
           <div class="landing-hero__actions">
@@ -36,8 +36,8 @@
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7Z" />
                 </svg>
               </span>
-              <h2>빠른 진단</h2>
-              <p>몇 분 안에 회생 가능성을 확인할 수 있습니다</p>
+              <h2>빠른 예비진단</h2>
+              <p>몇 분 안에 회생 가능성을 예비 점검할 수 있습니다</p>
             </article>
 
             <article class="feature-card">
@@ -47,7 +47,7 @@
                 </svg>
               </span>
               <h2>정량적 분석</h2>
-              <p>객관적인 재무 지표로 정확한 분석을 제공합니다</p>
+              <p>객관적인 재무 지표를 기준으로 분석합니다</p>
             </article>
 
             <article class="feature-card">
@@ -56,8 +56,8 @@
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2Zm10-10V7a4 4 0 0 0-8 0v4h8Z" />
                 </svg>
               </span>
-              <h2>서버 기반 처리</h2>
-              <p>업로드 파일은 Python 서버에서 분석하고 결과 화면으로 제공합니다</p>
+              <h2>웹 기반 처리</h2>
+              <p>엑셀 파일을 업로드하면 서버에서 분석하고 결과를 제공합니다</p>
             </article>
           </div>
         </div>
@@ -74,7 +74,7 @@
             <p>
               본 법인회생 가능성 진단기는 경영상의 어려움에 처하여 법인회생 절차에 관심이 많은 회사를 대상으로,
               회생신청 시 개시결정 및 회생계획인가의 가능성을 개략적으로 확인할 수 있도록 마련되었습니다.
-              정상적인 요소를 배제하고 정량적인 지표만을 바탕으로 구성되었습니다.
+              정성적인 요소를 배제하고 정량적인 지표만을 바탕으로 구성되었습니다.
             </p>
 
             <div class="notice-list">
@@ -92,12 +92,12 @@
               </article>
               <article class="notice-item">
                 <span>04</span>
-                <p>갱생에 대한 경영진의 의지가 없는 회사 등</p>
+                <p>회생에 대한 경영진의 의지가 없는 회사 등</p>
               </article>
             </div>
 
             <div class="notice-callout">
-              <p><strong>참고:</strong> 위 사항에 해당하는 회사는 실질적으로 회생절차를 진행함이 적절하지 않을 수 있음을 감안하여 주시기 바랍니다.</p>
+              <p><strong>유의:</strong> 위 사항에 해당하는 회사는 실질적으로 회생절차를 진행함이 적절하지 않을 수 있음을 감안하여 주시기 바랍니다.</p>
             </div>
           </div>
         </div>
@@ -114,7 +114,7 @@
             <article class="process-card">
               <span class="process-card__number">1</span>
               <div>
-                <h3>파일업로드</h3>
+                <h3>파일 업로드</h3>
                 <p>과거 재무제표 Excel 파일을 업로드합니다.</p>
                 <p>재무상태표는 최근 결산월 또는 전기말 자료를, 손익계산서는 전기 손익계산서 자료를 사용합니다.</p>
               </div>
@@ -123,7 +123,7 @@
             <article class="process-card">
               <span class="process-card__number">2</span>
               <div>
-                <h3>자산현황</h3>
+                <h3>자산 현황</h3>
                 <p>현재 시점의 자산 항목별 실사가치와 청산가치를 입력합니다.</p>
                 <p>청산가치는 회사를 즉시 청산하는 경우 회수 가능한 금액을 의미하며, 일반적으로 실사가치를 초과할 수 없습니다.</p>
               </div>
@@ -132,7 +132,7 @@
             <article class="process-card">
               <span class="process-card__number">3</span>
               <div>
-                <h3>부채현황</h3>
+                <h3>부채 현황</h3>
                 <p>현재 시점의 부채현황을 입력합니다.</p>
                 <p>재무상태표의 계정과목별 금액과 무관하게 실제 필요한 항목별 금액을 입력합니다.</p>
               </div>
@@ -141,7 +141,7 @@
             <article class="process-card">
               <span class="process-card__number">4</span>
               <div>
-                <h3>손익추정</h3>
+                <h3>손익 추정</h3>
                 <p>업로드한 손익계산서를 이용하여 향후 현금흐름 추정에 필요한 비율과 금액을 입력합니다.</p>
                 <p>매출액 대비 변동비율, 고정비율 등 회사에 적용되는 값을 조정합니다.</p>
               </div>
@@ -150,7 +150,7 @@
             <article class="process-card">
               <span class="process-card__number">5</span>
               <div>
-                <h3>담보등자산</h3>
+                <h3>담보 등 자산</h3>
                 <p>영업활동에 필수적이지 않은 비영업용 자산과 담보 제공 자산을 입력합니다.</p>
                 <p>담보로 제공된 토지, 건물 등 부동산은 별도로 반영합니다.</p>
               </div>
@@ -159,27 +159,19 @@
             <article class="process-card">
               <span class="process-card__number">6</span>
               <div>
-                <h3>결과확인</h3>
-                <p>입력한 내용을 기초로 회생절차 진행 가능성을 객관적인 지표로 확인합니다.</p>
+                <h3>결과 확인</h3>
+                <p>입력한 내용을 기초로 회생절차 진행 가능성을 예비 분석합니다.</p>
               </div>
             </article>
           </div>
 
-          <ol class="process-indicator" aria-label="진단 단계">
-            <li><span>1</span><strong>파일업로드</strong></li>
-            <li><span>2</span><strong>자산현황</strong></li>
-            <li><span>3</span><strong>부채현황</strong></li>
-            <li><span>4</span><strong>손익추정</strong></li>
-            <li><span>5</span><strong>담보등자산</strong></li>
-            <li><span>6</span><strong>결과확인</strong></li>
-          </ol>
         </div>
       </section>
 
       <section class="landing-cta">
         <div class="landing-container landing-container--compact">
           <h2>지금 바로 시작하세요</h2>
-          <p>3분이면 기업의 회생 가능성을 확인할 수 있습니다</p>
+          <p>3분이면 회생 가능성을 예비 진단할 수 있습니다</p>
           <a class="landing-button landing-button--large" href="{{ url_for('analysis_index') }}">
             <span>진단 시작하기</span>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">

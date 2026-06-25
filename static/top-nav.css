@@ -139,8 +139,6 @@
   }
 
   .site-nav__cta {
-    height: 40px;
-    min-width: 92px;
-    padding: 0 18px;
+    display: none;
   }
 }
