@@ -689,6 +689,11 @@ button {
   background: #ffffff;
 }
 
+.data-table .input-cell:has(.input),
+.data-table .input-cell:has(.select) {
+  background: #fff9e8;
+}
+
 .row-heading-data td {
   background: #f7faf9;
   color: #253b38;
@@ -837,6 +842,12 @@ button {
   height: 38px;
   padding: 0 10px;
   width: 100%;
+}
+
+.data-table .input-cell .input,
+.data-table .input-cell .select {
+  background: #fffefa;
+  border-color: #d7bf75;
 }
 
 .input:focus,
@@ -1148,15 +1159,32 @@ form[data-collateral-form] {
   text-decoration: none;
 }
 
+.step.is-complete {
+  background: #edf8f4;
+  border-color: #a8d9c6;
+  color: #0f513f;
+}
+
 .step.is-active {
   background: #163832;
   border-color: #163832;
   color: #ffffff;
 }
 
+.step-check {
+  font-size: 12px;
+  font-weight: 900;
+  line-height: 1;
+}
+
 .step:not(.is-active):hover {
   background: #dfe9e7;
   border-color: #bccdca;
+}
+
+.step.is-complete:not(.is-active):hover {
+  background: #dff2eb;
+  border-color: #8ecab3;
 }
 
 @media (max-width: 760px) {
