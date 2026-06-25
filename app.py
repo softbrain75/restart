@@ -1158,6 +1158,25 @@ def upload_form():
     return redirect(url_for("analysis_index"))
 
 
+@app.get("/upload/<case_id>")
+def upload_preview(case_id: str):
+    case = CASE_STORE.get(case_id)
+    if case is None:
+        return render_template(
+            "index.html",
+            workbook=None,
+            case=None,
+            error="작업 정보를 찾을 수 없습니다. 파일을 다시 업로드해 주세요.",
+        ), 404
+
+    return render_template(
+        "index.html",
+        workbook=case["workbook"],
+        case=case,
+        error=None,
+    )
+
+
 @app.post("/upload")
 def upload():
     try:

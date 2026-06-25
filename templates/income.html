@@ -12,20 +12,11 @@
   {% endif %}
 
   {% if case %}
-    <section class="workflow-panel" aria-label="작업 단계">
-      <div class="stepper">
-        <span class="step">업로드</span>
-        <span class="step">재무</span>
-        <span class="step">부채</span>
-        <span class="step is-active">손익</span>
-        <span class="step">담보</span>
-        <span class="step">결과</span>
-      </div>
-      <div class="workflow-panel__meta">
-        <strong>{{ case.company_name }}</strong>
-        <span>{{ (sales_rows|length) + (expense_rows|length) }}개 항목</span>
-      </div>
-    </section>
+    {% set current_step = "income" %}
+    {% set workflow_meta_label = case.company_name %}
+    {% set workflow_row_count = (sales_rows|length) + (expense_rows|length) %}
+    {% set workflow_meta_value = workflow_row_count ~ "개 항목" %}
+    {% include "_workflow_steps.html" %}
 
     <section class="section-header">
       <div>
@@ -139,10 +130,12 @@
         </section>
       </div>
 
-      <div class="action-row">
-        <a class="button button-secondary" href="{{ url_for('debt', case_id=case.case_id) }}">이전</a>
-        <button class="button button-primary" type="submit">저장</button>
-        <button class="button button-primary" type="submit" name="next" value="collateral">저장 후 담보 입력</button>
+      <div class="sticky-action-bar" aria-label="진행 작업">
+        <div class="sticky-action-bar__inner">
+          <a class="button button-secondary" href="{{ url_for('debt', case_id=case.case_id) }}">이전</a>
+          <button class="button button-primary" type="submit">저장</button>
+          <button class="button button-primary" type="submit" name="next" value="collateral">저장 후 담보 입력</button>
+        </div>
       </div>
     </form>
   {% endif %}

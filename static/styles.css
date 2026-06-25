@@ -812,6 +812,23 @@ button {
   margin-top: 14px;
 }
 
+.sticky-action-bar {
+  background: linear-gradient(180deg, rgba(244, 247, 247, 0), var(--color-bg) 24%);
+  flex: 0 0 auto;
+  margin-top: 12px;
+  padding-top: 10px;
+  position: sticky;
+  bottom: 0;
+  z-index: 4;
+}
+
+.sticky-action-bar__inner {
+  align-items: center;
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
 .stepper {
   align-items: center;
   display: flex;
@@ -993,6 +1010,7 @@ form[data-collateral-form] {
 }
 
 .step-button {
+  cursor: pointer;
   font-family: inherit;
   letter-spacing: 0;
 }
@@ -1073,18 +1091,25 @@ form[data-collateral-form] {
   border: 1px solid #cbd5d5;
   border-radius: var(--radius-md);
   color: #314042;
+  cursor: pointer;
   display: inline-flex;
   flex: 0 0 auto;
   font-size: 13px;
   font-weight: 700;
   height: 34px;
   padding: 0 12px;
+  text-decoration: none;
 }
 
 .step.is-active {
   background: #163832;
   border-color: #163832;
   color: #ffffff;
+}
+
+.step:not(.is-active):hover {
+  background: #dfe9e7;
+  border-color: #bccdca;
 }
 
 @media (max-width: 760px) {
@@ -1156,6 +1181,11 @@ form[data-collateral-form] {
   }
 
   .action-row {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .sticky-action-bar__inner {
     align-items: stretch;
     flex-direction: column;
   }

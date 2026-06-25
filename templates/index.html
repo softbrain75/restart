@@ -7,19 +7,10 @@
 {% block content %}
   {% if workbook %}
     {% if case %}
-      <section class="workflow-panel" aria-label="다음 작업">
-        <div class="stepper" aria-label="작업 단계">
-          <span class="step is-active">업로드</span>
-          <span class="step">재무</span>
-          <span class="step">부채</span>
-          <span class="step">손익</span>
-          <span class="step">담보</span>
-          <span class="step">결과</span>
-        </div>
-        <a class="button button-primary" href="{{ url_for('financial', case_id=case.case_id) }}">
-          재무 입력으로 이동
-        </a>
-      </section>
+      {% set current_step = "upload" %}
+      {% set workflow_meta_label = case.company_name %}
+      {% set workflow_meta_value = "업로드 미리보기" %}
+      {% include "_workflow_steps.html" %}
     {% endif %}
 
     <nav class="tabs" aria-label="시트 선택">
@@ -89,6 +80,15 @@
         </div>
       </section>
     {% endfor %}
+    {% if case %}
+      <div class="sticky-action-bar" aria-label="진행 작업">
+        <div class="sticky-action-bar__inner">
+          <a class="button button-primary" href="{{ url_for('financial', case_id=case.case_id) }}">
+            재무 입력으로 이동
+          </a>
+        </div>
+      </div>
+    {% endif %}
   {% else %}
     <section class="upload-card" aria-label="파일 업로드">
       {% if error %}
