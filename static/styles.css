@@ -330,12 +330,14 @@ button {
 }
 
 .toast-stack {
-  bottom: 22px;
+  bottom: 28px;
   display: grid;
   gap: 10px;
   max-width: min(420px, calc(100vw - 32px));
   position: fixed;
-  right: 22px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: max-content;
   z-index: 20;
 }
 
@@ -1208,9 +1210,9 @@ form[data-collateral-form] {
 
   .toast-stack {
     bottom: 14px;
-    left: 14px;
+    left: 50%;
     max-width: none;
-    right: 14px;
+    width: calc(100vw - 28px);
   }
 
   .app-main {
