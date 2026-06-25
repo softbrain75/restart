@@ -151,6 +151,10 @@ def consultation_form_from_request() -> dict[str, Any]:
 
 
 def validate_consultation_form(form: dict[str, Any]) -> list[str]:
+    # Temporary marketing-flow setting: allow users to unlock the detailed
+    # result without completing the contact form while the gate copy is tested.
+    return []
+
     errors: list[str] = []
     if not form["company"]:
         errors.append("회사명을 입력해 주세요.")

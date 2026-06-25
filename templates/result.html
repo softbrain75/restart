@@ -80,7 +80,6 @@
                     name="company"
                     type="text"
                     value="{{ consultation_form.get('company', case.company_name) }}"
-                    required
                     autocomplete="organization"
                   >
                 </label>
@@ -91,7 +90,6 @@
                     name="contact_name"
                     type="text"
                     value="{{ consultation_form.get('contact_name', '') }}"
-                    required
                     autocomplete="name"
                   >
                 </label>
@@ -102,7 +100,6 @@
                     name="phone"
                     type="tel"
                     value="{{ consultation_form.get('phone', '') }}"
-                    required
                     autocomplete="tel"
                   >
                 </label>
@@ -113,7 +110,6 @@
                     name="email"
                     type="email"
                     value="{{ consultation_form.get('email', '') }}"
-                    required
                     autocomplete="email"
                   >
                 </label>
@@ -129,7 +125,6 @@
                   <input
                     name="privacy_consent"
                     type="checkbox"
-                    required
                     {% if consultation_form.get('privacy_consent') %}checked{% endif %}
                   >
                   <span>개인정보 수집 및 이용에 동의합니다.</span>
@@ -138,7 +133,6 @@
                   <input
                     name="financial_consent"
                     type="checkbox"
-                    required
                     {% if consultation_form.get('financial_consent') %}checked{% endif %}
                   >
                   <span>업로드한 재무자료를 상담 및 분석 목적으로 검토하는 데 동의합니다.</span>
