@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import io
+import json
 import math
 import os
 import re
@@ -16,8 +17,11 @@ from openpyxl import load_workbook
 
 
 BASE_DIR = Path(__file__).resolve().parent
+LEADS_DIR = BASE_DIR / "leads"
+CONSULTATION_LOG_PATH = LEADS_DIR / "consultations.jsonl"
 ALLOWED_EXTENSIONS = {".xls", ".xlsx"}
 WHITESPACE_RE = re.compile(r"[\s\u00a0\u200b\u200c\u200d\ufeff]+")
+EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 DOCUMENT_FIELDS = (
     ("balance_file", "재무제표"),
     ("income_file", "손익계산서"),
@@ -128,6 +132,70 @@ def display_percent(value: float | None) -> str:
 
 def parse_percent_text(value: str) -> float | None:
     return parse_number_text(value.replace("%", ""))
+
+
+def clean_contact_text(value: str | None, max_length: int = 200) -> str:
+    return re.sub(r"\s+", " ", str(value or "")).strip()[:max_length]
+
+
+def consultation_form_from_request() -> dict[str, Any]:
+    return {
+        "company": clean_contact_text(request.form.get("company"), 120),
+        "contact_name": clean_contact_text(request.form.get("contact_name"), 80),
+        "phone": clean_contact_text(request.form.get("phone"), 40),
+        "email": clean_contact_text(request.form.get("email"), 120),
+        "message": clean_contact_text(request.form.get("message"), 1000),
+        "privacy_consent": request.form.get("privacy_consent") == "on",
+        "financial_consent": request.form.get("financial_consent") == "on",
+    }
+
+
+def validate_consultation_form(form: dict[str, Any]) -> list[str]:
+    errors: list[str] = []
+    if not form["company"]:
+        errors.append("회사명을 입력해 주세요.")
+    if not form["contact_name"]:
+        errors.append("담당자명을 입력해 주세요.")
+    if not form["phone"]:
+        errors.append("연락처를 입력해 주세요.")
+    if not form["email"]:
+        errors.append("이메일을 입력해 주세요.")
+    elif not EMAIL_RE.match(form["email"]):
+        errors.append("이메일 형식을 확인해 주세요.")
+    if not form["privacy_consent"]:
+        errors.append("개인정보 수집 및 이용에 동의해 주세요.")
+    if not form["financial_consent"]:
+        errors.append("재무자료 검토 및 상담 목적 이용에 동의해 주세요.")
+    return errors
+
+
+def append_consultation_log(case: dict[str, Any], form: dict[str, Any], result: dict[str, Any]) -> None:
+    LEADS_DIR.mkdir(parents=True, exist_ok=True)
+    summary = result.get("summary", {})
+    payload = {
+        "submitted_at": datetime.now().isoformat(timespec="seconds"),
+        "case_id": case["case_id"],
+        "uploaded_company_name": case.get("company_name", ""),
+        "contact": {
+            "company": form["company"],
+            "contact_name": form["contact_name"],
+            "phone": form["phone"],
+            "email": form["email"],
+            "message": form["message"],
+        },
+        "consents": {
+            "privacy_consent": form["privacy_consent"],
+            "financial_consent": form["financial_consent"],
+        },
+        "summary": {
+            "liquidation_value": summary.get("liquidation_value", 0),
+            "going_concern_value": summary.get("going_concern_value", 0),
+            "value_difference": summary.get("value_difference", 0),
+            "total_debt": summary.get("total_debt", 0),
+        },
+    }
+    with CONSULTATION_LOG_PATH.open("a", encoding="utf-8") as file:
+        file.write(json.dumps(payload, ensure_ascii=False) + "\n")
 
 
 def is_editable_financial_account(account: str) -> bool:
@@ -1384,7 +1452,37 @@ def result(case_id: str):
         case=case,
         calculation_result=calculate_case_result(case),
         error=None,
+        message="상담 신청이 접수되었습니다. 상세 분석 결과를 확인할 수 있습니다."
+        if request.args.get("consultation") == "submitted"
+        else None,
+        consultation_form=case.get("consultation", {}),
     )
+
+
+@app.post("/consultation/<case_id>")
+def submit_consultation(case_id: str):
+    case = CASE_STORE.get(case_id)
+    if case is None:
+        return redirect(url_for("analysis_index"))
+
+    form = consultation_form_from_request()
+    errors = validate_consultation_form(form)
+    result_data = calculate_case_result(case)
+
+    if errors:
+        return render_template(
+            "result.html",
+            case=case,
+            calculation_result=result_data,
+            error=" ".join(errors),
+            message=None,
+            consultation_form=form,
+        ), 400
+
+    append_consultation_log(case, form, result_data)
+    case["consultation"] = form
+    case["consultation_submitted"] = True
+    return redirect(url_for("result", case_id=case_id, consultation="submitted"))
 
 
 if __name__ == "__main__":

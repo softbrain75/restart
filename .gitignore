@@ -9,6 +9,7 @@ __pycache__/
 
 instance/
 uploads/
+leads/
 *.log
 
 .pytest_cache/
