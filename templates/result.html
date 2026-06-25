@@ -7,10 +7,6 @@
     <section class="notice notice-error" role="alert">{{ error }}</section>
   {% endif %}
 
-  {% if message %}
-    <section class="notice notice-success" role="status">{{ message }}</section>
-  {% endif %}
-
   {% if case and calculation_result %}
     {% set result = calculation_result %}
     {% set fmt = result.display %}

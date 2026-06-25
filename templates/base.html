@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{% block title %}기업회생 분석{% endblock %}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='top-nav.css') }}?v=2">
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}?v=24">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}?v=25">
   </head>
   <body>
     {% include "_top_nav.html" %}
@@ -14,6 +14,14 @@
         {% block content %}{% endblock %}
       </main>
     </div>
+
+    {% if message is defined and message %}
+      <div class="toast-stack" aria-live="polite" aria-atomic="true">
+        <div class="toast toast-success" role="status">
+          {{ message }}
+        </div>
+      </div>
+    {% endif %}
 
     {% block scripts %}{% endblock %}
   </body>

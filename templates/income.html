@@ -7,10 +7,6 @@
     <section class="notice notice-error" role="alert">{{ error }}</section>
   {% endif %}
 
-  {% if message %}
-    <section class="notice notice-success" role="status">{{ message }}</section>
-  {% endif %}
-
   {% if case %}
     {% set current_step = "income" %}
     {% set workflow_meta_label = case.company_name %}

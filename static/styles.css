@@ -329,6 +329,51 @@ button {
   color: var(--color-success-text);
 }
 
+.toast-stack {
+  bottom: 22px;
+  display: grid;
+  gap: 10px;
+  max-width: min(420px, calc(100vw - 32px));
+  position: fixed;
+  right: 22px;
+  z-index: 20;
+}
+
+.toast {
+  animation: toast-in 180ms ease-out, toast-out 240ms ease-in 4.2s forwards;
+  border-radius: var(--radius-md);
+  box-shadow: 0 14px 36px rgba(15, 36, 33, 0.18);
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.45;
+  padding: 14px 16px;
+}
+
+.toast-success {
+  background: #ffffff;
+  border: 1px solid var(--color-success-border);
+  color: var(--color-success-text);
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes toast-out {
+  to {
+    opacity: 0;
+    transform: translateY(8px);
+    visibility: hidden;
+  }
+}
+
 .workflow-panel {
   align-items: center;
   background: var(--color-surface);
@@ -1159,6 +1204,13 @@ form[data-collateral-form] {
 
   .button {
     width: 100%;
+  }
+
+  .toast-stack {
+    bottom: 14px;
+    left: 14px;
+    max-width: none;
+    right: 14px;
   }
 
   .app-main {
