@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% from "_tooltip.html" import help_button %}
 
-{% block title %}재무 입력 - 기업회생 분석{% endblock %}
+{% block title %}자산가치산정 - 기업회생 분석{% endblock %}
 
 {% block content %}
   {% if error %}
@@ -15,7 +15,7 @@
 
     <section class="section-header">
       <div>
-        <h2>재무 입력</h2>
+        <h2>자산가치산정</h2>
         <p>실사가치와 청산가치를 입력합니다. 청산가치는 실사가치보다 클 수 없습니다.</p>
       </div>
     </section>
@@ -23,26 +23,50 @@
     <form method="post" action="{{ url_for('save_financial', case_id=case.case_id) }}" data-financial-form>
       <div class="table-frame financial-frame">
         <section class="financial-table-section">
-          <h3 class="title-with-help">
-            자산가치산정
-            {% call help_button("자산가치산정 도움말") %}
-              <strong>자산가치산정 입력 기준</strong>
-              <span class="tooltip-list">
-                <span>청산가치는 파산적 청산 시 개별 자산을 처분해 회수 가능한 금액입니다.</span>
-                <span>청산가치는 실사가치와 같거나 작은 금액으로 입력합니다.</span>
-                <span>현금과 예금은 보통 실사가치와 동일하게 봅니다.</span>
-                <span>채권, 재고, 유가증권, 유형자산은 즉시 회수 또는 매각 가능한 금액을 입력합니다.</span>
-                <span>선급금, 선급비용, 무형자산은 회수 가능성이 낮으면 0으로 입력합니다.</span>
-              </span>
-            {% endcall %}
-          </h3>
+          <h3>자산가치산정</h3>
           <table class="data-table financial-table">
             <thead>
               <tr>
                 <th class="col-account">계정과목</th>
                 <th class="col-amount">장부금액</th>
-                <th class="col-amount">실사가치</th>
-                <th class="col-amount">청산가치</th>
+                <th class="col-amount">
+                  <span class="table-heading-help">
+                    실사가치
+                    {% call help_button("실사가치 도움말") %}
+                      <strong>실사가치 입력 기준</strong>
+                      <span class="tooltip-list">
+                        <span>실사가치는 일반적으로 공정가치입니다. 장부금액이 현재 공정가치와 같으면 그대로 반영하고, 다르면 공정가치에 해당하는 금액을 입력합니다.</span>
+                        <span>현금, 보통예금, 현금및현금성자산, 정기예적금 등은 현재 잔고를 입력합니다.</span>
+                        <span>외상매출금, 받을어음, 대여금, 보증금 등 채권은 정상 영업 상황에서 회수 가능한 금액을 입력합니다.</span>
+                        <span>선급금, 선급비용은 반환을 통한 회수가 가능하지 않으면 0으로 입력합니다.</span>
+                        <span>유가증권과 재고자산은 정상 영업 상황에서 매각할 경우 회수 가능한 금액을 입력합니다.</span>
+                        <span>퇴직연금운용자산은 전 임직원의 퇴직급여추계액을 초과하는 금액만 입력합니다.</span>
+                        <span>토지, 건물, 기타 유형자산은 감정평가금액이 있으면 그 금액을, 없으면 시장에서 매각 가능한 금액을 입력합니다.</span>
+                        <span>무형자산은 시장에서 양도 또는 매각이 가능하면 가능한 금액을, 그렇지 않으면 0으로 입력합니다.</span>
+                        <span>기타 자산은 공정가치에 해당하는 금액을 입력합니다.</span>
+                      </span>
+                    {% endcall %}
+                  </span>
+                </th>
+                <th class="col-amount">
+                  <span class="table-heading-help">
+                    청산가치
+                    {% call help_button("청산가치 도움말") %}
+                      <strong>청산가치 입력 기준</strong>
+                      <span class="tooltip-list">
+                        <span>청산가치는 파산적 청산 과정에서 개별 자산을 분리 처분할 때의 가치입니다. 회수 가능한 최소가치로 보며, 실사가치와 같거나 작아야 합니다.</span>
+                        <span>현금, 보통예금, 현금및현금성자산, 정기예적금 등은 일반적으로 실사가치와 동일합니다.</span>
+                        <span>외상매출금, 받을어음, 대여금, 보증금 등 채권은 파산적 청산 시 즉시 회수 가능한 금액을 입력합니다.</span>
+                        <span>선급금, 선급비용은 즉시 반환을 통한 회수가 가능하지 않으면 0으로 입력합니다.</span>
+                        <span>유가증권과 재고자산은 파산적 청산 시 즉시 매각할 경우 회수 가능한 금액을 입력합니다.</span>
+                        <span>토지와 건물은 실사가치로 반영한 금액에 법정낙찰가율을 곱한 금액을 입력합니다.</span>
+                        <span>기타 유형자산은 파산적 청산 시 즉시 매각할 경우 회수 가능한 금액을 입력합니다.</span>
+                        <span>무형자산은 시장에서 양도 또는 매각이 가능하면 가능한 금액을, 그렇지 않으면 0으로 입력합니다.</span>
+                        <span>기타 자산은 파산적 청산 시 회수 가능한 금액을 입력합니다.</span>
+                      </span>
+                    {% endcall %}
+                  </span>
+                </th>
               </tr>
             </thead>
             <tbody>

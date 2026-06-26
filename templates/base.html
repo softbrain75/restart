@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{% block title %}기업회생 분석{% endblock %}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='top-nav.css') }}?v=2">
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}?v=32">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}?v=33">
   </head>
   <body>
     {% include "_top_nav.html" %}
@@ -97,7 +97,7 @@
           if (!trigger || !content) return;
 
           const triggerRect = trigger.getBoundingClientRect();
-          const width = Math.min(360, window.innerWidth - margin * 2);
+          const width = Math.min(440, window.innerWidth - margin * 2);
           content.style.setProperty("--tooltip-width", `${width}px`);
 
           let left = triggerRect.left;

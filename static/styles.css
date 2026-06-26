@@ -681,13 +681,15 @@ button {
   font-weight: 400;
   left: var(--tooltip-left, 12px);
   line-height: 1.55;
+  max-height: calc(100vh - 24px);
   max-width: calc(100vw - 40px);
+  overflow: auto;
   pointer-events: none;
   padding: 12px 14px;
   position: fixed;
   top: var(--tooltip-top, 12px);
   transform: none;
-  width: var(--tooltip-width, min(360px, calc(100vw - 24px)));
+  width: var(--tooltip-width, min(440px, calc(100vw - 24px)));
   z-index: 1000;
 }
 
@@ -744,6 +746,13 @@ button {
   position: absolute;
   top: 0.72em;
   width: 4px;
+}
+
+.table-heading-help {
+  align-items: center;
+  display: inline-flex;
+  gap: 6px;
+  justify-content: center;
 }
 
 .section-header p {
