@@ -339,7 +339,7 @@ button {
   border-radius: var(--radius-md);
   display: grid;
   gap: 16px;
-  grid-template-columns: minmax(0, 1fr) 176px;
+  grid-template-columns: minmax(0, 1fr) 152px;
   padding: 16px;
 }
 
@@ -366,6 +366,7 @@ button {
 .history-item__actions {
   align-items: stretch;
   flex-direction: column;
+  gap: 8px;
   justify-content: flex-start;
 }
 
@@ -375,7 +376,33 @@ button {
 }
 
 .history-item__actions .button {
+  font-size: 14px;
   width: 100%;
+}
+
+.history-item__action-row {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: minmax(0, 1fr) 42px;
+}
+
+.history-item__action-row .button {
+  font-size: 13px;
+}
+
+.button-icon {
+  min-width: 42px;
+  padding: 0;
+}
+
+.button-icon svg {
+  fill: none;
+  height: 17px;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2;
+  width: 17px;
 }
 
 .history-summary {
