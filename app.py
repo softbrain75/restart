@@ -7,7 +7,7 @@ import os
 import re
 import uuid
 from copy import deepcopy
-from datetime import date, datetime
+from datetime import UTC, date, datetime, timedelta, timezone
 from functools import wraps
 from pathlib import Path
 from typing import Any
@@ -36,6 +36,7 @@ DOCUMENT_FIELDS = (
 app = Flask(__name__)
 app.config["MAX_CONTENT_LENGTH"] = 40 * 1024 * 1024
 app.secret_key = os.environ.get("RESTART_SECRET_KEY", "restart-local-dev-secret")
+KST = timezone(timedelta(hours=9), "KST")
 
 
 @app.after_request
@@ -47,7 +48,20 @@ def prevent_html_cache(response):
     return response
 
 def now_iso() -> str:
-    return datetime.now().isoformat(timespec="seconds")
+    return datetime.now(UTC).isoformat(timespec="seconds")
+
+
+def format_kst_datetime(value: Any) -> str:
+    text = str(value or "").strip()
+    if not text:
+        return ""
+    try:
+        parsed = datetime.fromisoformat(text.replace("Z", "+00:00"))
+    except ValueError:
+        return text
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=UTC)
+    return parsed.astimezone(KST).strftime("%Y-%m-%d %H:%M:%S")
 
 
 def read_json_file(path: Path, default: Any) -> Any:
@@ -242,7 +256,7 @@ def append_consultation_log(case: dict[str, Any], form: dict[str, Any], result: 
     LEADS_DIR.mkdir(parents=True, exist_ok=True)
     summary = result.get("summary", {})
     payload = {
-        "submitted_at": datetime.now().isoformat(timespec="seconds"),
+        "submitted_at": now_iso(),
         "case_id": case["case_id"],
         "uploaded_company_name": case.get("company_name", ""),
         "contact": {
@@ -334,7 +348,10 @@ def login_required(view):
 
 @app.context_processor
 def inject_auth_context():
-    return {"current_user": current_user()}
+    return {
+        "current_user": current_user(),
+        "format_kst_datetime": format_kst_datetime,
+    }
 
 
 def is_editable_financial_account(account: str) -> bool:

@@ -25,7 +25,7 @@
           {% set progress = item.progress %}
           <article class="history-item">
             <div class="history-item__main">
-              <span class="history-item__date">{{ case.updated_at or case.created_at }}</span>
+              <span class="history-item__date">{{ format_kst_datetime(case.updated_at or case.created_at) }}</span>
               <h3>
                 {{ case.company_name }}
                 {% if case.scenario_name %}
