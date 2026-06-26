@@ -1377,6 +1377,8 @@ def case_listing_for_user(user_id: str) -> list[dict[str, Any]]:
     for case in CASE_STORE.values():
         if case.get("user_id") != user_id:
             continue
+        if case.get("deleted_at"):
+            continue
         progress = case_progress(case)
         listings.append(
             {
@@ -1523,9 +1525,15 @@ def mypage():
         "mypage.html",
         active_page="mypage",
         cases=case_listing_for_user(user["user_id"]),
-        message="회원가입이 완료되었습니다. 분석 이력을 이곳에서 확인할 수 있습니다."
-        if request.args.get("joined") == "1"
-        else None,
+        message=(
+            "회원가입이 완료되었습니다. 분석 이력을 이곳에서 확인할 수 있습니다."
+            if request.args.get("joined") == "1"
+            else (
+                "분석 이력을 삭제했습니다."
+                if request.args.get("deleted") == "1"
+                else None
+            )
+        ),
     )
 
 
@@ -1538,6 +1546,17 @@ def copy_case(case_id: str):
         return redirect(url_for("mypage"))
     copied_case = copy_case_for_user(source_case, user["user_id"])
     return redirect(url_for("financial", case_id=copied_case["case_id"], copied="1"))
+
+
+@app.post("/cases/<case_id>/delete")
+@login_required
+def delete_case(case_id: str):
+    case = get_accessible_case(case_id)
+    if case is None:
+        return redirect(url_for("mypage"))
+    case["deleted_at"] = now_iso()
+    save_case(case)
+    return redirect(url_for("mypage", deleted="1"))
 
 
 @app.get("/analysis")

@@ -47,6 +47,13 @@
               <form action="{{ url_for('copy_case', case_id=case.case_id) }}" method="post">
                 <button class="button button-primary" type="submit">복사해서 재분석</button>
               </form>
+              <form
+                action="{{ url_for('delete_case', case_id=case.case_id) }}"
+                method="post"
+                onsubmit="return confirm('이 분석 이력을 삭제하시겠습니까? 삭제 후 마이페이지 목록에서 보이지 않습니다.');"
+              >
+                <button class="button button-danger" type="submit">삭제</button>
+              </form>
             </div>
           </article>
         {% endfor %}

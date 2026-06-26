@@ -512,6 +512,18 @@ button {
   background: #e3ecea;
 }
 
+.button-danger {
+  background: #fff7f4;
+  border-color: #e3b5a8;
+  color: #8f2f11;
+}
+
+.button-danger:hover {
+  background: var(--color-danger-bg);
+  border-color: var(--color-danger-border);
+  color: var(--color-danger-text);
+}
+
 .notice {
   border-radius: var(--radius-md);
   flex: 0 0 auto;
