@@ -19,7 +19,7 @@
       class="step{% if current_step == 'income' %} is-active{% elif case.get('income_saved') %} is-complete{% endif %}"
       href="{{ url_for('income', case_id=case.case_id) }}"
       {% if current_step == 'income' %}aria-current="step"{% endif %}
-    >순익추정{% if current_step != 'income' and case.get('income_saved') %} <span class="step-check" aria-hidden="true">✓</span>{% endif %}</a>
+    >손익추정{% if current_step != 'income' and case.get('income_saved') %} <span class="step-check" aria-hidden="true">✓</span>{% endif %}</a>
     <a
       class="step{% if current_step == 'collateral' %} is-active{% elif case.get('collateral_saved') %} is-complete{% endif %}"
       href="{{ url_for('collateral', case_id=case.case_id) }}"
