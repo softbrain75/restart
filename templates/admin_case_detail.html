@@ -1,0 +1,156 @@
+{% extends "base.html" %}
+
+{% block title %}분석 관리 - 기업회생 분석{% endblock %}
+{% block main_class %}account-main account-main--wide{% endblock %}
+
+{% block content %}
+  <section class="admin-header" aria-label="분석 관리">
+    <div>
+      <span class="admin-eyebrow">분석 관리</span>
+      <h1>{{ case.scenario_name or contact.company }}</h1>
+      <p>{{ format_kst_datetime(case.updated_at or case.created_at) }} 기준</p>
+    </div>
+    <div class="admin-header__actions">
+      {% if case.collateral_saved %}
+        <a class="button button-secondary" href="{{ url_for('result', case_id=case.case_id) }}">결과 보기</a>
+      {% endif %}
+      <a class="button button-secondary" href="{{ url_for('admin_dashboard') }}">목록으로</a>
+    </div>
+  </section>
+
+  <section class="admin-detail-grid" aria-label="분석 상세">
+    <div class="admin-panel">
+      <div class="admin-panel__header">
+        <div>
+          <h2>고객 정보</h2>
+          <p>상담 신청 정보가 있으면 상담 신청 값을 우선 표시합니다.</p>
+        </div>
+      </div>
+      <dl class="admin-detail-list">
+        <div>
+          <dt>회사명</dt>
+          <dd>{{ contact.company }}</dd>
+        </div>
+        <div>
+          <dt>담당자</dt>
+          <dd>{{ contact.contact_name or "-" }}</dd>
+        </div>
+        <div>
+          <dt>연락처</dt>
+          <dd>{{ contact.phone or "-" }}</dd>
+        </div>
+        <div>
+          <dt>이메일</dt>
+          <dd>{{ contact.email or "-" }}</dd>
+        </div>
+        <div>
+          <dt>회원</dt>
+          <dd>
+            {% if user %}
+              {{ user.company }} / {{ user.contact_name }} / {{ user.email }}
+              {% if user.email_verified %}
+                <span class="status-badge is-verified">인증완료</span>
+              {% else %}
+                <span class="status-badge is-unverified">미인증</span>
+              {% endif %}
+            {% else %}
+              비회원 또는 연결 전
+            {% endif %}
+          </dd>
+        </div>
+        <div>
+          <dt>문의 내용</dt>
+          <dd>{{ contact.message or "-" }}</dd>
+        </div>
+      </dl>
+    </div>
+
+    <div class="admin-panel">
+      <div class="admin-panel__header">
+        <div>
+          <h2>관리 상태</h2>
+          <p>내부 상담 진행 상태와 담당자 메모를 저장합니다.</p>
+        </div>
+      </div>
+      <form class="account-form" action="{{ url_for('admin_case_detail', case_id=case.case_id) }}" method="post">
+        <label class="field">
+          <span>상담 상태</span>
+          <select class="input" name="admin_status">
+            {% for value, label in status_options %}
+              <option value="{{ value }}"{% if value == admin_status %} selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+        </label>
+        <label class="field">
+          <span>담당자</span>
+          <input class="input" name="admin_assignee" type="text" value="{{ case.admin_assignee or '' }}" placeholder="내부 담당자명">
+        </label>
+        <label class="field">
+          <span>내부 메모</span>
+          <textarea class="input admin-memo-input" name="admin_memo" rows="8" placeholder="상담 내용, 확인할 자료, 다음 연락 예정 등을 기록하세요.">{{ case.admin_memo or '' }}</textarea>
+        </label>
+        <div class="account-actions">
+          <button class="button button-primary" type="submit">저장</button>
+        </div>
+      </form>
+    </div>
+  </section>
+
+  <section class="admin-panel" aria-label="예비 진단">
+    <div class="admin-panel__header">
+      <div>
+        <h2>예비 진단</h2>
+        <p>{{ diagnosis }}</p>
+      </div>
+      <span class="admin-status is-{{ admin_status_tone }}">{{ admin_status_label }}</span>
+    </div>
+    {% if summary %}
+      <div class="history-summary" aria-label="진단 요약">
+        {% for item in summary %}
+          <span class="history-summary__chip is-{{ item.tone }}">
+            <strong>{{ item.label }}</strong>
+            {{ item.status }}
+          </span>
+        {% endfor %}
+      </div>
+    {% endif %}
+    {% if result %}
+      <div class="summary-grid admin-summary-grid">
+        <div class="summary-card">
+          <span class="summary-card__label">청산가치</span>
+          <strong>{{ format_number(result.summary.liquidation_value) }}</strong>
+        </div>
+        <div class="summary-card">
+          <span class="summary-card__label">계속기업가치</span>
+          <strong>{{ format_number(result.summary.going_concern_value) }}</strong>
+        </div>
+        <div class="summary-card">
+          <span class="summary-card__label">가치 차이</span>
+          <strong>{{ format_number(result.summary.value_difference) }}</strong>
+        </div>
+        <div class="summary-card">
+          <span class="summary-card__label">총 채무</span>
+          <strong>{{ format_number(result.summary.total_debt) }}</strong>
+        </div>
+      </div>
+    {% else %}
+      <p class="account-note">아직 결과 산출 단계까지 입력되지 않았습니다. 현재 단계는 {{ progress.label }}입니다.</p>
+    {% endif %}
+  </section>
+
+  <section class="admin-panel" aria-label="업로드 파일">
+    <div class="admin-panel__header">
+      <div>
+        <h2>업로드 파일</h2>
+        <p>사용자가 업로드한 원본 파일명입니다.</p>
+      </div>
+    </div>
+    <ul class="admin-file-list">
+      {% for file in case.workbook.files %}
+        <li><strong>{{ file.label }}</strong> {{ file.name }}</li>
+      {% else %}
+        <li>파일 정보가 없습니다.</li>
+      {% endfor %}
+    </ul>
+  </section>
+{% endblock %}

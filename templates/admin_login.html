@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block title %}관리자 로그인 - 기업회생 분석{% endblock %}
+{% block main_class %}account-main{% endblock %}
+
+{% block content %}
+  <section class="account-card account-card--narrow" aria-label="관리자 로그인">
+    <div class="account-card__header">
+      <h1>관리자 로그인</h1>
+      <p>상담 신청과 분석 이력을 확인하는 관리자 전용 화면입니다.</p>
+    </div>
+
+    {% if not is_configured %}
+      <div class="notice notice-error" role="alert">
+        관리자 비밀번호가 설정되어 있지 않습니다. 서버 환경변수 RESTART_ADMIN_PASSWORD 또는 RESTART_ADMIN_PASSWORD_HASH를 설정해 주세요.
+      </div>
+    {% endif %}
+    {% if error %}
+      <div class="notice notice-error" role="alert">{{ error }}</div>
+    {% endif %}
+
+    <form class="account-form" action="{{ url_for('admin_login') }}" method="post">
+      <input type="hidden" name="next" value="{{ next_path }}">
+      <label class="field">
+        <span>관리자 아이디</span>
+        <input class="input" name="username" type="text" value="{{ username }}" autocomplete="username" required>
+      </label>
+      <label class="field">
+        <span>비밀번호</span>
+        <input class="input" name="password" type="password" autocomplete="current-password" required>
+      </label>
+
+      <div class="account-actions">
+        <button class="button button-primary" type="submit">로그인</button>
+      </div>
+    </form>
+  </section>
+{% endblock %}

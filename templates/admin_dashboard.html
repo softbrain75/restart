@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+
+{% block title %}관리자 - 기업회생 분석{% endblock %}
+{% block main_class %}account-main account-main--wide{% endblock %}
+
+{% block content %}
+  <section class="admin-header" aria-label="관리자 요약">
+    <div>
+      <span class="admin-eyebrow">관리자</span>
+      <h1>상담 및 분석 관리</h1>
+      <p>상담 신청, 분석 진행 상태, 예비 진단 결과를 한곳에서 확인합니다.</p>
+    </div>
+    <div class="admin-header__actions">
+      <a class="button button-secondary" href="{{ url_for('admin_users') }}">회원 관리</a>
+      <form action="{{ url_for('admin_logout') }}" method="post">
+        <button class="button button-secondary" type="submit">관리자 로그아웃</button>
+      </form>
+    </div>
+  </section>
+
+  <section class="admin-stat-grid" aria-label="관리 요약 지표">
+    <div class="admin-stat-card">
+      <span>전체 분석</span>
+      <strong>{{ stats.case_count }}</strong>
+    </div>
+    <div class="admin-stat-card">
+      <span>상담 신청</span>
+      <strong>{{ stats.consultation_count }}</strong>
+    </div>
+    <div class="admin-stat-card">
+      <span>신규 리드</span>
+      <strong>{{ stats.new_count }}</strong>
+    </div>
+    <div class="admin-stat-card">
+      <span>결과 산출</span>
+      <strong>{{ stats.completed_count }}</strong>
+    </div>
+    <div class="admin-stat-card">
+      <span>회원</span>
+      <strong>{{ stats.user_count }}</strong>
+    </div>
+  </section>
+
+  <section class="admin-panel" aria-label="분석 목록">
+    <div class="admin-panel__header">
+      <div>
+        <h2>분석 목록</h2>
+        <p>최신 수정 순으로 표시됩니다. 상세 화면에서 상담 상태와 내부 메모를 관리할 수 있습니다.</p>
+      </div>
+    </div>
+
+    {% if items %}
+      <div class="admin-case-list">
+        {% for item in items %}
+          {% set case = item.case %}
+          {% set contact = item.contact %}
+          {% set result = item.result %}
+          <article class="admin-case-card">
+            <div class="admin-case-card__main">
+              <div class="admin-case-card__meta">
+                <span>{{ format_kst_datetime(case.updated_at or case.created_at) }}</span>
+                <span class="admin-status is-{{ item.admin_status_tone }}">{{ item.admin_status_label }}</span>
+                {% if item.consultation_submitted %}
+                  <span class="admin-status is-positive">상담신청</span>
+                {% else %}
+                  <span class="admin-status is-neutral">상담전</span>
+                {% endif %}
+              </div>
+              <h3>
+                {{ case.scenario_name or contact.company }}
+                {% if case.scenario_name and contact.company %}
+                  <small>{{ contact.company }}</small>
+                {% endif %}
+              </h3>
+              <dl class="admin-contact-line">
+                <div>
+                  <dt>담당자</dt>
+                  <dd>{{ contact.contact_name or "-" }}</dd>
+                </div>
+                <div>
+                  <dt>연락처</dt>
+                  <dd>{{ contact.phone or "-" }}</dd>
+                </div>
+                <div>
+                  <dt>이메일</dt>
+                  <dd>{{ contact.email or "-" }}</dd>
+                </div>
+              </dl>
+              {% if item.summary %}
+                <div class="history-summary" aria-label="진단 요약">
+                  {% for summary in item.summary %}
+                    <span class="history-summary__chip is-{{ summary.tone }}">
+                      <strong>{{ summary.label }}</strong>
+                      {{ summary.status }}
+                    </span>
+                  {% endfor %}
+                </div>
+              {% endif %}
+              {% if result %}
+                <div class="admin-number-strip" aria-label="핵심 수치">
+                  <span>청산 {{ format_number(result.summary.liquidation_value) }}</span>
+                  <span>계속 {{ format_number(result.summary.going_concern_value) }}</span>
+                  <span>총채무 {{ format_number(result.summary.total_debt) }}</span>
+                </div>
+              {% endif %}
+            </div>
+            <div class="admin-case-card__actions">
+              <a class="button button-primary" href="{{ url_for('admin_case_detail', case_id=case.case_id) }}">관리</a>
+              {% if case.collateral_saved %}
+                <a class="button button-secondary" href="{{ url_for('result', case_id=case.case_id) }}">결과 보기</a>
+              {% endif %}
+            </div>
+          </article>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="empty-state">
+        <h3>등록된 분석이 없습니다.</h3>
+        <p>사용자가 재무분석을 진행하면 이곳에 표시됩니다.</p>
+      </div>
+    {% endif %}
+  </section>
+{% endblock %}

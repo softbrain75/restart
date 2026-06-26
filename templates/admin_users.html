@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+
+{% block title %}회원 관리 - 기업회생 분석{% endblock %}
+{% block main_class %}account-main account-main--wide{% endblock %}
+
+{% block content %}
+  <section class="admin-header" aria-label="회원 관리">
+    <div>
+      <span class="admin-eyebrow">관리자</span>
+      <h1>회원 관리</h1>
+      <p>가입자 연락처, 이메일 인증 여부, 분석 건수를 확인합니다.</p>
+    </div>
+    <div class="admin-header__actions">
+      <a class="button button-secondary" href="{{ url_for('admin_dashboard') }}">분석 관리</a>
+    </div>
+  </section>
+
+  <section class="admin-panel" aria-label="회원 목록">
+    {% if users %}
+      <div class="table-frame admin-table-frame">
+        <table class="data-table admin-table">
+          <thead>
+            <tr>
+              <th>회사명</th>
+              <th>담당자</th>
+              <th>연락처</th>
+              <th>이메일</th>
+              <th>분석 건수</th>
+              <th>최근 분석</th>
+              <th>가입일</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for item in users %}
+              {% set user = item.user %}
+              <tr>
+                <td>{{ user.company }}</td>
+                <td>{{ user.contact_name }}</td>
+                <td>{{ user.phone }}</td>
+                <td>
+                  {{ user.email }}
+                  {% if user.email_verified %}
+                    <span class="status-badge is-verified">인증완료</span>
+                  {% else %}
+                    <span class="status-badge is-unverified">미인증</span>
+                  {% endif %}
+                </td>
+                <td>{{ item.case_count }}</td>
+                <td>{{ format_kst_datetime(item.last_case_at) or "-" }}</td>
+                <td>{{ format_kst_datetime(user.created_at) }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="empty-state">
+        <h3>가입자가 없습니다.</h3>
+        <p>회원가입이 발생하면 이곳에 표시됩니다.</p>
+      </div>
+    {% endif %}
+  </section>
+{% endblock %}

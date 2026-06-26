@@ -12,7 +12,7 @@
     {% set result = calculation_result %}
     {% set fmt = result.display %}
     {% set consultation_submitted = case.get("consultation_submitted") %}
-    {% set detailed_unlocked = consultation_submitted or current_user %}
+    {% set detailed_unlocked = consultation_submitted or current_user or current_admin %}
     {% set consultation_form = consultation_form or case.get("consultation", {}) %}
 
     {% set current_step = "result" %}

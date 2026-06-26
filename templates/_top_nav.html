@@ -20,7 +20,12 @@
         <a class="site-nav__cta" href="{{ url_for('analysis_index') }}">진단 시작</a>
       {% endif %}
 
-      {% if current_user %}
+      {% if current_admin %}
+        <a class="site-nav__auth-link{% if current_page == 'admin' %} is-active{% endif %}" href="{{ url_for('admin_dashboard') }}">관리자</a>
+        <form class="site-nav__logout" action="{{ url_for('admin_logout') }}" method="post">
+          <button type="submit">관리자 로그아웃</button>
+        </form>
+      {% elif current_user %}
         <a class="site-nav__auth-link{% if current_page == 'mypage' %} is-active{% endif %}" href="{{ url_for('mypage') }}">마이페이지</a>
         <form class="site-nav__logout" action="{{ url_for('logout') }}" method="post">
           <button type="submit">로그아웃</button>

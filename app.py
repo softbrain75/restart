@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import io
 import json
+import hmac
 import math
 import os
 import re
@@ -35,6 +36,23 @@ DOCUMENT_FIELDS = (
 )
 EMAIL_VERIFICATION_MAX_AGE_SECONDS = 60 * 60 * 24 * 7
 EMAIL_VERIFICATION_SALT = "restart-email-verification"
+ADMIN_STATUS_OPTIONS = (
+    ("new", "신규"),
+    ("reviewing", "검토중"),
+    ("contacted", "연락완료"),
+    ("scheduled", "상담예약"),
+    ("hold", "보류"),
+    ("closed", "종료"),
+)
+ADMIN_STATUS_LABELS = dict(ADMIN_STATUS_OPTIONS)
+ADMIN_STATUS_TONES = {
+    "new": "warning",
+    "reviewing": "neutral",
+    "contacted": "positive",
+    "scheduled": "positive",
+    "hold": "negative",
+    "closed": "neutral",
+}
 
 app = Flask(__name__)
 app.config["MAX_CONTENT_LENGTH"] = 40 * 1024 * 1024
@@ -105,12 +123,18 @@ def load_cases() -> dict[str, dict[str, Any]]:
     return cases
 
 
+def write_case(case: dict[str, Any]) -> None:
+    if not case.get("case_id"):
+        return
+    write_json_file(CASES_DIR / f"{case['case_id']}.json", case)
+
+
 def save_case(case: dict[str, Any]) -> None:
     if not case.get("case_id"):
         return
     case.setdefault("created_at", now_iso())
     case["updated_at"] = now_iso()
-    write_json_file(CASES_DIR / f"{case['case_id']}.json", case)
+    write_case(case)
 
 
 USERS: dict[str, dict[str, Any]] = load_users()
@@ -402,6 +426,8 @@ def login_user(user: dict[str, Any]) -> None:
 
 
 def case_is_accessible(case: dict[str, Any]) -> bool:
+    if current_admin():
+        return True
     owner_id = case.get("user_id")
     if not owner_id:
         return case.get("case_id") in session.get("case_ids", [])
@@ -425,11 +451,50 @@ def login_required(view):
     return wrapped
 
 
+def admin_username() -> str:
+    return os.environ.get("RESTART_ADMIN_USERNAME", "admin").strip() or "admin"
+
+
+def admin_password_is_configured() -> bool:
+    return bool(
+        os.environ.get("RESTART_ADMIN_PASSWORD_HASH", "").strip()
+        or os.environ.get("RESTART_ADMIN_PASSWORD", "")
+    )
+
+
+def admin_password_matches(password: str) -> bool:
+    password_hash = os.environ.get("RESTART_ADMIN_PASSWORD_HASH", "").strip()
+    if password_hash:
+        return check_password_hash(password_hash, password)
+
+    plain_password = os.environ.get("RESTART_ADMIN_PASSWORD", "")
+    return bool(plain_password) and hmac.compare_digest(plain_password, password)
+
+
+def current_admin() -> str | None:
+    admin = session.get("admin_user")
+    if not admin:
+        return None
+    return str(admin)
+
+
+def admin_login_required(view):
+    @wraps(view)
+    def wrapped(*args, **kwargs):
+        if not current_admin():
+            return redirect(url_for("admin_login", next=request.path))
+        return view(*args, **kwargs)
+
+    return wrapped
+
+
 @app.context_processor
 def inject_auth_context():
     return {
         "current_user": current_user(),
+        "current_admin": current_admin(),
         "format_kst_datetime": format_kst_datetime,
+        "format_number": display_whole_number,
     }
 
 
@@ -1517,6 +1582,113 @@ def case_listing_for_user(user_id: str) -> list[dict[str, Any]]:
     )
 
 
+def admin_status_value(case: dict[str, Any]) -> str:
+    status = str(case.get("admin_status") or "new")
+    return status if status in ADMIN_STATUS_LABELS else "new"
+
+
+def admin_status_label(case: dict[str, Any]) -> str:
+    return ADMIN_STATUS_LABELS[admin_status_value(case)]
+
+
+def admin_status_tone(case: dict[str, Any]) -> str:
+    return ADMIN_STATUS_TONES.get(admin_status_value(case), "neutral")
+
+
+def admin_case_contact(case: dict[str, Any], user: dict[str, Any] | None = None) -> dict[str, str]:
+    consultation = case.get("consultation") if isinstance(case.get("consultation"), dict) else {}
+    return {
+        "company": (
+            consultation.get("company")
+            or case.get("company_name")
+            or (user or {}).get("company")
+            or "회사명 없음"
+        ),
+        "contact_name": consultation.get("contact_name") or (user or {}).get("contact_name", ""),
+        "phone": consultation.get("phone") or (user or {}).get("phone", ""),
+        "email": consultation.get("email") or (user or {}).get("email", ""),
+        "message": consultation.get("message", ""),
+    }
+
+
+def admin_case_result_summary(case: dict[str, Any]) -> dict[str, Any] | None:
+    if not case.get("collateral_saved"):
+        return None
+    try:
+        result = calculate_case_result(case)
+    except Exception:
+        return None
+    return {
+        "summary": result.get("summary", {}),
+        "diagnosis": result.get("diagnosis", {}),
+        "comparison_rows": result.get("comparison_rows", []),
+    }
+
+
+def admin_case_listing() -> list[dict[str, Any]]:
+    listings = []
+    for case in CASE_STORE.values():
+        if case.get("deleted_at"):
+            continue
+        user = USERS.get(str(case.get("user_id")))
+        result = admin_case_result_summary(case)
+        listings.append(
+            {
+                "case": case,
+                "user": user,
+                "contact": admin_case_contact(case, user),
+                "progress": case_progress(case),
+                "diagnosis": case_diagnosis_label(case),
+                "summary": case_diagnosis_summary(case),
+                "result": result,
+                "admin_status": admin_status_value(case),
+                "admin_status_label": admin_status_label(case),
+                "admin_status_tone": admin_status_tone(case),
+                "consultation_submitted": bool(case.get("consultation_submitted")),
+            }
+        )
+    return sorted(
+        listings,
+        key=lambda item: item["case"].get("updated_at") or item["case"].get("created_at") or "",
+        reverse=True,
+    )
+
+
+def admin_dashboard_stats(items: list[dict[str, Any]]) -> dict[str, int]:
+    return {
+        "case_count": len(items),
+        "consultation_count": sum(1 for item in items if item["consultation_submitted"]),
+        "new_count": sum(1 for item in items if item["admin_status"] == "new"),
+        "completed_count": sum(1 for item in items if item["case"].get("collateral_saved")),
+        "user_count": len(USERS),
+    }
+
+
+def admin_user_listing() -> list[dict[str, Any]]:
+    user_case_counts: dict[str, int] = {}
+    last_case_at: dict[str, str] = {}
+    for case in CASE_STORE.values():
+        user_id = str(case.get("user_id") or "")
+        if not user_id or case.get("deleted_at"):
+            continue
+        user_case_counts[user_id] = user_case_counts.get(user_id, 0) + 1
+        timestamp = str(case.get("updated_at") or case.get("created_at") or "")
+        if timestamp > last_case_at.get(user_id, ""):
+            last_case_at[user_id] = timestamp
+
+    users = []
+    for user in USERS.values():
+        user_id = str(user.get("user_id"))
+        users.append(
+            {
+                "user": user,
+                "case_count": user_case_counts.get(user_id, 0),
+                "last_case_at": last_case_at.get(user_id, ""),
+            }
+        )
+    return sorted(users, key=lambda item: item["last_case_at"] or item["user"].get("created_at", ""), reverse=True)
+
+
 def copy_case_for_user(source_case: dict[str, Any], user_id: str) -> dict[str, Any]:
     copied_case = deepcopy(source_case)
     original_id = source_case["case_id"]
@@ -1837,6 +2009,104 @@ def delete_account():
 def logout():
     session.pop("user_id", None)
     return redirect(url_for("index"))
+
+
+@app.route("/admin/login", methods=["GET", "POST"])
+def admin_login():
+    if current_admin():
+        return redirect(url_for("admin_dashboard"))
+
+    next_path = request.values.get("next", "")
+    if not str(next_path).startswith("/admin"):
+        next_path = url_for("admin_dashboard")
+
+    error = None
+    username = request.form.get("username", admin_username()).strip()
+
+    if request.method == "POST":
+        if not admin_password_is_configured():
+            error = "관리자 비밀번호 환경변수가 설정되어 있지 않습니다."
+        elif username != admin_username() or not admin_password_matches(request.form.get("password", "")):
+            error = "관리자 아이디 또는 비밀번호를 확인해 주세요."
+        else:
+            session["admin_user"] = username
+            return redirect(next_path)
+
+    return render_template(
+        "admin_login.html",
+        active_page="admin",
+        username=username,
+        next_path=next_path,
+        error=error,
+        is_configured=admin_password_is_configured(),
+    )
+
+
+@app.post("/admin/logout")
+def admin_logout():
+    session.pop("admin_user", None)
+    return redirect(url_for("admin_login"))
+
+
+@app.get("/admin")
+@admin_login_required
+def admin_dashboard():
+    items = admin_case_listing()
+    return render_template(
+        "admin_dashboard.html",
+        active_page="admin",
+        items=items,
+        stats=admin_dashboard_stats(items),
+        status_options=ADMIN_STATUS_OPTIONS,
+    )
+
+
+@app.get("/admin/users")
+@admin_login_required
+def admin_users():
+    return render_template(
+        "admin_users.html",
+        active_page="admin",
+        users=admin_user_listing(),
+    )
+
+
+@app.route("/admin/cases/<case_id>", methods=["GET", "POST"])
+@admin_login_required
+def admin_case_detail(case_id: str):
+    case = CASE_STORE.get(case_id)
+    if not case or case.get("deleted_at"):
+        return redirect(url_for("admin_dashboard"))
+
+    if request.method == "POST":
+        status = request.form.get("admin_status", "new")
+        if status not in ADMIN_STATUS_LABELS:
+            status = "new"
+        case["admin_status"] = status
+        case["admin_assignee"] = clean_contact_text(request.form.get("admin_assignee"), 80)
+        case["admin_memo"] = str(request.form.get("admin_memo") or "").strip()[:3000]
+        case["admin_updated_at"] = now_iso()
+        write_case(case)
+        return redirect(url_for("admin_case_detail", case_id=case_id, saved="1"))
+
+    user = USERS.get(str(case.get("user_id")))
+    result = admin_case_result_summary(case)
+    return render_template(
+        "admin_case_detail.html",
+        active_page="admin",
+        case=case,
+        user=user,
+        contact=admin_case_contact(case, user),
+        progress=case_progress(case),
+        diagnosis=case_diagnosis_label(case),
+        summary=case_diagnosis_summary(case),
+        result=result,
+        status_options=ADMIN_STATUS_OPTIONS,
+        admin_status=admin_status_value(case),
+        admin_status_label=admin_status_label(case),
+        admin_status_tone=admin_status_tone(case),
+        message="관리자 메모가 저장되었습니다." if request.args.get("saved") == "1" else None,
+    )
 
 
 @app.get("/mypage")

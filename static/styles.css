@@ -584,6 +584,271 @@ button {
   margin: 0;
 }
 
+.admin-header,
+.admin-panel,
+.admin-stat-card {
+  background: var(--color-surface);
+  border: 1px solid rgba(209, 208, 200, 0.86);
+  border-radius: 16px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.05);
+}
+
+.admin-header,
+.admin-panel {
+  margin: 0 auto 16px;
+  max-width: 1180px;
+  padding: 24px;
+  width: 100%;
+}
+
+.admin-header {
+  align-items: center;
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+}
+
+.admin-eyebrow {
+  color: var(--color-primary);
+  display: block;
+  font-size: 12px;
+  font-weight: 900;
+  margin-bottom: 6px;
+}
+
+.admin-header h1,
+.admin-panel__header h2 {
+  font-size: 24px;
+  margin: 0 0 8px;
+}
+
+.admin-header p,
+.admin-panel__header p {
+  color: var(--color-muted);
+  font-size: 13px;
+  margin: 0;
+}
+
+.admin-header__actions {
+  align-items: center;
+  display: flex;
+  flex: 0 0 auto;
+  gap: 8px;
+}
+
+.admin-header__actions form {
+  margin: 0;
+}
+
+.admin-stat-grid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  margin: 0 auto 16px;
+  max-width: 1180px;
+}
+
+.admin-stat-card {
+  padding: 16px;
+}
+
+.admin-stat-card span {
+  color: var(--color-muted);
+  display: block;
+  font-size: 12px;
+  font-weight: 800;
+  margin-bottom: 8px;
+}
+
+.admin-stat-card strong {
+  color: var(--color-text);
+  display: block;
+  font-size: 24px;
+  line-height: 1;
+}
+
+.admin-panel__header {
+  align-items: center;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+
+.admin-case-list {
+  display: grid;
+  gap: 10px;
+}
+
+.admin-case-card {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  display: grid;
+  gap: 16px;
+  grid-template-columns: minmax(0, 1fr) 124px;
+  padding: 16px;
+}
+
+.admin-case-card__meta {
+  align-items: center;
+  color: var(--color-muted);
+  display: flex;
+  flex-wrap: wrap;
+  font-size: 12px;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.admin-case-card h3 {
+  font-size: 18px;
+  margin: 0;
+}
+
+.admin-case-card h3 small {
+  color: var(--color-muted);
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 700;
+  margin-left: 8px;
+}
+
+.admin-case-card__actions {
+  align-items: stretch;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.admin-contact-line,
+.admin-detail-list {
+  display: grid;
+  gap: 8px 14px;
+  margin: 12px 0 0;
+}
+
+.admin-contact-line {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.admin-contact-line div,
+.admin-detail-list div {
+  min-width: 0;
+}
+
+.admin-contact-line dt,
+.admin-detail-list dt {
+  color: var(--color-muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.admin-contact-line dd,
+.admin-detail-list dd {
+  color: var(--color-text);
+  font-size: 13px;
+  font-weight: 800;
+  margin: 3px 0 0;
+  overflow-wrap: anywhere;
+}
+
+.admin-number-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 12px;
+}
+
+.admin-number-strip span {
+  background: #f4f8f7;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  color: var(--color-text);
+  font-size: 12px;
+  font-weight: 800;
+  padding: 5px 9px;
+}
+
+.admin-status {
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  display: inline-flex;
+  font-size: 12px;
+  font-weight: 900;
+  line-height: 1.2;
+  padding: 5px 9px;
+}
+
+.admin-status.is-positive {
+  background: #dff3eb;
+  border-color: #a8dbc9;
+  color: #0f6f5f;
+}
+
+.admin-status.is-negative {
+  background: #fde9e1;
+  border-color: #f0b9a8;
+  color: #a83d24;
+}
+
+.admin-status.is-warning {
+  background: #fff2cf;
+  border-color: #e8cc86;
+  color: #8a5b00;
+}
+
+.admin-status.is-neutral {
+  background: #e9eeee;
+  border-color: #c6d0ce;
+  color: #52615f;
+}
+
+.admin-detail-grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: minmax(0, 1fr) minmax(340px, 0.8fr);
+  margin: 0 auto;
+  max-width: 1180px;
+}
+
+.admin-detail-grid .admin-panel {
+  margin-bottom: 0;
+}
+
+.admin-detail-list {
+  grid-template-columns: 1fr;
+}
+
+.admin-memo-input {
+  min-height: 180px;
+  resize: vertical;
+}
+
+.admin-summary-grid {
+  margin-top: 16px;
+}
+
+.admin-file-list {
+  color: var(--color-text);
+  display: grid;
+  font-size: 13px;
+  gap: 8px;
+  margin: 0;
+  padding-left: 18px;
+}
+
+.admin-file-list strong {
+  margin-right: 8px;
+}
+
+.admin-table-frame {
+  max-height: none;
+  overflow: auto;
+}
+
+.admin-table {
+  min-width: 980px;
+}
+
 .consultation-account-note {
   background: #f4f8f7;
   border: 1px solid var(--color-border);
@@ -1908,20 +2173,32 @@ form[data-collateral-form] {
 
   .account-card,
   .history-panel,
-  .mypage-header {
+  .mypage-header,
+  .admin-header,
+  .admin-panel {
     padding: 18px;
   }
 
   .account-form__grid,
-  .history-item {
+  .history-item,
+  .admin-case-card,
+  .admin-detail-grid,
+  .admin-contact-line {
     grid-template-columns: 1fr;
   }
 
   .account-actions,
   .history-item__actions,
-  .mypage-header {
+  .mypage-header,
+  .admin-header,
+  .admin-header__actions,
+  .admin-panel__header {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .admin-stat-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .account-subsection,
