@@ -763,11 +763,17 @@ button {
 }
 
 .financial-frame {
+  display: grid;
+  gap: 8px;
   max-height: none;
+  padding: 12px;
 }
 
 .debt-frame {
+  display: grid;
+  gap: 8px;
   max-height: none;
+  padding: 12px;
 }
 
 .income-frame {
@@ -1159,10 +1165,14 @@ form[data-collateral-form] {
   min-height: 0;
 }
 
+.financial-table-section,
+.debt-table-section,
 .income-table-section {
   min-width: 0;
 }
 
+.financial-table-section h3,
+.debt-table-section h3,
 .income-table-section h3 {
   font-size: 15px;
   margin: 0 0 8px;

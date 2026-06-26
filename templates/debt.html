@@ -15,52 +15,55 @@
 
     <section class="section-header">
       <div>
-        <h2 class="title-with-help">
-          부채 입력
-          {% call help_button("채무입력 도움말") %}
-            <strong>채무입력 기준</strong>
-            <span class="tooltip-list">
-              <span>각 채무는 미지급 이자를 포함한 현재 전체 금액을 입력합니다.</span>
-              <span>담보채무는 담보를 제공하고 차입한 채무입니다.</span>
-              <span>무담보 금융기관채무는 담보 없이 금융기관에서 차입한 채무입니다.</span>
-              <span>기타 무담보채무에는 상거래채무 등을 입력하되 특수관계인채무는 제외합니다.</span>
-              <span>미지급 임금, 퇴직급여추계액, 4대보험, 국세, 지방세 등도 빠짐없이 입력합니다.</span>
-            </span>
-          {% endcall %}
-        </h2>
+        <h2>부채 입력</h2>
         <p>부채 구분별 채무금액을 입력합니다. 저장 후 다음 단계에서 손익추정을 진행합니다.</p>
       </div>
     </section>
 
     <form method="post" action="{{ url_for('save_debt', case_id=case.case_id) }}" data-debt-form>
       <div class="table-frame debt-frame">
-        <table class="data-table debt-table">
-          <thead>
-            <tr>
-              <th class="col-account">구분</th>
-              <th class="col-amount">채무금액</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for row in rows %}
+        <section class="debt-table-section">
+          <h3 class="title-with-help">
+            채무입력
+            {% call help_button("채무입력 도움말") %}
+              <strong>채무입력 기준</strong>
+              <span class="tooltip-list">
+                <span>각 채무는 미지급 이자를 포함한 현재 전체 금액을 입력합니다.</span>
+                <span>담보채무는 담보를 제공하고 차입한 채무입니다.</span>
+                <span>무담보 금융기관채무는 담보 없이 금융기관에서 차입한 채무입니다.</span>
+                <span>기타 무담보채무에는 상거래채무 등을 입력하되 특수관계인채무는 제외합니다.</span>
+                <span>미지급 임금, 퇴직급여추계액, 4대보험, 국세, 지방세 등도 빠짐없이 입력합니다.</span>
+              </span>
+            {% endcall %}
+          </h3>
+          <table class="data-table debt-table">
+            <thead>
               <tr>
-                <td class="account-cell">{{ row.category }}</td>
-                <td class="input-cell">
-                  <input
-                    class="input numeric"
-                    name="debt_amount_{{ loop.index0 }}"
-                    type="text"
-                    inputmode="numeric"
-                    value="{{ row.debt_amount }}"
-                    placeholder="채무금액 입력"
-                  >
-                  <input type="hidden" name="collateral_type_{{ loop.index0 }}" value="{{ row.collateral_type }}">
-                  <input type="hidden" name="audit_value_{{ loop.index0 }}" value="{{ row.audit_value }}">
-                </td>
+                <th class="col-account">구분</th>
+                <th class="col-amount">채무금액</th>
               </tr>
-            {% endfor %}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {% for row in rows %}
+                <tr>
+                  <td class="account-cell">{{ row.category }}</td>
+                  <td class="input-cell">
+                    <input
+                      class="input numeric"
+                      name="debt_amount_{{ loop.index0 }}"
+                      type="text"
+                      inputmode="numeric"
+                      value="{{ row.debt_amount }}"
+                      placeholder="채무금액 입력"
+                    >
+                    <input type="hidden" name="collateral_type_{{ loop.index0 }}" value="{{ row.collateral_type }}">
+                    <input type="hidden" name="audit_value_{{ loop.index0 }}" value="{{ row.audit_value }}">
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </section>
       </div>
 
       <div class="sticky-action-bar" aria-label="진행 작업">

@@ -15,69 +15,72 @@
 
     <section class="section-header">
       <div>
-        <h2 class="title-with-help">
-          재무 입력
-          {% call help_button("자산가치산정 도움말") %}
-            <strong>자산가치산정 입력 기준</strong>
-            <span class="tooltip-list">
-              <span>청산가치는 파산적 청산 시 개별 자산을 처분해 회수 가능한 금액입니다.</span>
-              <span>청산가치는 실사가치와 같거나 작은 금액으로 입력합니다.</span>
-              <span>현금과 예금은 보통 실사가치와 동일하게 봅니다.</span>
-              <span>채권, 재고, 유가증권, 유형자산은 즉시 회수 또는 매각 가능한 금액을 입력합니다.</span>
-              <span>선급금, 선급비용, 무형자산은 회수 가능성이 낮으면 0으로 입력합니다.</span>
-            </span>
-          {% endcall %}
-        </h2>
+        <h2>재무 입력</h2>
         <p>실사가치와 청산가치를 입력합니다. 청산가치는 실사가치보다 클 수 없습니다.</p>
       </div>
     </section>
 
     <form method="post" action="{{ url_for('save_financial', case_id=case.case_id) }}" data-financial-form>
       <div class="table-frame financial-frame">
-        <table class="data-table financial-table">
-          <thead>
-            <tr>
-              <th class="col-account">계정과목</th>
-              <th class="col-amount">장부금액</th>
-              <th class="col-amount">실사가치</th>
-              <th class="col-amount">청산가치</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for row in rows %}
-              <tr class="{% if not row.is_editable %}row-heading-data{% endif %}">
-                <td class="account-cell">{{ row.account }}</td>
-                <td class="amount-cell">{{ row.amount }}</td>
-                <td class="input-cell">
-                  {% if row.is_editable %}
-                    <input
-                      class="input numeric"
-                      name="audit_value_{{ loop.index0 }}"
-                      type="text"
-                      inputmode="numeric"
-                      value="{{ row.audit_value }}"
-                      data-audit-input
-                      data-row-index="{{ loop.index0 }}"
-                    >
-                  {% endif %}
-                </td>
-                <td class="input-cell">
-                  {% if row.is_editable %}
-                    <input
-                      class="input numeric"
-                      name="liquidation_value_{{ loop.index0 }}"
-                      type="text"
-                      inputmode="numeric"
-                      value="{{ row.liquidation_value }}"
-                      data-liquidation-input
-                      data-row-index="{{ loop.index0 }}"
-                    >
-                  {% endif %}
-                </td>
+        <section class="financial-table-section">
+          <h3 class="title-with-help">
+            자산가치산정
+            {% call help_button("자산가치산정 도움말") %}
+              <strong>자산가치산정 입력 기준</strong>
+              <span class="tooltip-list">
+                <span>청산가치는 파산적 청산 시 개별 자산을 처분해 회수 가능한 금액입니다.</span>
+                <span>청산가치는 실사가치와 같거나 작은 금액으로 입력합니다.</span>
+                <span>현금과 예금은 보통 실사가치와 동일하게 봅니다.</span>
+                <span>채권, 재고, 유가증권, 유형자산은 즉시 회수 또는 매각 가능한 금액을 입력합니다.</span>
+                <span>선급금, 선급비용, 무형자산은 회수 가능성이 낮으면 0으로 입력합니다.</span>
+              </span>
+            {% endcall %}
+          </h3>
+          <table class="data-table financial-table">
+            <thead>
+              <tr>
+                <th class="col-account">계정과목</th>
+                <th class="col-amount">장부금액</th>
+                <th class="col-amount">실사가치</th>
+                <th class="col-amount">청산가치</th>
               </tr>
-            {% endfor %}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {% for row in rows %}
+                <tr class="{% if not row.is_editable %}row-heading-data{% endif %}">
+                  <td class="account-cell">{{ row.account }}</td>
+                  <td class="amount-cell">{{ row.amount }}</td>
+                  <td class="input-cell">
+                    {% if row.is_editable %}
+                      <input
+                        class="input numeric"
+                        name="audit_value_{{ loop.index0 }}"
+                        type="text"
+                        inputmode="numeric"
+                        value="{{ row.audit_value }}"
+                        data-audit-input
+                        data-row-index="{{ loop.index0 }}"
+                      >
+                    {% endif %}
+                  </td>
+                  <td class="input-cell">
+                    {% if row.is_editable %}
+                      <input
+                        class="input numeric"
+                        name="liquidation_value_{{ loop.index0 }}"
+                        type="text"
+                        inputmode="numeric"
+                        value="{{ row.liquidation_value }}"
+                        data-liquidation-input
+                        data-row-index="{{ loop.index0 }}"
+                      >
+                    {% endif %}
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </section>
       </div>
 
       <div class="sticky-action-bar" aria-label="진행 작업">
