@@ -645,6 +645,11 @@ button {
   z-index: 8;
 }
 
+.info-tooltip.is-open,
+.info-tooltip.is-pinned {
+  z-index: 2147483000;
+}
+
 .info-tooltip__trigger {
   align-items: center;
   background: #e8eeee;
@@ -691,7 +696,7 @@ button {
   top: var(--tooltip-top, 12px);
   transform: none;
   width: var(--tooltip-width, min(440px, calc(100vw - 24px)));
-  z-index: 1000;
+  z-index: 2147483001;
 }
 
 .info-tooltip.is-open .info-tooltip__content,
