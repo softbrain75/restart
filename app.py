@@ -47,6 +47,7 @@ NON_EDITABLE_ACCOUNT_RE = re.compile(
 PREPAID_ACCOUNTS = {"선급금", "선급비용"}
 ASSET_TOTAL_ACCOUNTS = {"자산총계"}
 LIABILITY_SECTION_START_ACCOUNTS = {"부채", "부채및자본"}
+DEDUCTIBLE_ASSET_ACCOUNTS = ("감가상각누계", "국고보조")
 DEBT_DEFAULT_ROWS = (
     ("secured_debt", "담보채무"),
     ("unsecured_financial_debt", "무담보 금융기관채무"),
@@ -214,6 +215,23 @@ def is_editable_financial_account(account: str) -> bool:
     return NON_EDITABLE_ACCOUNT_RE.match(compacted) is None
 
 
+def is_deductible_asset_account(account: str) -> bool:
+    compacted = compact_text(account)
+    return any(keyword in compacted for keyword in DEDUCTIBLE_ASSET_ACCOUNTS)
+
+
+def subtract_from_financial_row(row: dict[str, Any], deduction: float) -> None:
+    amount_number = row.get("amount_number")
+    if amount_number is not None:
+        row["amount_number"] = amount_number - deduction
+        row["amount"] = display_number(row["amount_number"])
+
+    for key in ("audit_value", "liquidation_value"):
+        number = parse_number_text(row.get(key, ""))
+        if number is not None:
+            row[key] = display_number(number - deduction)
+
+
 def current_amount_from_balance_row(row: dict[str, Any]) -> str:
     current_cells = [
         cell
@@ -228,6 +246,7 @@ def current_amount_from_balance_row(row: dict[str, Any]) -> str:
 
 def extract_financial_rows(sheet: dict[str, Any]) -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
+    last_editable_asset_row: dict[str, Any] | None = None
 
     for row in sheet["rows"]:
         subject_cell = next(
@@ -242,6 +261,11 @@ def extract_financial_rows(sheet: dict[str, Any]) -> list[dict[str, Any]]:
 
         amount_text = current_amount_from_balance_row(row)
         amount_number = parse_number_text(amount_text)
+        if is_deductible_asset_account(account):
+            if last_editable_asset_row is not None and amount_number is not None:
+                subtract_from_financial_row(last_editable_asset_row, abs(amount_number))
+            continue
+
         editable = is_editable_financial_account(account)
 
         if editable and account in PREPAID_ACCOUNTS:
@@ -265,6 +289,8 @@ def extract_financial_rows(sheet: dict[str, Any]) -> list[dict[str, Any]]:
                 "is_editable": editable,
             }
         )
+        if editable:
+            last_editable_asset_row = rows[-1]
         if account in ASSET_TOTAL_ACCOUNTS:
             break
 
