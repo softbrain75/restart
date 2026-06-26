@@ -48,6 +48,7 @@ PREPAID_ACCOUNTS = {"선급금", "선급비용"}
 ASSET_TOTAL_ACCOUNTS = {"자산총계"}
 LIABILITY_SECTION_START_ACCOUNTS = {"부채", "부채및자본"}
 DEDUCTIBLE_ASSET_ACCOUNTS = ("감가상각누계", "국고보조", "대손충당금")
+INTANGIBLE_ASSET_ACCOUNT = "무형자산"
 DEBT_DEFAULT_ROWS = (
     ("secured_debt", "담보채무"),
     ("unsecured_financial_debt", "무담보 금융기관채무"),
@@ -220,6 +221,10 @@ def is_deductible_asset_account(account: str) -> bool:
     return any(keyword in compacted for keyword in DEDUCTIBLE_ASSET_ACCOUNTS)
 
 
+def is_numbered_section_account(account: str) -> bool:
+    return NON_EDITABLE_ACCOUNT_RE.match(compact_text(account)) is not None
+
+
 def subtract_from_financial_row(row: dict[str, Any], deduction: float) -> None:
     amount_number = row.get("amount_number")
     if amount_number is not None:
@@ -252,6 +257,7 @@ def current_amount_from_balance_row(row: dict[str, Any]) -> str:
 def extract_financial_rows(sheet: dict[str, Any]) -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
     last_editable_asset_row: dict[str, Any] | None = None
+    in_intangible_asset_section = False
 
     for row in sheet["rows"]:
         subject_cell = next(
@@ -263,6 +269,8 @@ def extract_financial_rows(sheet: dict[str, Any]) -> list[dict[str, Any]]:
             continue
         if rows and account in LIABILITY_SECTION_START_ACCOUNTS:
             break
+        if is_numbered_section_account(account):
+            in_intangible_asset_section = INTANGIBLE_ASSET_ACCOUNT in account
 
         amount_text = current_amount_from_balance_row(row)
         amount_number = parse_number_text(amount_text)
@@ -274,6 +282,8 @@ def extract_financial_rows(sheet: dict[str, Any]) -> list[dict[str, Any]]:
         editable = is_editable_financial_account(account)
 
         if editable and account in PREPAID_ACCOUNTS:
+            audit_value = 0.0
+        elif editable and in_intangible_asset_section:
             audit_value = 0.0
         elif editable:
             audit_value = amount_number
