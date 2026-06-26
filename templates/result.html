@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 
 {% block title %}결과 확인 - 기업회생 분석{% endblock %}
+{% block main_class %}result-main{% endblock %}
 
 {% block content %}
   {% if error %}
@@ -372,11 +373,6 @@
       {% endif %}
     </section>
 
-    <div class="sticky-action-bar" aria-label="진행 작업">
-      <div class="sticky-action-bar__inner">
-        <a class="button button-secondary" href="{{ url_for('collateral', case_id=case.case_id) }}">이전</a>
-      </div>
-    </div>
   {% endif %}
 {% endblock %}
 
