@@ -23,26 +23,36 @@
     <form method="post" action="{{ url_for('save_income', case_id=case.case_id) }}" data-income-form>
       <div class="table-frame income-frame">
         <section class="income-table-section">
-          <h3 class="title-with-help">
-            매출
-            {% call help_button("매출 추정 도움말") %}
-              <strong>매출 추정 기준</strong>
-              <span class="tooltip-list">
-                <span>기본값은 최근 2개년 실적과 매출액 대비 매출원가 비율을 기준으로 제시됩니다.</span>
-                <span>향후 10년 동안 달성 가능하다고 보는 연평균 매출액성장률을 입력합니다.</span>
-                <span>매출원가율은 향후 적용될 것으로 예상되는 매출 대비 원가 비율을 입력합니다.</span>
-              </span>
-            {% endcall %}
-          </h3>
+          <h3>매출</h3>
           <table class="data-table income-table">
             <thead>
               <tr>
                 <th class="col-account">구분</th>
                 <th class="col-amount">전전년도(Y-2)</th>
                 <th class="col-amount">전년도(Y-1)</th>
-                <th class="col-rate">성장률/원가율</th>
+                <th class="col-rate">
+                  <span class="table-heading-help">
+                    성장률/원가율
+                    {% call help_button("성장률/원가율 도움말") %}
+                      <strong>성장률/원가율</strong>
+                      <span class="tooltip-list">
+                        <span>한국은행 최근 보고서 상 소비자물가상승률과 과거 2개년의 매출액 대비 매출원가 비율을 매출액성장율, 매출원가율로 기본적으로 제시하였습니다.</span>
+                      </span>
+                    {% endcall %}
+                  </span>
+                </th>
                 <th class="col-amount">월평균(기본값)</th>
-                <th class="col-amount">최종입력값</th>
+                <th class="col-amount">
+                  <span class="table-heading-help">
+                    최종입력값
+                    {% call help_button("최종입력값 도움말") %}
+                      <strong>최종입력값</strong>
+                      <span class="tooltip-list">
+                        <span>회사가 향후 10년 동안 달성 및 적용될 것으로 생각하는 연평균 매출액성장율과 매출원가율을 입력하세요.</span>
+                      </span>
+                    {% endcall %}
+                  </span>
+                </th>
               </tr>
             </thead>
             <tbody>
