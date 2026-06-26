@@ -47,7 +47,7 @@ NON_EDITABLE_ACCOUNT_RE = re.compile(
 PREPAID_ACCOUNTS = {"선급금", "선급비용"}
 ASSET_TOTAL_ACCOUNTS = {"자산총계"}
 LIABILITY_SECTION_START_ACCOUNTS = {"부채", "부채및자본"}
-DEDUCTIBLE_ASSET_ACCOUNTS = ("감가상각누계", "국고보조")
+DEDUCTIBLE_ASSET_ACCOUNTS = ("감가상각누계", "국고보조", "대손충당금")
 DEBT_DEFAULT_ROWS = (
     ("secured_debt", "담보채무"),
     ("unsecured_financial_debt", "무담보 금융기관채무"),
