@@ -226,6 +226,11 @@ def subtract_from_financial_row(row: dict[str, Any], deduction: float) -> None:
         row["amount_number"] = amount_number - deduction
         row["amount"] = display_number(row["amount_number"])
 
+    if row.get("account") in PREPAID_ACCOUNTS:
+        row["audit_value"] = display_number(0.0)
+        row["liquidation_value"] = display_number(0.0)
+        return
+
     for key in ("audit_value", "liquidation_value"):
         number = parse_number_text(row.get(key, ""))
         if number is not None:
