@@ -394,81 +394,50 @@ button {
 }
 
 .history-summary {
-  display: grid;
+  display: flex;
+  flex-wrap: wrap;
   gap: 6px;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
   margin-top: 12px;
 }
 
-.history-summary__item {
-  background: #f8fbfa;
-  border: 1px solid var(--color-border);
-  border-left: 3px solid #9aa9a7;
-  border-radius: var(--radius-sm);
-  padding: 8px 10px;
-}
-
-.history-summary__item.is-positive {
-  border-left-color: var(--color-primary);
-}
-
-.history-summary__item.is-negative {
-  border-left-color: #c95535;
-}
-
-.history-summary__item.is-warning {
-  border-left-color: #c78a17;
-}
-
-.history-summary__item.is-neutral {
-  border-left-color: #9aa9a7;
-}
-
-.history-summary__head {
+.history-summary__chip {
   align-items: center;
-  display: flex;
-  gap: 8px;
-  justify-content: space-between;
-  margin-bottom: 5px;
-}
-
-.history-summary__head strong {
-  font-size: 12px;
-}
-
-.history-summary__head span {
+  border: 1px solid var(--color-border);
   border-radius: 999px;
-  flex: 0 0 auto;
-  font-size: 11px;
+  display: inline-flex;
+  gap: 8px;
+  font-size: 12px;
   font-weight: 800;
-  padding: 2px 7px;
+  line-height: 1.2;
+  padding: 6px 10px;
 }
 
-.history-summary__item.is-positive .history-summary__head span {
+.history-summary__chip strong {
+  color: var(--color-text);
+}
+
+.history-summary__chip.is-positive {
   background: #dff3eb;
+  border-color: #a8dbc9;
   color: #0f6f5f;
 }
 
-.history-summary__item.is-negative .history-summary__head span {
+.history-summary__chip.is-negative {
   background: #fde9e1;
+  border-color: #f0b9a8;
   color: #a83d24;
 }
 
-.history-summary__item.is-warning .history-summary__head span {
+.history-summary__chip.is-warning {
   background: #fff2cf;
+  border-color: #e8cc86;
   color: #8a5b00;
 }
 
-.history-summary__item.is-neutral .history-summary__head span {
+.history-summary__chip.is-neutral {
   background: #e9eeee;
+  border-color: #c6d0ce;
   color: #52615f;
-}
-
-.history-summary__metric {
-  color: var(--color-text);
-  font-size: 12px;
-  font-weight: 800;
-  overflow-wrap: anywhere;
 }
 
 .empty-state {
@@ -1830,10 +1799,6 @@ form[data-collateral-form] {
   .mypage-header {
     align-items: stretch;
     flex-direction: column;
-  }
-
-  .history-summary {
-    grid-template-columns: 1fr;
   }
 
   .history-item__actions form {

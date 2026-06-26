@@ -1372,43 +1372,10 @@ def case_diagnosis_label(case: dict[str, Any]) -> str:
     return "회생 가능성 검토 대상" if diagnosis.get("overall_positive") else "추가 검토 필요"
 
 
-def compact_summary_text(text: str, limit: int = 130) -> str:
-    normalized = " ".join(str(text or "").split())
-    if len(normalized) <= limit:
-        return normalized
-    return normalized[: limit - 1].rstrip() + "…"
-
-
-def compact_amount_label(value: float | None) -> str:
-    if value is None or not math.isfinite(value):
-        return "-"
-    return f"{display_number(value / 1_000_000)}백만원"
-
-
-def compact_percent_label(value: float | None) -> str:
-    if value is None or not math.isfinite(value):
-        return "-"
-    return f"{value * 100:.1f}%"
-
-
-def compact_percent_point_label(value: float | None) -> str:
-    if value is None or not math.isfinite(value):
-        return "-"
-    sign = "+" if value > 0 else ""
-    return f"{sign}{value * 100:.1f}%p"
-
-
-def condition_summary_item(
-    label: str,
-    message: str,
-    positive: bool,
-    metric: str = "",
-) -> dict[str, str]:
+def diagnosis_chip(label: str, positive: bool) -> dict[str, str]:
     return {
         "label": label,
-        "status": "긍정" if positive else "미흡",
-        "message": compact_summary_text(message),
-        "metric": metric,
+        "status": "회생유리" if positive else "회생불리",
         "tone": "positive" if positive else "negative",
     }
 
@@ -1417,10 +1384,8 @@ def case_diagnosis_summary(case: dict[str, Any]) -> list[dict[str, str]]:
     if not case.get("collateral_saved"):
         return [
             {
-                "label": "진행 상태",
-                "status": "입력 부족",
-                "message": "입력 단계가 완료되면 진단 요약이 표시됩니다.",
-                "metric": "입력 완료 후 표시",
+                "label": "진행",
+                "status": "입력중",
                 "tone": "neutral",
             }
         ]
@@ -1431,74 +1396,23 @@ def case_diagnosis_summary(case: dict[str, Any]) -> list[dict[str, str]]:
     except Exception:
         return [
             {
-                "label": "진단 결과",
-                "status": "확인 필요",
-                "message": "결과 계산을 다시 확인해 주세요.",
-                "metric": "계산 확인 필요",
+                "label": "진단",
+                "status": "확인필요",
                 "tone": "warning",
             }
         ]
 
-    result_summary = result.get("summary", {})
-    comparison_rows = result.get("comparison_rows", [])
-    repayment_differences = [
-        row.get("rate_difference", 0.0)
-        for row in comparison_rows[:5]
-        if row.get("debt", 0.0) > 0
-    ]
-    minimum_repayment_difference = min(repayment_differences) if repayment_differences else 0.0
-    unsecured_financial_rate = next(
-        (
-            row.get("going_rate", 0.0)
-            for row in comparison_rows
-            if row.get("field") == "unsecured_financial_debt"
-        ),
-        0.0,
-    )
-
-    rows = [
-        condition_summary_item(
-            "가치 비교",
-            diagnosis.get("value_message", ""),
-            bool(diagnosis.get("value_positive")),
-            (
-                f"계속 {compact_amount_label(result_summary.get('going_concern_value'))} / "
-                f"청산 {compact_amount_label(result_summary.get('liquidation_value'))}"
-            ),
-        ),
-        condition_summary_item(
-            "변제율 비교",
-            diagnosis.get("repayment_message", ""),
-            bool(diagnosis.get("repayment_positive")),
-            f"최소 변제율 차이 {compact_percent_point_label(minimum_repayment_difference)}",
-        ),
-    ]
-    if diagnosis.get("consent_message"):
-        rows.append(
-            condition_summary_item(
-                "채권자 동의 가능성",
-                diagnosis.get("consent_message", ""),
-                bool(diagnosis.get("consent_positive")),
-                f"명목변제율 {compact_percent_label(unsecured_financial_rate)}",
-            )
-        )
-    condition_count = sum(
-        1
-        for key in ("value_positive", "repayment_positive", "consent_positive")
-        if diagnosis.get(key)
-    )
     overall_positive = bool(diagnosis.get("overall_positive"))
-    rows.append(
+    return [
+        diagnosis_chip("가치", bool(diagnosis.get("value_positive"))),
+        diagnosis_chip("변제율", bool(diagnosis.get("repayment_positive"))),
+        diagnosis_chip("동의", bool(diagnosis.get("consent_positive"))),
         {
-            "label": "종합 결론",
-            "status": "긍정" if overall_positive else "추가 검토",
-            "message": compact_summary_text(diagnosis.get("overall_message", "")),
-            "metric": f"{condition_count}/3 조건 충족",
+            "label": "종합",
+            "status": "회생유리" if overall_positive else "추가검토",
             "tone": "positive" if overall_positive else "warning",
-        }
-    )
-
-    return [row for row in rows if row.get("message")]
+        },
+    ]
 
 
 def case_listing_for_user(user_id: str) -> list[dict[str, Any]]:
