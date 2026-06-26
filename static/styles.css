@@ -435,6 +435,144 @@ button {
   white-space: nowrap;
 }
 
+.result-infographic {
+  display: grid;
+  flex: 0 0 auto;
+  gap: 12px;
+  grid-template-columns: minmax(0, 1.25fr) minmax(320px, 0.75fr);
+  margin: 0 0 14px;
+}
+
+.result-visual-panel {
+  background: #ffffff;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  min-width: 0;
+  padding: 16px;
+}
+
+.result-visual-header {
+  align-items: flex-start;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  margin-bottom: 14px;
+  min-width: 0;
+}
+
+.result-visual-header h3 {
+  font-size: 15px;
+  margin: 0;
+}
+
+.result-visual-header p {
+  color: var(--color-muted);
+  font-size: 12px;
+  line-height: 1.45;
+  margin: 4px 0 0;
+}
+
+.result-status-pill {
+  background: #e9f6f1;
+  border: 1px solid #a8d9c6;
+  border-radius: 999px;
+  color: #0f513f;
+  flex: 0 0 auto;
+  font-size: 12px;
+  font-weight: 800;
+  padding: 6px 10px;
+}
+
+.result-status-pill.is-negative {
+  background: #fff4ed;
+  border-color: #f0b79e;
+  color: #8f2f11;
+}
+
+.value-bar-list,
+.coverage-list {
+  display: grid;
+  gap: 12px;
+}
+
+.value-bar-label,
+.coverage-label {
+  align-items: baseline;
+  display: flex;
+  gap: 10px;
+  justify-content: space-between;
+  margin-bottom: 6px;
+  min-width: 0;
+}
+
+.value-bar-label span,
+.coverage-label span {
+  color: #314042;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.value-bar-label strong,
+.coverage-label strong {
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  overflow: hidden;
+  text-align: right;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.value-bar-track,
+.coverage-track {
+  background: #edf2f2;
+  border-radius: 999px;
+  height: 14px;
+  overflow: hidden;
+}
+
+.coverage-track {
+  height: 10px;
+}
+
+.value-bar-fill,
+.coverage-fill {
+  border-radius: inherit;
+  display: block;
+  height: 100%;
+}
+
+.value-bar-fill {
+  width: var(--bar-width);
+}
+
+.coverage-fill {
+  width: var(--coverage-width);
+}
+
+.value-bar-row.is-liquidation .value-bar-fill,
+.coverage-row.is-liquidation .coverage-fill {
+  background: #2b7bbb;
+}
+
+.value-bar-row.is-going .value-bar-fill,
+.coverage-row.is-going .coverage-fill {
+  background: var(--color-primary);
+}
+
+.value-bar-row.is-debt .value-bar-fill {
+  background: #d4a62f;
+}
+
+.value-bar-row.is-negative .value-bar-fill {
+  background: repeating-linear-gradient(
+    135deg,
+    #b5472b 0,
+    #b5472b 6px,
+    #d9876f 6px,
+    #d9876f 12px
+  );
+}
+
 .tabs {
   display: flex;
   flex: 0 0 auto;
@@ -1249,6 +1387,14 @@ form[data-collateral-form] {
 
   .summary-grid {
     grid-template-columns: 1fr;
+  }
+
+  .result-infographic {
+    grid-template-columns: 1fr;
+  }
+
+  .result-visual-header {
+    flex-direction: column;
   }
 
   .section-header {

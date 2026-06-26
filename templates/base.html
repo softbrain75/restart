@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{% block title %}기업회생 분석{% endblock %}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='top-nav.css') }}?v=2">
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}?v=28">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}?v=29">
   </head>
   <body>
     {% include "_top_nav.html" %}
@@ -23,6 +23,57 @@
       </div>
     {% endif %}
 
+    <script>
+      (() => {
+        const formSelector = [
+          "form[data-financial-form]",
+          "form[data-debt-form]",
+          "form[data-income-form]",
+          "form[data-collateral-form]",
+        ].join(",");
+        const fieldSelector = [
+          "input:not([type='hidden']):not([type='submit']):not([type='button']):not([type='reset'])",
+          "select",
+          "textarea",
+        ].join(",");
+
+        function isFocusable(field) {
+          return (
+            !field.disabled &&
+            !field.readOnly &&
+            field.getClientRects().length > 0
+          );
+        }
+
+        document.addEventListener("keydown", (event) => {
+          if (event.key !== "Enter" || event.isComposing || event.keyCode === 229) return;
+
+          const field = event.target.closest(fieldSelector);
+          if (!field || field.tagName === "TEXTAREA") return;
+
+          const form = field.closest(formSelector);
+          if (!form) return;
+
+          event.preventDefault();
+
+          const fields = Array.from(form.querySelectorAll(fieldSelector)).filter(isFocusable);
+          const currentIndex = fields.indexOf(field);
+          if (currentIndex === -1) return;
+
+          const nextField = fields[currentIndex + 1];
+
+          field.blur();
+          if (nextField) {
+            requestAnimationFrame(() => {
+              nextField.focus();
+              if (typeof nextField.select === "function") {
+                nextField.select();
+              }
+            });
+          }
+        });
+      })();
+    </script>
     {% block scripts %}{% endblock %}
   </body>
 </html>
