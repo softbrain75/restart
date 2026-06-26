@@ -1420,7 +1420,7 @@ def case_diagnosis_summary(case: dict[str, Any]) -> list[dict[str, str]]:
                 "label": "진행 상태",
                 "status": "입력 부족",
                 "message": "입력 단계가 완료되면 진단 요약이 표시됩니다.",
-                "metric": "",
+                "metric": "입력 완료 후 표시",
                 "tone": "neutral",
             }
         ]
@@ -1434,7 +1434,7 @@ def case_diagnosis_summary(case: dict[str, Any]) -> list[dict[str, str]]:
                 "label": "진단 결과",
                 "status": "확인 필요",
                 "message": "결과 계산을 다시 확인해 주세요.",
-                "metric": "",
+                "metric": "계산 확인 필요",
                 "tone": "warning",
             }
         ]

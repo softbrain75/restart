@@ -468,15 +468,7 @@ button {
   color: var(--color-text);
   font-size: 12px;
   font-weight: 800;
-  margin-bottom: 5px;
   overflow-wrap: anywhere;
-}
-
-.history-summary__item p {
-  color: var(--color-muted);
-  font-size: 12.5px;
-  line-height: 1.45;
-  margin: 0;
 }
 
 .empty-state {
