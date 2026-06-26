@@ -32,13 +32,6 @@
                   <small>{{ case.scenario_name }}</small>
                 {% endif %}
               </h3>
-              <div class="history-item__meta">
-                <span>{{ item.diagnosis }}</span>
-                <span>{{ progress.label }}</span>
-                {% if case.source_case_id %}
-                  <span>복사 분석</span>
-                {% endif %}
-              </div>
               {% if item.summary %}
                 <div class="history-summary" aria-label="진단 요약">
                   {% for summary in item.summary %}

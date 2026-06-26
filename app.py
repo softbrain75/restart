@@ -1404,11 +1404,11 @@ def case_diagnosis_summary(case: dict[str, Any]) -> list[dict[str, str]]:
 
     overall_positive = bool(diagnosis.get("overall_positive"))
     return [
-        diagnosis_chip("가치", bool(diagnosis.get("value_positive"))),
-        diagnosis_chip("변제율", bool(diagnosis.get("repayment_positive"))),
-        diagnosis_chip("동의", bool(diagnosis.get("consent_positive"))),
+        diagnosis_chip("가치 비교", bool(diagnosis.get("value_positive"))),
+        diagnosis_chip("변제율 비교", bool(diagnosis.get("repayment_positive"))),
+        diagnosis_chip("채권자 동의 가능성", bool(diagnosis.get("consent_positive"))),
         {
-            "label": "종합",
+            "label": "종합 결론",
             "status": "회생유리" if overall_positive else "추가검토",
             "tone": "positive" if overall_positive else "warning",
         },

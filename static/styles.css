@@ -363,21 +363,6 @@ button {
   margin-left: 8px;
 }
 
-.history-item__meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-.history-item__meta span {
-  background: var(--color-surface-muted);
-  border-radius: 999px;
-  color: #294743;
-  font-size: 12px;
-  font-weight: 800;
-  padding: 4px 9px;
-}
-
 .history-item__actions {
   align-items: stretch;
   flex-direction: column;
