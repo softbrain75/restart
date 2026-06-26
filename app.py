@@ -40,7 +40,10 @@ def prevent_html_cache(response):
     return response
 
 CASE_STORE: dict[str, dict[str, Any]] = {}
-NON_EDITABLE_ACCOUNT_RE = re.compile(r"^[\dIVXLCDMivxlcdm\u2160-\u217F\u2460-\u24FF]")
+NON_EDITABLE_ACCOUNT_RE = re.compile(
+    r"^(?:[\dIVXLCDMivxlcdm\u2160-\u217F\u2460-\u24FF]|"
+    r"[\(\[（［]\s*(?:\d+|[IVXLCDMivxlcdm]+|[\u2160-\u217F]+|[\u2460-\u24FF]|[가-힣])\s*[\)\]）］])"
+)
 PREPAID_ACCOUNTS = {"선급금", "선급비용"}
 ASSET_TOTAL_ACCOUNTS = {"자산총계"}
 LIABILITY_SECTION_START_ACCOUNTS = {"부채", "부채및자본"}
