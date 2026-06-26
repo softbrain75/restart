@@ -23,23 +23,43 @@
     <form method="post" action="{{ url_for('save_collateral', case_id=case.case_id) }}" data-collateral-form>
       <div class="table-frame collateral-frame">
         <section class="collateral-table-section">
-          <h3 class="title-with-help">
-            담보등자산
-            {% call help_button("담보등자산 도움말") %}
-              <strong>담보등자산 입력 기준</strong>
-              <span class="tooltip-list">
-                <span>자산가치산정 화면에서 반영한 실사가치와 청산가치를 기준으로 입력합니다.</span>
-                <span>회생이 개시되면 담보 제공 자산과 영업에 필수적이지 않은 비영업용자산은 매각을 가정합니다.</span>
-                <span>정기예금, 보험해약환급금, 유가증권, 기타 비영업용자산 등을 빠짐없이 반영합니다.</span>
-              </span>
-            {% endcall %}
-          </h3>
+          <h3>담보등자산</h3>
           <table class="data-table collateral-table">
             <thead>
               <tr>
-                <th class="col-account">구분</th>
-                <th class="col-amount">실사가치(정상 매각금액)</th>
-                <th class="col-amount">청산가치(청산 시 매각금액)</th>
+                <th class="col-account">
+                  <span class="table-heading-help">
+                    구분
+                    {% call help_button("구분 도움말") %}
+                      <strong>구분</strong>
+                      <span class="tooltip-list">
+                        <span>회생이 개시되는 경우, 일반적으로 담보로 제공한 자산과 영업활동에 필수적이지 않은 자산(비영업용자산)은 매각을 가정합니다. 담보로 제공한 자산 및 영업활동에 반드시 필요한 자산이 아닌 정기예·적금, 보험해약환급금, 유가증권 및 기타 비영업용자산 등을 입력해 주세요.</span>
+                      </span>
+                    {% endcall %}
+                  </span>
+                </th>
+                <th class="col-amount">
+                  <span class="table-heading-help">
+                    실사가치(정상 매각금액)
+                    {% call help_button("실사가치 정상 매각금액 도움말") %}
+                      <strong>실사가치(정상 매각금액)</strong>
+                      <span class="tooltip-list">
+                        <span>이전 화면 자산현황에서 반영된 실사가치를 입력해 주세요.</span>
+                      </span>
+                    {% endcall %}
+                  </span>
+                </th>
+                <th class="col-amount">
+                  <span class="table-heading-help">
+                    청산가치(청산 시 매각금액)
+                    {% call help_button("청산가치 청산 시 매각금액 도움말") %}
+                      <strong>청산가치(청산 시 매각금액)</strong>
+                      <span class="tooltip-list">
+                        <span>이전 화면 자산현황에서 반영된 청산가치를 입력해 주세요.</span>
+                      </span>
+                    {% endcall %}
+                  </span>
+                </th>
               </tr>
             </thead>
             <tbody>
