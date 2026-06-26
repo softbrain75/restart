@@ -9,17 +9,17 @@
       class="step{% if current_step == 'financial' %} is-active{% elif case.get('financial_saved') %} is-complete{% endif %}"
       href="{{ url_for('financial', case_id=case.case_id) }}"
       {% if current_step == 'financial' %}aria-current="step"{% endif %}
-    >재무{% if current_step != 'financial' and case.get('financial_saved') %} <span class="step-check" aria-hidden="true">✓</span>{% endif %}</a>
+    >자산가치산정{% if current_step != 'financial' and case.get('financial_saved') %} <span class="step-check" aria-hidden="true">✓</span>{% endif %}</a>
     <a
       class="step{% if current_step == 'debt' %} is-active{% elif case.get('debt_saved') %} is-complete{% endif %}"
       href="{{ url_for('debt', case_id=case.case_id) }}"
       {% if current_step == 'debt' %}aria-current="step"{% endif %}
-    >부채{% if current_step != 'debt' and case.get('debt_saved') %} <span class="step-check" aria-hidden="true">✓</span>{% endif %}</a>
+    >채무입력{% if current_step != 'debt' and case.get('debt_saved') %} <span class="step-check" aria-hidden="true">✓</span>{% endif %}</a>
     <a
       class="step{% if current_step == 'income' %} is-active{% elif case.get('income_saved') %} is-complete{% endif %}"
       href="{{ url_for('income', case_id=case.case_id) }}"
       {% if current_step == 'income' %}aria-current="step"{% endif %}
-    >손익{% if current_step != 'income' and case.get('income_saved') %} <span class="step-check" aria-hidden="true">✓</span>{% endif %}</a>
+    >순익추정{% if current_step != 'income' and case.get('income_saved') %} <span class="step-check" aria-hidden="true">✓</span>{% endif %}</a>
     <a
       class="step{% if current_step == 'collateral' %} is-active{% elif case.get('collateral_saved') %} is-complete{% endif %}"
       href="{{ url_for('collateral', case_id=case.case_id) }}"
