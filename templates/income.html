@@ -86,28 +86,49 @@
         </section>
 
         <section class="income-table-section">
-          <h3 class="title-with-help">
-            판매비와 관리비
-            {% call help_button("판매비와 관리비 추정 도움말") %}
-              <strong>판매비와 관리비 추정 기준</strong>
-              <span class="tooltip-list">
-                <span>매출액과 비례하여 발생하는 비용은 변동비, 일정하게 발생하는 비용은 고정비로 선택합니다.</span>
-                <span>고정비는 현재 지출하는 월평균 금액을 입력합니다.</span>
-                <span>변동비는 매출액 대비 발생 비율을 입력합니다.</span>
-                <span>분기 또는 연 1회 발생 비용은 월 기준으로 환산하여 반영합니다.</span>
-                <span>매각 후 재임차가 예상되면 지급임차료와 기타 미반영 비용도 반영합니다.</span>
-              </span>
-            {% endcall %}
-          </h3>
+          <h3>판매비와 관리비</h3>
           <table class="data-table income-table">
             <thead>
               <tr>
                 <th class="col-account">구분</th>
                 <th class="col-amount">전전년도(Y-2)</th>
                 <th class="col-amount">전년도(Y-1)</th>
-                <th class="col-rate">고정/변동</th>
-                <th class="col-amount">월평균(기본값)</th>
-                <th class="col-amount">최종입력값</th>
+                <th class="col-rate">
+                  <span class="table-heading-help">
+                    고정/변동
+                    {% call help_button("고정/변동 도움말") %}
+                      <strong>고정/변동</strong>
+                      <span class="tooltip-list">
+                        <span>회사의 매출액과 비례하여 발생하는 비용은 변동비로 선택하시고, 비례하지 않고 일정하게 발생하는 비용은 고정비로 선택하세요.</span>
+                      </span>
+                    {% endcall %}
+                  </span>
+                </th>
+                <th class="col-amount">
+                  <span class="table-heading-help">
+                    월평균(기본값)
+                    {% call help_button("월평균 기본값 도움말") %}
+                      <strong>월평균(기본값)</strong>
+                      <span class="tooltip-list">
+                        <span>고정비는 최근 2개년 동안 발생한 금액의 월평균 금액이며, 변동비는 최근 2개년 동안 발생한 매출액 대비 발생한 비율입니다.</span>
+                      </span>
+                    {% endcall %}
+                  </span>
+                </th>
+                <th class="col-amount">
+                  <span class="table-heading-help">
+                    최종입력값
+                    {% call help_button("최종입력값 도움말") %}
+                      <strong>최종입력값</strong>
+                      <span class="tooltip-list">
+                        <span>고정비 항목은 현재 지출하는 월평균 금액을 입력하시고, 변동비는 최근 매출액 대비 발생 비율을 입력하세요.</span>
+                        <span>고정비 항목 중 분기 또는 1년에 한 번 발생하는 비용은 월로 환산한 금액을 가산 반영하여 주세요.</span>
+                        <span>회생이 개시되는 경우, 담보로 제공한 공장및공장용지, 건물 등은 통상 매각을 가정합니다. 해당 자산을 매각 후 재임차하는 경우 예상하는 지급임차료를 추가로 반영하여 주세요. 예상 임차보증금은 이후 화면에서 입력합니다.</span>
+                        <span>기타 반영되지 않은 비용이 있으면 기타미반영비용으로 반영해 주세요.</span>
+                      </span>
+                    {% endcall %}
+                  </span>
+                </th>
               </tr>
             </thead>
             <tbody>
