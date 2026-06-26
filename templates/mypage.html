@@ -39,6 +39,16 @@
                   <span>복사 분석</span>
                 {% endif %}
               </div>
+              {% if item.summary %}
+                <div class="history-summary" aria-label="진단 요약">
+                  {% for summary in item.summary %}
+                    <div class="history-summary__item is-{{ summary.tone }}">
+                      <strong>{{ summary.label }}</strong>
+                      <p>{{ summary.message }}</p>
+                    </div>
+                  {% endfor %}
+                </div>
+              {% endif %}
             </div>
             <div class="history-item__actions">
               <a class="button button-secondary" href="{{ url_for(progress.endpoint, case_id=case.case_id) }}">

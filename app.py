@@ -1372,6 +1372,59 @@ def case_diagnosis_label(case: dict[str, Any]) -> str:
     return "회생 가능성 검토 대상" if diagnosis.get("overall_positive") else "추가 검토 필요"
 
 
+def compact_summary_text(text: str, limit: int = 130) -> str:
+    normalized = " ".join(str(text or "").split())
+    if len(normalized) <= limit:
+        return normalized
+    return normalized[: limit - 1].rstrip() + "…"
+
+
+def case_diagnosis_summary(case: dict[str, Any]) -> list[dict[str, str]]:
+    if not case.get("collateral_saved"):
+        return [
+            {
+                "label": "진행 상태",
+                "message": "입력 단계가 완료되면 진단 요약이 표시됩니다.",
+                "tone": "neutral",
+            }
+        ]
+
+    try:
+        diagnosis = calculate_case_result(case)["diagnosis"]
+    except Exception:
+        return [
+            {
+                "label": "진단 결과",
+                "message": "결과 계산을 다시 확인해 주세요.",
+                "tone": "negative",
+            }
+        ]
+
+    rows = [
+        ("가치 비교", diagnosis.get("value_message", ""), diagnosis.get("value_positive")),
+        ("변제율 비교", diagnosis.get("repayment_message", ""), diagnosis.get("repayment_positive")),
+    ]
+    if diagnosis.get("consent_message"):
+        rows.append(
+            (
+                "채권자 동의 가능성",
+                diagnosis.get("consent_message", ""),
+                diagnosis.get("consent_positive"),
+            )
+        )
+    rows.append(("종합 결론", diagnosis.get("overall_message", ""), diagnosis.get("overall_positive")))
+
+    return [
+        {
+            "label": label,
+            "message": compact_summary_text(message),
+            "tone": "positive" if positive else "negative",
+        }
+        for label, message, positive in rows
+        if message
+    ]
+
+
 def case_listing_for_user(user_id: str) -> list[dict[str, Any]]:
     listings = []
     for case in CASE_STORE.values():
@@ -1385,6 +1438,7 @@ def case_listing_for_user(user_id: str) -> list[dict[str, Any]]:
                 "case": case,
                 "progress": progress,
                 "diagnosis": case_diagnosis_label(case),
+                "summary": case_diagnosis_summary(case),
             }
         )
     return sorted(
