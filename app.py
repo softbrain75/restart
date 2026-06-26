@@ -1244,12 +1244,7 @@ def upload():
             error=f"엑셀을 읽는 중 오류가 발생했습니다: {exc}",
         ), 400
 
-    return render_template(
-        "index.html",
-        workbook=workbook,
-        case=case,
-        error=None,
-    )
+    return redirect(url_for("financial", case_id=case["case_id"], uploaded="1"))
 
 
 @app.get("/financial/<case_id>")
@@ -1269,7 +1264,11 @@ def financial(case_id: str):
         case=case,
         rows=case["financial_rows"],
         error=None,
-        message=None,
+        message=(
+            "파일이 업로드되었습니다. 자산가치산정을 확인해 주세요."
+            if request.args.get("uploaded") == "1"
+            else None
+        ),
     )
 
 

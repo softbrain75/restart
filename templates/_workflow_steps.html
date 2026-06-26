@@ -1,11 +1,6 @@
 <section class="workflow-panel" aria-label="작업 단계">
   <nav class="stepper" aria-label="작업 단계">
     <a
-      class="step{% if current_step == 'upload' %} is-active{% else %} is-complete{% endif %}"
-      href="{{ url_for('upload_preview', case_id=case.case_id) }}"
-      {% if current_step == 'upload' %}aria-current="step"{% endif %}
-    >업로드{% if current_step != 'upload' %} <span class="step-check" aria-hidden="true">✓</span>{% endif %}</a>
-    <a
       class="step{% if current_step == 'financial' %} is-active{% elif case.get('financial_saved') %} is-complete{% endif %}"
       href="{{ url_for('financial', case_id=case.case_id) }}"
       {% if current_step == 'financial' %}aria-current="step"{% endif %}
