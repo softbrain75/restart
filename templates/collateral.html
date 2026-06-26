@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "_tooltip.html" import help_button %}
 
 {% block title %}담보 입력 - 기업회생 분석{% endblock %}
 
@@ -22,7 +23,17 @@
     <form method="post" action="{{ url_for('save_collateral', case_id=case.case_id) }}" data-collateral-form>
       <div class="table-frame collateral-frame">
         <section class="collateral-table-section">
-          <h3>담보등자산</h3>
+          <h3 class="title-with-help">
+            담보등자산
+            {% call help_button("담보등자산 도움말") %}
+              <strong>담보등자산 입력 기준</strong>
+              <span class="tooltip-list">
+                <span>자산가치산정 화면에서 반영한 실사가치와 청산가치를 기준으로 입력합니다.</span>
+                <span>회생이 개시되면 담보 제공 자산과 영업에 필수적이지 않은 비영업용자산은 매각을 가정합니다.</span>
+                <span>정기예금, 보험해약환급금, 유가증권, 기타 비영업용자산 등을 빠짐없이 반영합니다.</span>
+              </span>
+            {% endcall %}
+          </h3>
           <table class="data-table collateral-table">
             <thead>
               <tr>
@@ -66,7 +77,17 @@
         </section>
 
         <section class="collateral-table-section">
-          <h3>재임차</h3>
+          <h3 class="title-with-help">
+            재임차
+            {% call help_button("재임차 도움말") %}
+              <strong>재임차 입력 기준</strong>
+              <span class="tooltip-list">
+                <span>담보로 제공한 공장, 공장용지, 건물 등을 매각 후 다시 임차하는 경우 입력합니다.</span>
+                <span>예상 임차보증금과 월세를 추가로 반영합니다.</span>
+                <span>재임차 계획이 없으면 해당 금액은 비워두거나 0으로 둡니다.</span>
+              </span>
+            {% endcall %}
+          </h3>
           <table class="data-table rent-table">
             <thead>
               <tr>

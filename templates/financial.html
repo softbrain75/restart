@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "_tooltip.html" import help_button %}
 
 {% block title %}재무 입력 - 기업회생 분석{% endblock %}
 
@@ -14,7 +15,19 @@
 
     <section class="section-header">
       <div>
-        <h2>재무 입력</h2>
+        <h2 class="title-with-help">
+          재무 입력
+          {% call help_button("자산가치산정 도움말") %}
+            <strong>자산가치산정 입력 기준</strong>
+            <span class="tooltip-list">
+              <span>청산가치는 파산적 청산 시 개별 자산을 처분해 회수 가능한 금액입니다.</span>
+              <span>청산가치는 실사가치와 같거나 작은 금액으로 입력합니다.</span>
+              <span>현금과 예금은 보통 실사가치와 동일하게 봅니다.</span>
+              <span>채권, 재고, 유가증권, 유형자산은 즉시 회수 또는 매각 가능한 금액을 입력합니다.</span>
+              <span>선급금, 선급비용, 무형자산은 회수 가능성이 낮으면 0으로 입력합니다.</span>
+            </span>
+          {% endcall %}
+        </h2>
         <p>실사가치와 청산가치를 입력합니다. 청산가치는 실사가치보다 클 수 없습니다.</p>
       </div>
     </section>

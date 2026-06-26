@@ -1,0 +1,8 @@
+{% macro help_button(label="도움말") -%}
+  <span class="info-tooltip">
+    <button class="info-tooltip__trigger" type="button" aria-label="{{ label }}">i</button>
+    <span class="info-tooltip__content" role="tooltip">
+      {{ caller() }}
+    </span>
+  </span>
+{%- endmacro %}

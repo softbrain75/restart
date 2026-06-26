@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "_tooltip.html" import help_button %}
 
 {% block title %}손익 입력 - 기업회생 분석{% endblock %}
 
@@ -22,7 +23,17 @@
     <form method="post" action="{{ url_for('save_income', case_id=case.case_id) }}" data-income-form>
       <div class="table-frame income-frame">
         <section class="income-table-section">
-          <h3>매출</h3>
+          <h3 class="title-with-help">
+            매출
+            {% call help_button("매출 추정 도움말") %}
+              <strong>매출 추정 기준</strong>
+              <span class="tooltip-list">
+                <span>기본값은 최근 2개년 실적과 매출액 대비 매출원가 비율을 기준으로 제시됩니다.</span>
+                <span>향후 10년 동안 달성 가능하다고 보는 연평균 매출액성장률을 입력합니다.</span>
+                <span>매출원가율은 향후 적용될 것으로 예상되는 매출 대비 원가 비율을 입력합니다.</span>
+              </span>
+            {% endcall %}
+          </h3>
           <table class="data-table income-table">
             <thead>
               <tr>
@@ -65,7 +76,19 @@
         </section>
 
         <section class="income-table-section">
-          <h3>판매비와 관리비</h3>
+          <h3 class="title-with-help">
+            판매비와 관리비
+            {% call help_button("판매비와 관리비 추정 도움말") %}
+              <strong>판매비와 관리비 추정 기준</strong>
+              <span class="tooltip-list">
+                <span>매출액과 비례하여 발생하는 비용은 변동비, 일정하게 발생하는 비용은 고정비로 선택합니다.</span>
+                <span>고정비는 현재 지출하는 월평균 금액을 입력합니다.</span>
+                <span>변동비는 매출액 대비 발생 비율을 입력합니다.</span>
+                <span>분기 또는 연 1회 발생 비용은 월 기준으로 환산하여 반영합니다.</span>
+                <span>매각 후 재임차가 예상되면 지급임차료와 기타 미반영 비용도 반영합니다.</span>
+              </span>
+            {% endcall %}
+          </h3>
           <table class="data-table income-table">
             <thead>
               <tr>
