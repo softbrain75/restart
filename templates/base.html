@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{% block title %}기업회생 분석{% endblock %}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='top-nav.css') }}?v=2">
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}?v=30">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}?v=31">
   </head>
   <body>
     {% include "_top_nav.html" %}
@@ -72,6 +72,113 @@
             });
           }
         });
+      })();
+
+      (() => {
+        const tooltips = Array.from(document.querySelectorAll(".info-tooltip"));
+        const margin = 12;
+        const gap = 8;
+
+        function closeTooltip(tooltip) {
+          tooltip.classList.remove("is-open", "is-pinned", "is-above");
+        }
+
+        function closeOtherTooltips(currentTooltip) {
+          tooltips.forEach((tooltip) => {
+            if (tooltip !== currentTooltip) {
+              closeTooltip(tooltip);
+            }
+          });
+        }
+
+        function positionTooltip(tooltip) {
+          const trigger = tooltip.querySelector(".info-tooltip__trigger");
+          const content = tooltip.querySelector(".info-tooltip__content");
+          if (!trigger || !content) return;
+
+          const triggerRect = trigger.getBoundingClientRect();
+          const width = Math.min(360, window.innerWidth - margin * 2);
+          content.style.setProperty("--tooltip-width", `${width}px`);
+
+          let left = triggerRect.left;
+          left = Math.min(left, window.innerWidth - margin - width);
+          left = Math.max(margin, left);
+
+          content.style.setProperty("--tooltip-left", `${left}px`);
+          content.style.setProperty(
+            "--tooltip-arrow-left",
+            `${triggerRect.left + triggerRect.width / 2 - left}px`
+          );
+
+          tooltip.classList.add("is-open");
+          tooltip.classList.remove("is-above");
+
+          const height = content.offsetHeight;
+          let top = triggerRect.bottom + gap;
+          if (
+            top + height > window.innerHeight - margin &&
+            triggerRect.top - height - gap >= margin
+          ) {
+            top = triggerRect.top - height - gap;
+            tooltip.classList.add("is-above");
+          }
+
+          content.style.setProperty("--tooltip-top", `${Math.max(margin, top)}px`);
+        }
+
+        function openTooltip(tooltip) {
+          closeOtherTooltips(tooltip);
+          positionTooltip(tooltip);
+        }
+
+        tooltips.forEach((tooltip) => {
+          const trigger = tooltip.querySelector(".info-tooltip__trigger");
+          if (!trigger) return;
+
+          tooltip.addEventListener("mouseenter", () => openTooltip(tooltip));
+          tooltip.addEventListener("mouseleave", () => {
+            if (!tooltip.classList.contains("is-pinned")) {
+              closeTooltip(tooltip);
+            }
+          });
+
+          trigger.addEventListener("focus", () => openTooltip(tooltip));
+          trigger.addEventListener("blur", () => {
+            if (!tooltip.classList.contains("is-pinned")) {
+              closeTooltip(tooltip);
+            }
+          });
+          trigger.addEventListener("click", (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+
+            const pinned = tooltip.classList.contains("is-pinned");
+            closeOtherTooltips(tooltip);
+            if (pinned) {
+              closeTooltip(tooltip);
+              return;
+            }
+
+            tooltip.classList.add("is-pinned");
+            positionTooltip(tooltip);
+          });
+        });
+
+        document.addEventListener("click", () => {
+          tooltips.forEach(closeTooltip);
+        });
+
+        window.addEventListener("resize", () => {
+          document.querySelectorAll(".info-tooltip.is-open, .info-tooltip.is-pinned").forEach(positionTooltip);
+        });
+
+        document.addEventListener(
+          "scroll",
+          () => {
+            document.querySelectorAll(".info-tooltip.is-open, .info-tooltip.is-pinned").forEach(positionTooltip);
+          },
+          true
+        );
       })();
     </script>
     {% block scripts %}{% endblock %}

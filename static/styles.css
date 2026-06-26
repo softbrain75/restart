@@ -679,19 +679,20 @@ button {
   display: none;
   font-size: 12px;
   font-weight: 400;
-  left: 50%;
+  left: var(--tooltip-left, 12px);
   line-height: 1.55;
   max-width: calc(100vw - 40px);
+  pointer-events: none;
   padding: 12px 14px;
-  position: absolute;
-  top: calc(100% + 8px);
-  transform: translateX(-50%);
-  width: 360px;
-  z-index: 20;
+  position: fixed;
+  top: var(--tooltip-top, 12px);
+  transform: none;
+  width: var(--tooltip-width, min(360px, calc(100vw - 24px)));
+  z-index: 1000;
 }
 
-.info-tooltip:hover .info-tooltip__content,
-.info-tooltip:focus-within .info-tooltip__content {
+.info-tooltip.is-open .info-tooltip__content,
+.info-tooltip.is-pinned .info-tooltip__content {
   display: block;
 }
 
@@ -701,11 +702,19 @@ button {
   border-top: 1px solid #b7c6c4;
   content: "";
   height: 10px;
-  left: 50%;
+  left: var(--tooltip-arrow-left, 14px);
   position: absolute;
   top: -6px;
   transform: translateX(-50%) rotate(45deg);
   width: 10px;
+}
+
+.info-tooltip.is-above .info-tooltip__content::before {
+  border: 0;
+  border-bottom: 1px solid #b7c6c4;
+  border-right: 1px solid #b7c6c4;
+  bottom: -6px;
+  top: auto;
 }
 
 .info-tooltip__content strong {
@@ -1495,19 +1504,6 @@ form[data-collateral-form] {
 
   .summary-grid {
     grid-template-columns: 1fr;
-  }
-
-  .info-tooltip__content {
-    left: auto;
-    right: -8px;
-    transform: none;
-    width: min(340px, calc(100vw - 28px));
-  }
-
-  .info-tooltip__content::before {
-    left: auto;
-    right: 12px;
-    transform: rotate(45deg);
   }
 
   .result-infographic {
