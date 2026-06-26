@@ -117,6 +117,37 @@
   background: rgba(14, 58, 39, 0.92);
 }
 
+.site-nav__actions {
+  align-items: center;
+  display: inline-flex;
+  flex: 0 0 auto;
+  gap: 14px;
+  justify-content: flex-end;
+  min-width: 0;
+}
+
+.site-nav__auth-link,
+.site-nav__logout button {
+  background: transparent;
+  border: 0;
+  color: rgba(14, 58, 39, 0.72);
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 800;
+  padding: 8px 0;
+  text-decoration: none;
+}
+
+.site-nav__auth-link:hover,
+.site-nav__auth-link.is-active,
+.site-nav__logout button:hover {
+  color: var(--top-nav-ink);
+}
+
+.site-nav__logout {
+  margin: 0;
+}
+
 @media (max-width: 760px) {
   .site-nav__inner {
     gap: 16px;
@@ -138,7 +169,7 @@
     display: none;
   }
 
-  .site-nav__cta {
+  .site-nav__actions {
     display: none;
   }
 }

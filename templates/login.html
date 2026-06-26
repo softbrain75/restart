@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+
+{% block title %}로그인 - 기업회생 분석{% endblock %}
+{% block main_class %}account-main{% endblock %}
+
+{% block content %}
+  <section class="account-card account-card--narrow" aria-label="로그인">
+    <div class="account-card__header">
+      <h1>로그인</h1>
+      <p>저장된 분석 이력과 재분석 시나리오를 확인합니다.</p>
+    </div>
+
+    {% if error %}
+      <div class="notice notice-error" role="alert">{{ error }}</div>
+    {% endif %}
+
+    <form class="account-form" action="{{ url_for('login', next=next_path) }}" method="post">
+      <input type="hidden" name="next" value="{{ next_path }}">
+      <label class="field">
+        <span>이메일</span>
+        <input class="input" name="email" type="email" value="{{ email }}" autocomplete="email" required>
+      </label>
+      <label class="field">
+        <span>비밀번호</span>
+        <input class="input" name="password" type="password" autocomplete="current-password" required>
+      </label>
+
+      <div class="account-actions">
+        <button class="button button-primary" type="submit">로그인</button>
+        <a class="button button-secondary" href="{{ url_for('signup') }}">회원가입</a>
+      </div>
+    </form>
+  </section>
+{% endblock %}

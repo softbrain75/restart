@@ -6,17 +6,23 @@ import math
 import os
 import re
 import uuid
+from copy import deepcopy
 from datetime import date, datetime
+from functools import wraps
 from pathlib import Path
 from typing import Any
 
 import xlrd
 from calculation import calculate_case_result
-from flask import Flask, redirect, render_template, request, url_for
+from flask import Flask, redirect, render_template, request, session, url_for
 from openpyxl import load_workbook
+from werkzeug.security import check_password_hash, generate_password_hash
 
 
 BASE_DIR = Path(__file__).resolve().parent
+DATA_DIR = BASE_DIR / "data"
+USERS_PATH = DATA_DIR / "users.json"
+CASES_DIR = DATA_DIR / "cases"
 LEADS_DIR = BASE_DIR / "leads"
 CONSULTATION_LOG_PATH = LEADS_DIR / "consultations.jsonl"
 ALLOWED_EXTENSIONS = {".xls", ".xlsx"}
@@ -29,6 +35,7 @@ DOCUMENT_FIELDS = (
 
 app = Flask(__name__)
 app.config["MAX_CONTENT_LENGTH"] = 40 * 1024 * 1024
+app.secret_key = os.environ.get("RESTART_SECRET_KEY", "restart-local-dev-secret")
 
 
 @app.after_request
@@ -39,7 +46,58 @@ def prevent_html_cache(response):
         response.headers["Expires"] = "0"
     return response
 
-CASE_STORE: dict[str, dict[str, Any]] = {}
+def now_iso() -> str:
+    return datetime.now().isoformat(timespec="seconds")
+
+
+def read_json_file(path: Path, default: Any) -> Any:
+    if not path.exists():
+        return default
+    try:
+        with path.open("r", encoding="utf-8") as file:
+            return json.load(file)
+    except (OSError, json.JSONDecodeError):
+        return default
+
+
+def write_json_file(path: Path, payload: Any) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temp_path = path.with_suffix(path.suffix + ".tmp")
+    with temp_path.open("w", encoding="utf-8") as file:
+        json.dump(payload, file, ensure_ascii=False, indent=2)
+    temp_path.replace(path)
+
+
+def load_users() -> dict[str, dict[str, Any]]:
+    users = read_json_file(USERS_PATH, {})
+    return users if isinstance(users, dict) else {}
+
+
+def save_users() -> None:
+    write_json_file(USERS_PATH, USERS)
+
+
+def load_cases() -> dict[str, dict[str, Any]]:
+    cases: dict[str, dict[str, Any]] = {}
+    if not CASES_DIR.exists():
+        return cases
+    for path in CASES_DIR.glob("*.json"):
+        case = read_json_file(path, None)
+        if isinstance(case, dict) and case.get("case_id"):
+            cases[case["case_id"]] = case
+    return cases
+
+
+def save_case(case: dict[str, Any]) -> None:
+    if not case.get("case_id"):
+        return
+    case.setdefault("created_at", now_iso())
+    case["updated_at"] = now_iso()
+    write_json_file(CASES_DIR / f"{case['case_id']}.json", case)
+
+
+USERS: dict[str, dict[str, Any]] = load_users()
+CASE_STORE: dict[str, dict[str, Any]] = load_cases()
 NON_EDITABLE_ACCOUNT_RE = re.compile(
     r"^(?:[\dIVXLCDMivxlcdm\u2160-\u217F\u2460-\u24FF]|"
     r"[\(\[（［]\s*(?:\d+|[IVXLCDMivxlcdm]+|[\u2160-\u217F]+|[\u2460-\u24FF]|[가-힣])\s*[\)\]）］])"
@@ -207,6 +265,76 @@ def append_consultation_log(case: dict[str, Any], form: dict[str, Any], result: 
     }
     with CONSULTATION_LOG_PATH.open("a", encoding="utf-8") as file:
         file.write(json.dumps(payload, ensure_ascii=False) + "\n")
+
+
+def normalize_email(email: str | None) -> str:
+    return str(email or "").strip().lower()
+
+
+def current_user_id() -> str | None:
+    user_id = session.get("user_id")
+    return str(user_id) if user_id in USERS else None
+
+
+def current_user() -> dict[str, Any] | None:
+    user_id = current_user_id()
+    return USERS.get(user_id) if user_id else None
+
+
+def find_user_by_email(email: str) -> dict[str, Any] | None:
+    normalized = normalize_email(email)
+    return next((user for user in USERS.values() if user.get("email") == normalized), None)
+
+
+def remember_session_case(case_id: str) -> None:
+    case_ids = list(session.get("case_ids", []))
+    if case_id not in case_ids:
+        case_ids.append(case_id)
+        session["case_ids"] = case_ids
+
+
+def attach_session_cases_to_user(user_id: str) -> None:
+    for case_id in session.get("case_ids", []):
+        case = CASE_STORE.get(case_id)
+        if not case:
+            continue
+        if not case.get("user_id"):
+            case["user_id"] = user_id
+            save_case(case)
+
+
+def login_user(user: dict[str, Any]) -> None:
+    session["user_id"] = user["user_id"]
+    attach_session_cases_to_user(user["user_id"])
+
+
+def case_is_accessible(case: dict[str, Any]) -> bool:
+    owner_id = case.get("user_id")
+    if not owner_id:
+        return case.get("case_id") in session.get("case_ids", [])
+    return owner_id == current_user_id()
+
+
+def get_accessible_case(case_id: str) -> dict[str, Any] | None:
+    case = CASE_STORE.get(case_id)
+    if not case or not case_is_accessible(case):
+        return None
+    return case
+
+
+def login_required(view):
+    @wraps(view)
+    def wrapped(*args, **kwargs):
+        if not current_user():
+            return redirect(url_for("login", next=request.path))
+        return view(*args, **kwargs)
+
+    return wrapped
+
+
+@app.context_processor
+def inject_auth_context():
+    return {"current_user": current_user()}
 
 
 def is_editable_financial_account(account: str) -> bool:
@@ -529,6 +657,7 @@ def company_name_from_workbook(workbook: dict[str, Any]) -> str:
 
 def create_case(workbook: dict[str, Any]) -> dict[str, Any]:
     case_id = uuid.uuid4().hex[:12]
+    created_at = now_iso()
     balance_sheet = next(
         (sheet for sheet in workbook["sheets"] if sheet.get("document_label") == "재무제표"),
         workbook["sheets"][0],
@@ -540,6 +669,11 @@ def create_case(workbook: dict[str, Any]) -> dict[str, Any]:
     case = {
         "case_id": case_id,
         "company_name": company_name_from_workbook(workbook),
+        "scenario_name": "",
+        "source_case_id": None,
+        "user_id": current_user_id(),
+        "created_at": created_at,
+        "updated_at": created_at,
         "workbook": workbook,
         "financial_rows": extract_financial_rows(balance_sheet),
         "financial_saved": False,
@@ -552,6 +686,8 @@ def create_case(workbook: dict[str, Any]) -> dict[str, Any]:
         "collateral_saved": False,
     }
     CASE_STORE[case_id] = case
+    remember_session_case(case_id)
+    save_case(case)
     return case
 
 
@@ -1197,9 +1333,194 @@ def build_document_workbook(uploaded_files: Any) -> dict[str, Any]:
     return {"sheets": sheets, "files": files}
 
 
+def case_progress(case: dict[str, Any]) -> dict[str, str]:
+    if case.get("collateral_saved"):
+        return {"label": "결과 확인", "endpoint": "result"}
+    if case.get("income_saved"):
+        return {"label": "담보 입력", "endpoint": "collateral"}
+    if case.get("debt_saved"):
+        return {"label": "손익추정", "endpoint": "income"}
+    if case.get("financial_saved"):
+        return {"label": "채무입력", "endpoint": "debt"}
+    return {"label": "자산가치산정", "endpoint": "financial"}
+
+
+def case_diagnosis_label(case: dict[str, Any]) -> str:
+    if not case.get("collateral_saved"):
+        return "입력 진행 중"
+    try:
+        diagnosis = calculate_case_result(case)["diagnosis"]
+    except Exception:
+        return "결과 확인 필요"
+    return "회생 가능성 검토 대상" if diagnosis.get("overall_positive") else "추가 검토 필요"
+
+
+def case_listing_for_user(user_id: str) -> list[dict[str, Any]]:
+    listings = []
+    for case in CASE_STORE.values():
+        if case.get("user_id") != user_id:
+            continue
+        progress = case_progress(case)
+        listings.append(
+            {
+                "case": case,
+                "progress": progress,
+                "diagnosis": case_diagnosis_label(case),
+            }
+        )
+    return sorted(
+        listings,
+        key=lambda item: item["case"].get("updated_at") or item["case"].get("created_at") or "",
+        reverse=True,
+    )
+
+
+def copy_case_for_user(source_case: dict[str, Any], user_id: str) -> dict[str, Any]:
+    copied_case = deepcopy(source_case)
+    original_id = source_case["case_id"]
+    new_case_id = uuid.uuid4().hex[:12]
+    created_at = now_iso()
+    copied_case["case_id"] = new_case_id
+    copied_case["source_case_id"] = original_id
+    copied_case["user_id"] = user_id
+    copied_case["created_at"] = created_at
+    copied_case["updated_at"] = created_at
+    copied_case["scenario_name"] = f"{source_case.get('scenario_name') or source_case.get('company_name', '분석')} 복사본"
+    copied_case.pop("consultation", None)
+    copied_case["consultation_submitted"] = False
+    CASE_STORE[new_case_id] = copied_case
+    remember_session_case(new_case_id)
+    save_case(copied_case)
+    return copied_case
+
+
 @app.get("/")
 def index():
     return render_template("landing.html", active_page="home")
+
+
+@app.route("/signup", methods=["GET", "POST"])
+def signup():
+    if current_user():
+        return redirect(url_for("mypage"))
+
+    case_id = request.values.get("case_id", "")
+    prefill_case = get_accessible_case(case_id) if case_id else None
+    prefill_consultation = (prefill_case or {}).get("consultation", {})
+    form = {
+        "company": request.form.get("company", prefill_consultation.get("company", (prefill_case or {}).get("company_name", ""))).strip(),
+        "contact_name": request.form.get("contact_name", prefill_consultation.get("contact_name", "")).strip(),
+        "phone": request.form.get("phone", prefill_consultation.get("phone", "")).strip(),
+        "email": normalize_email(request.form.get("email", prefill_consultation.get("email", ""))),
+    }
+    error = None
+
+    if request.method == "POST":
+        password = request.form.get("password", "")
+        password_confirm = request.form.get("password_confirm", "")
+
+        if not form["company"]:
+            error = "회사명을 입력해 주세요."
+        elif not form["contact_name"]:
+            error = "담당자명을 입력해 주세요."
+        elif not form["phone"]:
+            error = "연락처를 입력해 주세요."
+        elif not form["email"]:
+            error = "이메일을 입력해 주세요."
+        elif not EMAIL_RE.match(form["email"]):
+            error = "이메일 형식을 확인해 주세요."
+        elif find_user_by_email(form["email"]):
+            error = "이미 가입된 이메일입니다."
+        elif len(password) < 8:
+            error = "비밀번호는 8자 이상 입력해 주세요."
+        elif password != password_confirm:
+            error = "비밀번호 확인이 일치하지 않습니다."
+        elif request.form.get("privacy_consent") != "on":
+            error = "개인정보 수집 및 이용에 동의해 주세요."
+        else:
+            user_id = uuid.uuid4().hex[:12]
+            user = {
+                "user_id": user_id,
+                "company": form["company"],
+                "contact_name": form["contact_name"],
+                "phone": form["phone"],
+                "email": form["email"],
+                "password_hash": generate_password_hash(password),
+                "email_verified": False,
+                "created_at": now_iso(),
+            }
+            USERS[user_id] = user
+            save_users()
+            login_user(user)
+            return redirect(url_for("mypage", joined="1"))
+
+    return render_template(
+        "signup.html",
+        active_page="signup",
+        form=form,
+        case_id=case_id,
+        error=error,
+    )
+
+
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    if current_user():
+        return redirect(url_for("mypage"))
+
+    email = normalize_email(request.form.get("email"))
+    error = None
+    if request.method == "POST":
+        user = find_user_by_email(email)
+        password = request.form.get("password", "")
+        if not user or not check_password_hash(user.get("password_hash", ""), password):
+            error = "이메일 또는 비밀번호를 확인해 주세요."
+        else:
+            login_user(user)
+            next_path = request.args.get("next") or request.form.get("next") or url_for("mypage")
+            if not next_path.startswith("/"):
+                next_path = url_for("mypage")
+            return redirect(next_path)
+
+    return render_template(
+        "login.html",
+        active_page="login",
+        email=email,
+        next_path=request.args.get("next", ""),
+        error=error,
+    )
+
+
+@app.post("/logout")
+def logout():
+    session.pop("user_id", None)
+    return redirect(url_for("index"))
+
+
+@app.get("/mypage")
+@login_required
+def mypage():
+    user = current_user()
+    assert user is not None
+    return render_template(
+        "mypage.html",
+        active_page="mypage",
+        cases=case_listing_for_user(user["user_id"]),
+        message="회원가입이 완료되었습니다. 분석 이력을 이곳에서 확인할 수 있습니다."
+        if request.args.get("joined") == "1"
+        else None,
+    )
+
+
+@app.post("/cases/<case_id>/copy")
+@login_required
+def copy_case(case_id: str):
+    user = current_user()
+    source_case = get_accessible_case(case_id)
+    if user is None or source_case is None:
+        return redirect(url_for("mypage"))
+    copied_case = copy_case_for_user(source_case, user["user_id"])
+    return redirect(url_for("financial", case_id=copied_case["case_id"], copied="1"))
 
 
 @app.get("/analysis")
@@ -1214,7 +1535,7 @@ def upload_form():
 
 @app.get("/upload/<case_id>")
 def upload_preview(case_id: str):
-    case = CASE_STORE.get(case_id)
+    case = get_accessible_case(case_id)
     if case is None:
         return render_template(
             "index.html",
@@ -1249,7 +1570,7 @@ def upload():
 
 @app.get("/financial/<case_id>")
 def financial(case_id: str):
-    case = CASE_STORE.get(case_id)
+    case = get_accessible_case(case_id)
     if case is None:
         return render_template(
             "financial.html",
@@ -1267,14 +1588,18 @@ def financial(case_id: str):
         message=(
             "파일이 업로드되었습니다. 자산가치산정을 확인해 주세요."
             if request.args.get("uploaded") == "1"
-            else None
+            else (
+                "기존 분석을 복사했습니다. 필요한 숫자를 수정해 다시 분석할 수 있습니다."
+                if request.args.get("copied") == "1"
+                else None
+            )
         ),
     )
 
 
 @app.post("/financial/<case_id>/save")
 def save_financial(case_id: str):
-    case = CASE_STORE.get(case_id)
+    case = get_accessible_case(case_id)
     if case is None:
         return redirect(url_for("analysis_index"))
 
@@ -1309,6 +1634,7 @@ def save_financial(case_id: str):
         ), 400
 
     case["financial_saved"] = True
+    save_case(case)
     if request.form.get("next") == "debt":
         return redirect(url_for("debt", case_id=case_id))
 
@@ -1323,7 +1649,7 @@ def save_financial(case_id: str):
 
 @app.get("/debt/<case_id>")
 def debt(case_id: str):
-    case = CASE_STORE.get(case_id)
+    case = get_accessible_case(case_id)
     if case is None:
         return render_template(
             "debt.html",
@@ -1344,7 +1670,7 @@ def debt(case_id: str):
 
 @app.post("/debt/<case_id>/save")
 def save_debt(case_id: str):
-    case = CASE_STORE.get(case_id)
+    case = get_accessible_case(case_id)
     if case is None:
         return redirect(url_for("analysis_index"))
 
@@ -1357,6 +1683,7 @@ def save_debt(case_id: str):
         row["audit_value"] = request.form.get(f"audit_value_{index}", row.get("audit_value", ""))
 
     case["debt_saved"] = True
+    save_case(case)
     if request.form.get("next") == "income":
         return redirect(url_for("income", case_id=case_id))
 
@@ -1371,7 +1698,7 @@ def save_debt(case_id: str):
 
 @app.get("/income/<case_id>")
 def income(case_id: str):
-    case = CASE_STORE.get(case_id)
+    case = get_accessible_case(case_id)
     if case is None:
         return render_template(
             "income.html",
@@ -1395,7 +1722,7 @@ def income(case_id: str):
 
 @app.post("/income/<case_id>/save")
 def save_income(case_id: str):
-    case = CASE_STORE.get(case_id)
+    case = get_accessible_case(case_id)
     if case is None:
         return redirect(url_for("analysis_index"))
 
@@ -1418,6 +1745,7 @@ def save_income(case_id: str):
         row["final_value"] = final_display
 
     case["income_saved"] = True
+    save_case(case)
     if request.form.get("next") == "collateral":
         return redirect(url_for("collateral", case_id=case_id))
 
@@ -1433,7 +1761,7 @@ def save_income(case_id: str):
 
 @app.get("/collateral/<case_id>")
 def collateral(case_id: str):
-    case = CASE_STORE.get(case_id)
+    case = get_accessible_case(case_id)
     if case is None:
         return render_template(
             "collateral.html",
@@ -1456,7 +1784,7 @@ def collateral(case_id: str):
 
 @app.post("/collateral/<case_id>/save")
 def save_collateral(case_id: str):
-    case = CASE_STORE.get(case_id)
+    case = get_accessible_case(case_id)
     if case is None:
         return redirect(url_for("analysis_index"))
 
@@ -1496,6 +1824,7 @@ def save_collateral(case_id: str):
         ), 400
 
     case["collateral_saved"] = True
+    save_case(case)
     if request.form.get("next") == "result":
         return redirect(url_for("result", case_id=case_id))
 
@@ -1511,7 +1840,7 @@ def save_collateral(case_id: str):
 
 @app.get("/result/<case_id>")
 def result(case_id: str):
-    case = CASE_STORE.get(case_id)
+    case = get_accessible_case(case_id)
     if case is None:
         return render_template(
             "result.html",
@@ -1533,7 +1862,7 @@ def result(case_id: str):
 
 @app.post("/consultation/<case_id>")
 def submit_consultation(case_id: str):
-    case = CASE_STORE.get(case_id)
+    case = get_accessible_case(case_id)
     if case is None:
         return redirect(url_for("analysis_index"))
 
@@ -1554,6 +1883,7 @@ def submit_consultation(case_id: str):
     append_consultation_log(case, form, result_data)
     case["consultation"] = form
     case["consultation_submitted"] = True
+    save_case(case)
     return redirect(url_for("result", case_id=case_id, consultation="submitted"))
 
 

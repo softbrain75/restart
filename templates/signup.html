@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+
+{% block title %}회원가입 - 기업회생 분석{% endblock %}
+{% block main_class %}account-main{% endblock %}
+
+{% block content %}
+  <section class="account-card" aria-label="회원가입">
+    <div class="account-card__header">
+      <h1>회원가입</h1>
+      <p>분석 이력과 재분석 시나리오를 저장하려면 계정을 만들어 주세요.</p>
+    </div>
+
+    {% if error %}
+      <div class="notice notice-error" role="alert">{{ error }}</div>
+    {% endif %}
+
+    <form class="account-form" action="{{ url_for('signup', case_id=case_id) if case_id else url_for('signup') }}" method="post">
+      {% if case_id %}
+        <input type="hidden" name="case_id" value="{{ case_id }}">
+      {% endif %}
+      <div class="account-form__grid">
+        <label class="field">
+          <span>회사명</span>
+          <input class="input" name="company" type="text" value="{{ form.company }}" autocomplete="organization" required>
+        </label>
+        <label class="field">
+          <span>담당자명</span>
+          <input class="input" name="contact_name" type="text" value="{{ form.contact_name }}" autocomplete="name" required>
+        </label>
+        <label class="field">
+          <span>연락처</span>
+          <input class="input" name="phone" type="tel" value="{{ form.phone }}" autocomplete="tel" required>
+        </label>
+        <label class="field">
+          <span>이메일</span>
+          <input class="input" name="email" type="email" value="{{ form.email }}" autocomplete="email" required>
+        </label>
+        <label class="field">
+          <span>비밀번호</span>
+          <input class="input" name="password" type="password" autocomplete="new-password" required>
+        </label>
+        <label class="field">
+          <span>비밀번호 확인</span>
+          <input class="input" name="password_confirm" type="password" autocomplete="new-password" required>
+        </label>
+      </div>
+
+      <label class="checkbox-field">
+        <input name="privacy_consent" type="checkbox" required>
+        <span>개인정보 수집 및 이용에 동의합니다.</span>
+      </label>
+
+      <p class="account-note">초기 버전은 이메일과 비밀번호로 가입합니다. 이메일 인증은 메일 발송 도메인 설정 이후 적용할 수 있습니다.</p>
+
+      <div class="account-actions">
+        <button class="button button-primary" type="submit">회원가입</button>
+        <a class="button button-secondary" href="{{ url_for('login') }}">로그인</a>
+      </div>
+    </form>
+  </section>
+{% endblock %}

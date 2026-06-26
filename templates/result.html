@@ -60,6 +60,12 @@
                 <li>채무 변제율 및 채권자 동의 가능성 검토</li>
                 <li>회생절차 진행 전 추가 확인사항 안내</li>
               </ul>
+              {% if not current_user %}
+                <p class="consultation-account-note">
+                  계정을 만들면 현재 분석 결과를 마이페이지에 저장하고, 복사해서 재분석할 수 있습니다.
+                  <a href="{{ url_for('signup', case_id=case.case_id) }}">회원가입하기</a>
+                </p>
+              {% endif %}
             </div>
 
             <form

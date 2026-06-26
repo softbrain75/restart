@@ -15,8 +15,20 @@
       <a class="site-nav__link{% if current_page == 'analysis' %} is-active{% endif %}" href="{{ url_for('analysis_index') }}">재무분석</a>
     </div>
 
-    {% if current_page == "home" %}
-      <a class="site-nav__cta" href="{{ url_for('analysis_index') }}">진단 시작</a>
-    {% endif %}
+    <div class="site-nav__actions">
+      {% if current_page == "home" %}
+        <a class="site-nav__cta" href="{{ url_for('analysis_index') }}">진단 시작</a>
+      {% endif %}
+
+      {% if current_user %}
+        <a class="site-nav__auth-link{% if current_page == 'mypage' %} is-active{% endif %}" href="{{ url_for('mypage') }}">마이페이지</a>
+        <form class="site-nav__logout" action="{{ url_for('logout') }}" method="post">
+          <button type="submit">로그아웃</button>
+        </form>
+      {% else %}
+        <a class="site-nav__auth-link{% if current_page == 'login' %} is-active{% endif %}" href="{{ url_for('login') }}">로그인</a>
+        <a class="site-nav__auth-link{% if current_page == 'signup' %} is-active{% endif %}" href="{{ url_for('signup') }}">회원가입</a>
+      {% endif %}
+    </div>
   </div>
 </nav>

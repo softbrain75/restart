@@ -221,6 +221,202 @@ button {
   display: none;
 }
 
+.account-main {
+  background: #ecebe4;
+  display: block;
+  max-width: none;
+  overflow: auto;
+  overflow-x: hidden;
+  padding: 56px 24px;
+}
+
+.account-card,
+.history-panel,
+.mypage-header {
+  background: var(--color-surface);
+  border: 1px solid rgba(209, 208, 200, 0.86);
+  border-radius: 16px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.05);
+  margin: 0 auto;
+  max-width: 880px;
+  padding: 28px;
+  width: 100%;
+}
+
+.account-card--narrow {
+  max-width: 520px;
+}
+
+.account-main--wide .history-panel,
+.account-main--wide .mypage-header {
+  max-width: 1080px;
+}
+
+.account-card__header,
+.history-panel__header {
+  margin-bottom: 22px;
+}
+
+.account-card__header h1,
+.mypage-header h1,
+.history-panel__header h2 {
+  font-size: 24px;
+  margin: 0 0 8px;
+}
+
+.account-card__header p,
+.mypage-header p,
+.history-panel__header p,
+.account-note {
+  color: var(--color-muted);
+  font-size: 13px;
+  margin: 0;
+}
+
+.account-form {
+  display: grid;
+  gap: 18px;
+}
+
+.account-form__grid {
+  display: grid;
+  gap: 14px 16px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.field span {
+  color: var(--color-text);
+  display: block;
+  font-size: 13px;
+  font-weight: 800;
+  margin-bottom: 6px;
+}
+
+.checkbox-field {
+  align-items: flex-start;
+  color: var(--color-muted);
+  display: inline-flex;
+  font-size: 13px;
+  gap: 8px;
+  line-height: 1.45;
+}
+
+.checkbox-field input {
+  margin-top: 2px;
+}
+
+.account-actions,
+.history-item__actions,
+.mypage-header {
+  align-items: center;
+  display: flex;
+  gap: 10px;
+}
+
+.account-actions {
+  justify-content: flex-end;
+}
+
+.mypage-header {
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.history-list {
+  display: grid;
+  gap: 10px;
+}
+
+.history-item {
+  align-items: center;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  display: grid;
+  gap: 16px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  padding: 16px;
+}
+
+.history-item__date {
+  color: var(--color-muted);
+  display: block;
+  font-size: 12px;
+  margin-bottom: 6px;
+}
+
+.history-item h3 {
+  font-size: 17px;
+  margin: 0 0 8px;
+}
+
+.history-item h3 small {
+  color: var(--color-muted);
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 700;
+  margin-left: 8px;
+}
+
+.history-item__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.history-item__meta span {
+  background: var(--color-surface-muted);
+  border-radius: 999px;
+  color: #294743;
+  font-size: 12px;
+  font-weight: 800;
+  padding: 4px 9px;
+}
+
+.history-item__actions {
+  justify-content: flex-end;
+}
+
+.history-item__actions form {
+  margin: 0;
+}
+
+.empty-state {
+  align-items: center;
+  border: 1px dashed var(--color-border-strong);
+  border-radius: var(--radius-md);
+  display: grid;
+  gap: 10px;
+  justify-items: center;
+  padding: 36px 16px;
+  text-align: center;
+}
+
+.empty-state h3 {
+  margin: 0;
+}
+
+.empty-state p {
+  color: var(--color-muted);
+  font-size: 13px;
+  margin: 0;
+}
+
+.consultation-account-note {
+  background: #f4f8f7;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  color: var(--color-muted);
+  font-size: 13px;
+  margin: 12px 0 0;
+  padding: 10px 12px;
+}
+
+.consultation-account-note a {
+  color: var(--color-primary);
+  font-weight: 800;
+  text-decoration: none;
+}
+
 .upload-progress {
   align-items: center;
   background: linear-gradient(135deg, #f8f7f3, #ecebe4);
@@ -1506,6 +1702,32 @@ form[data-collateral-form] {
 
   .consultation-form__grid {
     grid-template-columns: 1fr;
+  }
+
+  .account-main {
+    padding: 24px 14px;
+  }
+
+  .account-card,
+  .history-panel,
+  .mypage-header {
+    padding: 18px;
+  }
+
+  .account-form__grid,
+  .history-item {
+    grid-template-columns: 1fr;
+  }
+
+  .account-actions,
+  .history-item__actions,
+  .mypage-header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .history-item__actions form {
+    width: 100%;
   }
 
   .consultation-submit {
