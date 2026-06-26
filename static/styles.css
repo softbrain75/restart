@@ -759,6 +759,13 @@ button {
   justify-content: center;
 }
 
+.row-label-help {
+  align-items: center;
+  display: inline-flex;
+  gap: 6px;
+  min-width: 0;
+}
+
 .section-header p {
   color: var(--color-muted);
   font-size: 13px;

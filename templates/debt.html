@@ -12,6 +12,15 @@
     {% set current_step = "debt" %}
     {% set workflow_meta_label = case.company_name %}
     {% include "_workflow_steps.html" %}
+    {% set debt_help = {
+      "secured_debt": "담보를 제공하고 차입한 채무 전체금액을 입력해 주세요. 미지급한 이자가 있으면 함께 포함합니다.",
+      "unsecured_financial_debt": "담보 없이 금융기관으로부터 차입한 채무 전체금액을 입력해 주세요. 미지급한 이자가 있으면 함께 포함합니다.",
+      "other_unsecured_debt": "기타 담보 없이 발생한 상거래채무 등의 금액을 입력해 주세요. 특수관계인채무는 이 항목에서 제외합니다.",
+      "related_party_debt": "대표이사, 대표이사의 친인척 등 특수관계인으로부터 차입한 채무를 입력해 주세요.",
+      "unpaid_wages": "미지급한 급여, 퇴직급여 등 임금채권이 있으면 입력해 주세요. 대표이사 등 특수관계인에 대한 임금채권은 특수관계인채무에 포함합니다.",
+      "retirement_benefit": "현 시점에서 전 임직원이 일시에 퇴직할 경우 지급해야 할 퇴직급여추계액을 입력해 주세요. 대표이사는 제외하고, 외부에 예치한 퇴직연금운용자산이 있으면 그 금액을 차감한 후 입력합니다.",
+      "tax_arrears": "미지급한 4대보험, 국세, 지방세 등을 입력해 주세요."
+    } %}
 
     <section class="section-header">
       <div>
@@ -23,19 +32,7 @@
     <form method="post" action="{{ url_for('save_debt', case_id=case.case_id) }}" data-debt-form>
       <div class="table-frame debt-frame">
         <section class="debt-table-section">
-          <h3 class="title-with-help">
-            채무입력
-            {% call help_button("채무입력 도움말") %}
-              <strong>채무입력 기준</strong>
-              <span class="tooltip-list">
-                <span>각 채무는 미지급 이자를 포함한 현재 전체 금액을 입력합니다.</span>
-                <span>담보채무는 담보를 제공하고 차입한 채무입니다.</span>
-                <span>무담보 금융기관채무는 담보 없이 금융기관에서 차입한 채무입니다.</span>
-                <span>기타 무담보채무에는 상거래채무 등을 입력하되 특수관계인채무는 제외합니다.</span>
-                <span>미지급 임금, 퇴직급여추계액, 4대보험, 국세, 지방세 등도 빠짐없이 입력합니다.</span>
-              </span>
-            {% endcall %}
-          </h3>
+          <h3>채무입력</h3>
           <table class="data-table debt-table">
             <thead>
               <tr>
@@ -46,7 +43,19 @@
             <tbody>
               {% for row in rows %}
                 <tr>
-                  <td class="account-cell">{{ row.category }}</td>
+                  <td class="account-cell">
+                    <span class="row-label-help">
+                      {{ row.category }}
+                      {% if debt_help.get(row.field) %}
+                        {% call help_button(row.category ~ " 도움말") %}
+                          <strong>{{ row.category }}</strong>
+                          <span class="tooltip-list">
+                            <span>{{ debt_help[row.field] }}</span>
+                          </span>
+                        {% endcall %}
+                      {% endif %}
+                    </span>
+                  </td>
                   <td class="input-cell">
                     <input
                       class="input numeric"
