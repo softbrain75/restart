@@ -209,7 +209,7 @@ def append_consultation_log(case: dict[str, Any], form: dict[str, Any], result: 
 
 def is_editable_financial_account(account: str) -> bool:
     compacted = compact_text(account)
-    if not compacted or compacted == "자산":
+    if not compacted or compacted in {"자산", *ASSET_TOTAL_ACCOUNTS}:
         return False
     return NON_EDITABLE_ACCOUNT_RE.match(compacted) is None
 
