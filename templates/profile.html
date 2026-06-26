@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block title %}내 정보 수정 - 기업회생 분석{% endblock %}
+{% block main_class %}account-main{% endblock %}
+
+{% block content %}
+  <section class="account-card" aria-label="내 정보 수정">
+    <div class="account-card__header">
+      <h1>내 정보 수정</h1>
+      <p>마이페이지와 상담 안내에 사용할 기본 연락처 정보를 수정합니다.</p>
+    </div>
+
+    {% if error %}
+      <div class="notice notice-error" role="alert">{{ error }}</div>
+    {% endif %}
+
+    <form class="account-form" action="{{ url_for('profile') }}" method="post">
+      <div class="account-form__grid">
+        <label class="field">
+          <span>회사명</span>
+          <input class="input" name="company" type="text" value="{{ form.company }}" autocomplete="organization" required>
+        </label>
+        <label class="field">
+          <span>담당자명</span>
+          <input class="input" name="contact_name" type="text" value="{{ form.contact_name }}" autocomplete="name" required>
+        </label>
+        <label class="field">
+          <span>연락처</span>
+          <input class="input" name="phone" type="tel" value="{{ form.phone }}" autocomplete="tel" required>
+        </label>
+        <label class="field">
+          <span>이메일</span>
+          <input class="input" name="email" type="email" value="{{ form.email }}" autocomplete="email" required>
+        </label>
+      </div>
+
+      <p class="account-note">이메일은 로그인 아이디로 사용됩니다. 변경 후에는 변경된 이메일로 로그인해야 합니다.</p>
+
+      <div class="account-actions">
+        <a class="button button-secondary" href="{{ url_for('mypage') }}">취소</a>
+        <button class="button button-primary" type="submit">저장</button>
+      </div>
+    </form>
+  </section>
+{% endblock %}

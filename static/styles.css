@@ -337,6 +337,38 @@ button {
   margin-bottom: 16px;
 }
 
+.mypage-profile-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  margin: 10px 0 0;
+}
+
+.mypage-profile-summary div {
+  align-items: baseline;
+  display: inline-flex;
+  gap: 5px;
+}
+
+.mypage-profile-summary dt {
+  color: var(--color-muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.mypage-profile-summary dd {
+  color: var(--color-text);
+  font-size: 13px;
+  font-weight: 800;
+  margin: 0;
+}
+
+.mypage-header__actions {
+  display: flex;
+  flex: 0 0 auto;
+  gap: 8px;
+}
+
 .history-list {
   display: grid;
   gap: 10px;
@@ -1840,6 +1872,10 @@ form[data-collateral-form] {
   .history-item__actions,
   .mypage-header {
     align-items: stretch;
+    flex-direction: column;
+  }
+
+  .mypage-header__actions {
     flex-direction: column;
   }
 

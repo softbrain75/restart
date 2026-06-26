@@ -7,9 +7,29 @@
   <section class="mypage-header" aria-label="마이페이지 요약">
     <div>
       <h1>마이페이지</h1>
-      <p>{{ current_user.company }} · {{ current_user.contact_name }}</p>
+      <dl class="mypage-profile-summary">
+        <div>
+          <dt>회사명</dt>
+          <dd>{{ current_user.company }}</dd>
+        </div>
+        <div>
+          <dt>담당자명</dt>
+          <dd>{{ current_user.contact_name }}</dd>
+        </div>
+        <div>
+          <dt>연락처</dt>
+          <dd>{{ current_user.phone }}</dd>
+        </div>
+        <div>
+          <dt>이메일</dt>
+          <dd>{{ current_user.email }}</dd>
+        </div>
+      </dl>
     </div>
-    <a class="button button-primary" href="{{ url_for('analysis_index') }}">새 분석 시작</a>
+    <div class="mypage-header__actions">
+      <a class="button button-secondary" href="{{ url_for('profile') }}">내 정보 수정</a>
+      <a class="button button-primary" href="{{ url_for('analysis_index') }}">새 분석 시작</a>
+    </div>
   </section>
 
   <section class="history-panel" aria-label="분석 이력">

@@ -1579,6 +1579,50 @@ def login():
     )
 
 
+@app.route("/profile", methods=["GET", "POST"])
+@login_required
+def profile():
+    user = current_user()
+    assert user is not None
+    form = {
+        "company": request.form.get("company", user.get("company", "")).strip(),
+        "contact_name": request.form.get("contact_name", user.get("contact_name", "")).strip(),
+        "phone": request.form.get("phone", user.get("phone", "")).strip(),
+        "email": normalize_email(request.form.get("email", user.get("email", ""))),
+    }
+    error = None
+
+    if request.method == "POST":
+        email_owner = find_user_by_email(form["email"]) if form["email"] else None
+        if not form["company"]:
+            error = "회사명을 입력해 주세요."
+        elif not form["contact_name"]:
+            error = "담당자명을 입력해 주세요."
+        elif not form["phone"]:
+            error = "연락처를 입력해 주세요."
+        elif not form["email"]:
+            error = "이메일을 입력해 주세요."
+        elif not EMAIL_RE.match(form["email"]):
+            error = "이메일 형식을 확인해 주세요."
+        elif email_owner and email_owner.get("user_id") != user.get("user_id"):
+            error = "이미 가입된 이메일입니다."
+        else:
+            user["company"] = form["company"]
+            user["contact_name"] = form["contact_name"]
+            user["phone"] = form["phone"]
+            user["email"] = form["email"]
+            user["updated_at"] = now_iso()
+            save_users()
+            return redirect(url_for("mypage", profile_updated="1"))
+
+    return render_template(
+        "profile.html",
+        active_page="mypage",
+        form=form,
+        error=error,
+    )
+
+
 @app.post("/logout")
 def logout():
     session.pop("user_id", None)
@@ -1601,12 +1645,16 @@ def mypage():
                 "분석 이력을 삭제했습니다."
                 if request.args.get("deleted") == "1"
                 else (
-                    "복사본을 생성했습니다."
-                    if request.args.get("copied") == "1"
+                    "회원 정보를 수정했습니다."
+                    if request.args.get("profile_updated") == "1"
                     else (
-                        "분석 이름을 저장했습니다."
-                        if request.args.get("renamed") == "1"
-                        else None
+                        "복사본을 생성했습니다."
+                        if request.args.get("copied") == "1"
+                        else (
+                            "분석 이름을 저장했습니다."
+                            if request.args.get("renamed") == "1"
+                            else None
+                        )
                     )
                 )
             )
