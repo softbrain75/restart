@@ -43,7 +43,13 @@
                 <div class="history-summary" aria-label="진단 요약">
                   {% for summary in item.summary %}
                     <div class="history-summary__item is-{{ summary.tone }}">
-                      <strong>{{ summary.label }}</strong>
+                      <div class="history-summary__head">
+                        <strong>{{ summary.label }}</strong>
+                        <span>{{ summary.status }}</span>
+                      </div>
+                      {% if summary.metric %}
+                        <div class="history-summary__metric">{{ summary.metric }}</div>
+                      {% endif %}
                       <p>{{ summary.message }}</p>
                     </div>
                   {% endfor %}

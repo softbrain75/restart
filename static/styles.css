@@ -396,6 +396,7 @@ button {
 .history-summary {
   display: grid;
   gap: 6px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   margin-top: 12px;
 }
 
@@ -415,14 +416,60 @@ button {
   border-left-color: #c95535;
 }
 
+.history-summary__item.is-warning {
+  border-left-color: #c78a17;
+}
+
 .history-summary__item.is-neutral {
   border-left-color: #9aa9a7;
 }
 
-.history-summary__item strong {
-  display: block;
+.history-summary__head {
+  align-items: center;
+  display: flex;
+  gap: 8px;
+  justify-content: space-between;
+  margin-bottom: 5px;
+}
+
+.history-summary__head strong {
   font-size: 12px;
-  margin-bottom: 3px;
+}
+
+.history-summary__head span {
+  border-radius: 999px;
+  flex: 0 0 auto;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 2px 7px;
+}
+
+.history-summary__item.is-positive .history-summary__head span {
+  background: #dff3eb;
+  color: #0f6f5f;
+}
+
+.history-summary__item.is-negative .history-summary__head span {
+  background: #fde9e1;
+  color: #a83d24;
+}
+
+.history-summary__item.is-warning .history-summary__head span {
+  background: #fff2cf;
+  color: #8a5b00;
+}
+
+.history-summary__item.is-neutral .history-summary__head span {
+  background: #e9eeee;
+  color: #52615f;
+}
+
+.history-summary__metric {
+  color: var(--color-text);
+  font-size: 12px;
+  font-weight: 800;
+  margin-bottom: 5px;
+  overflow-wrap: anywhere;
 }
 
 .history-summary__item p {
@@ -1791,6 +1838,10 @@ form[data-collateral-form] {
   .mypage-header {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .history-summary {
+    grid-template-columns: 1fr;
   }
 
   .history-item__actions form {
