@@ -42,6 +42,8 @@ def prevent_html_cache(response):
 CASE_STORE: dict[str, dict[str, Any]] = {}
 NON_EDITABLE_ACCOUNT_RE = re.compile(r"^[\dIVXLCDMivxlcdm\u2160-\u217F\u2460-\u24FF]")
 PREPAID_ACCOUNTS = {"선급금", "선급비용"}
+ASSET_TOTAL_ACCOUNTS = {"자산총계"}
+LIABILITY_SECTION_START_ACCOUNTS = {"부채", "부채및자본"}
 DEBT_DEFAULT_ROWS = (
     ("secured_debt", "담보채무"),
     ("unsecured_financial_debt", "무담보 금융기관채무"),
@@ -232,6 +234,8 @@ def extract_financial_rows(sheet: dict[str, Any]) -> list[dict[str, Any]]:
         account = compact_text(subject_cell["text"]) if subject_cell else ""
         if not account or account in {"과목", "금액"}:
             continue
+        if rows and account in LIABILITY_SECTION_START_ACCOUNTS:
+            break
 
         amount_text = current_amount_from_balance_row(row)
         amount_number = parse_number_text(amount_text)
@@ -258,6 +262,8 @@ def extract_financial_rows(sheet: dict[str, Any]) -> list[dict[str, Any]]:
                 "is_editable": editable,
             }
         )
+        if account in ASSET_TOTAL_ACCOUNTS:
+            break
 
     return rows
 
