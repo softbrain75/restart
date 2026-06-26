@@ -46,20 +46,24 @@
           <article class="history-item">
             <div class="history-item__main">
               <span class="history-item__date">{{ format_kst_datetime(case.updated_at or case.created_at) }}</span>
-              <h3>
-                {{ case.company_name }}
-              </h3>
-              <form class="history-name-form" action="{{ url_for('rename_case', case_id=case.case_id) }}" method="post">
+              <form
+                class="history-title-form"
+                action="{{ url_for('rename_case', case_id=case.case_id) }}"
+                method="post"
+                data-inline-rename-form
+              >
                 <label class="sr-only" for="scenario-name-{{ case.case_id }}">분석 이름</label>
                 <input
                   id="scenario-name-{{ case.case_id }}"
+                  class="history-title-input"
                   name="scenario_name"
                   type="text"
-                  value="{{ case.scenario_name or '' }}"
+                  value="{{ case.scenario_name or case.company_name }}"
+                  data-original-value="{{ case.scenario_name or case.company_name }}"
+                  data-fallback-value="{{ case.company_name }}"
                   placeholder="분석 이름"
                   autocomplete="off"
                 >
-                <button class="button button-secondary" type="submit">저장</button>
               </form>
               {% if item.summary %}
                 <div class="history-summary" aria-label="진단 요약">
@@ -100,4 +104,53 @@
       </div>
     {% endif %}
   </section>
+{% endblock %}
+
+{% block scripts %}
+  <script>
+    (() => {
+      document.querySelectorAll("[data-inline-rename-form]").forEach((form) => {
+        const input = form.querySelector(".history-title-input");
+        if (!input) return;
+        let isSaving = false;
+
+        async function saveIfChanged() {
+          const nextValue = input.value.trim();
+          if (nextValue === input.dataset.originalValue.trim() || isSaving) return;
+
+          isSaving = true;
+          const data = new FormData(form);
+          data.set("scenario_name", nextValue);
+
+          try {
+            const response = await fetch(form.action, {
+              method: "POST",
+              body: data,
+              headers: { "X-Requested-With": "fetch" },
+            });
+            if (!response.ok) return;
+
+            const displayValue = nextValue || input.dataset.fallbackValue;
+            input.value = displayValue;
+            input.dataset.originalValue = displayValue;
+          } finally {
+            isSaving = false;
+          }
+        }
+
+        input.addEventListener("keydown", (event) => {
+          if (event.key !== "Enter" || event.isComposing || event.keyCode === 229) return;
+          event.preventDefault();
+          saveIfChanged();
+          input.blur();
+        });
+
+        input.addEventListener("blur", saveIfChanged);
+        form.addEventListener("submit", (event) => {
+          event.preventDefault();
+          saveIfChanged();
+        });
+      });
+    })();
+  </script>
 {% endblock %}

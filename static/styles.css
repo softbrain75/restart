@@ -431,40 +431,37 @@ button {
   font-size: 13px;
 }
 
-.history-name-form {
-  align-items: center;
-  display: grid;
-  gap: 6px;
-  grid-template-columns: minmax(0, 1fr) 54px;
+.history-title-form {
   margin: 0;
-  max-width: 330px;
 }
 
-.history-name-form input {
-  background: #ffffff;
-  border: 1px solid var(--color-border);
+.history-title-input {
+  background: transparent;
+  border: 1px solid transparent;
   border-radius: var(--radius-sm);
   color: var(--color-text);
-  font-size: 13px;
-  font-weight: 700;
-  height: 34px;
-  padding: 0 10px;
+  font-size: 17px;
+  font-weight: 800;
+  height: 32px;
+  max-width: 520px;
+  padding: 0 6px;
+  width: 100%;
 }
 
-.history-name-form input::placeholder {
-  color: #8a9996;
-  font-weight: 600;
+.history-title-input:hover {
+  background: #f8fbfa;
+  border-color: var(--color-border);
 }
 
-.history-name-form input:focus {
+.history-title-input:focus {
+  background: #ffffff;
   border-color: var(--color-primary);
   outline: 2px solid rgba(15, 95, 85, 0.14);
 }
 
-.history-name-form .button {
-  font-size: 12px;
-  height: 34px;
-  padding: 0 10px;
+.history-title-input::placeholder {
+  color: #8a9996;
+  font-weight: 700;
 }
 
 .history-summary {

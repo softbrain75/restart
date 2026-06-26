@@ -1679,8 +1679,13 @@ def rename_case(case_id: str):
     case = get_accessible_case(case_id)
     if case is None:
         return redirect(url_for("mypage"))
-    case["scenario_name"] = request.form.get("scenario_name", "").strip()
+    scenario_name = request.form.get("scenario_name", "").strip()
+    if scenario_name == str(case.get("company_name", "")).strip():
+        scenario_name = ""
+    case["scenario_name"] = scenario_name
     save_case(case)
+    if request.headers.get("X-Requested-With") == "fetch":
+        return ("", 204)
     return redirect(url_for("mypage", renamed="1"))
 
 
