@@ -1415,7 +1415,7 @@ def case_diagnosis_summary(case: dict[str, Any]) -> list[dict[str, str]]:
     ]
 
 
-def case_listing_for_user(user_id: str) -> list[dict[str, Any]]:
+def case_listing_for_user(user_id: str, copied_id: str = "") -> list[dict[str, Any]]:
     listings = []
     for case in CASE_STORE.values():
         if case.get("user_id") != user_id:
@@ -1431,11 +1431,36 @@ def case_listing_for_user(user_id: str) -> list[dict[str, Any]]:
                 "summary": case_diagnosis_summary(case),
             }
         )
-    return sorted(
+    sorted_listings = sorted(
         listings,
         key=lambda item: item["case"].get("updated_at") or item["case"].get("created_at") or "",
         reverse=True,
     )
+    if copied_id:
+        copied_index = next(
+            (
+                index
+                for index, item in enumerate(sorted_listings)
+                if item["case"].get("case_id") == copied_id
+            ),
+            None,
+        )
+        if copied_index is not None:
+            copied_item = sorted_listings.pop(copied_index)
+            source_id = copied_item["case"].get("source_case_id")
+            source_index = next(
+                (
+                    index
+                    for index, item in enumerate(sorted_listings)
+                    if item["case"].get("case_id") == source_id
+                ),
+                None,
+            )
+            if source_index is not None:
+                sorted_listings.insert(source_index + 1, copied_item)
+            else:
+                sorted_listings.insert(copied_index, copied_item)
+    return sorted_listings
 
 
 def copy_case_for_user(source_case: dict[str, Any], user_id: str) -> dict[str, Any]:
@@ -1568,14 +1593,22 @@ def mypage():
     return render_template(
         "mypage.html",
         active_page="mypage",
-        cases=case_listing_for_user(user["user_id"]),
+        cases=case_listing_for_user(user["user_id"], request.args.get("copied_id", "")),
         message=(
             "회원가입이 완료되었습니다. 분석 이력을 이곳에서 확인할 수 있습니다."
             if request.args.get("joined") == "1"
             else (
                 "분석 이력을 삭제했습니다."
                 if request.args.get("deleted") == "1"
-                else None
+                else (
+                    "복사본을 생성했습니다."
+                    if request.args.get("copied") == "1"
+                    else (
+                        "분석 이름을 저장했습니다."
+                        if request.args.get("renamed") == "1"
+                        else None
+                    )
+                )
             )
         ),
     )
@@ -1589,7 +1622,18 @@ def copy_case(case_id: str):
     if user is None or source_case is None:
         return redirect(url_for("mypage"))
     copied_case = copy_case_for_user(source_case, user["user_id"])
-    return redirect(url_for("financial", case_id=copied_case["case_id"], copied="1"))
+    return redirect(url_for("mypage", copied="1", copied_id=copied_case["case_id"]))
+
+
+@app.post("/cases/<case_id>/rename")
+@login_required
+def rename_case(case_id: str):
+    case = get_accessible_case(case_id)
+    if case is None:
+        return redirect(url_for("mypage"))
+    case["scenario_name"] = request.form.get("scenario_name", "").strip()
+    save_case(case)
+    return redirect(url_for("mypage", renamed="1"))
 
 
 @app.post("/cases/<case_id>/delete")

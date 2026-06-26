@@ -52,6 +52,15 @@ button {
   letter-spacing: 0;
 }
 
+.sr-only {
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  position: absolute;
+  white-space: nowrap;
+  width: 1px;
+}
+
 .app-shell {
   display: flex;
   flex-direction: column;
@@ -383,26 +392,47 @@ button {
 .history-item__action-row {
   display: grid;
   gap: 8px;
-  grid-template-columns: minmax(0, 1fr) 42px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .history-item__action-row .button {
   font-size: 13px;
 }
 
-.button-icon {
-  min-width: 42px;
-  padding: 0;
+.history-name-form {
+  align-items: center;
+  display: grid;
+  gap: 6px;
+  grid-template-columns: minmax(0, 1fr) 54px;
+  margin: 0;
+  max-width: 330px;
 }
 
-.button-icon svg {
-  fill: none;
-  height: 17px;
-  stroke: currentColor;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  stroke-width: 2;
-  width: 17px;
+.history-name-form input {
+  background: #ffffff;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-text);
+  font-size: 13px;
+  font-weight: 700;
+  height: 34px;
+  padding: 0 10px;
+}
+
+.history-name-form input::placeholder {
+  color: #8a9996;
+  font-weight: 600;
+}
+
+.history-name-form input:focus {
+  border-color: var(--color-primary);
+  outline: 2px solid rgba(15, 95, 85, 0.14);
+}
+
+.history-name-form .button {
+  font-size: 12px;
+  height: 34px;
+  padding: 0 10px;
 }
 
 .history-summary {

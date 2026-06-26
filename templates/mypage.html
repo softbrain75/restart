@@ -28,10 +28,19 @@
               <span class="history-item__date">{{ format_kst_datetime(case.updated_at or case.created_at) }}</span>
               <h3>
                 {{ case.company_name }}
-                {% if case.scenario_name %}
-                  <small>{{ case.scenario_name }}</small>
-                {% endif %}
               </h3>
+              <form class="history-name-form" action="{{ url_for('rename_case', case_id=case.case_id) }}" method="post">
+                <label class="sr-only" for="scenario-name-{{ case.case_id }}">분석 이름</label>
+                <input
+                  id="scenario-name-{{ case.case_id }}"
+                  name="scenario_name"
+                  type="text"
+                  value="{{ case.scenario_name or '' }}"
+                  placeholder="분석 이름"
+                  autocomplete="off"
+                >
+                <button class="button button-secondary" type="submit">저장</button>
+              </form>
               {% if item.summary %}
                 <div class="history-summary" aria-label="진단 요약">
                   {% for summary in item.summary %}
@@ -56,15 +65,7 @@
                   method="post"
                   onsubmit="return confirm('이 분석 이력을 삭제하시겠습니까? 삭제 후 마이페이지 목록에서 보이지 않습니다.');"
                 >
-                  <button class="button button-danger button-icon" type="submit" aria-label="삭제" title="삭제">
-                    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-                      <path d="M3 6h18"></path>
-                      <path d="M8 6V4h8v2"></path>
-                      <path d="M19 6l-1 14H6L5 6"></path>
-                      <path d="M10 11v5"></path>
-                      <path d="M14 11v5"></path>
-                    </svg>
-                  </button>
+                  <button class="button button-danger" type="submit">삭제</button>
                 </form>
               </div>
             </div>
