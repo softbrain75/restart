@@ -97,21 +97,21 @@
         </section>
 
         <section class="collateral-table-section">
-          <h3 class="title-with-help">
-            재임차
-            {% call help_button("재임차 도움말") %}
-              <strong>재임차 입력 기준</strong>
-              <span class="tooltip-list">
-                <span>담보로 제공한 공장, 공장용지, 건물 등을 매각 후 다시 임차하는 경우 입력합니다.</span>
-                <span>예상 임차보증금과 월세를 추가로 반영합니다.</span>
-                <span>재임차 계획이 없으면 해당 금액은 비워두거나 0으로 둡니다.</span>
-              </span>
-            {% endcall %}
-          </h3>
+          <h3>재임차</h3>
           <table class="data-table rent-table">
             <thead>
               <tr>
-                <th class="col-account">구분</th>
+                <th class="col-account">
+                  <span class="table-heading-help">
+                    구분
+                    {% call help_button("재임차 구분 도움말") %}
+                      <strong>구분</strong>
+                      <span class="tooltip-list">
+                        <span>회생이 개시되는 경우, 담보로 제공한 공장및공장용지, 건물 등은 통상 매각을 가정합니다. 해당 자산을 매각 후 재임차하는 경우 예상하는 임차보증금과 지급임차료(월세)를 추가로 반영하여 주세요.</span>
+                      </span>
+                    {% endcall %}
+                  </span>
+                </th>
                 <th class="col-amount">금액</th>
               </tr>
             </thead>
