@@ -22,7 +22,14 @@
         </div>
         <div>
           <dt>이메일</dt>
-          <dd>{{ current_user.email }}</dd>
+          <dd>
+            {{ current_user.email }}
+            {% if current_user.email_verified %}
+              <span class="status-badge is-verified">인증완료</span>
+            {% else %}
+              <span class="status-badge is-unverified">미인증</span>
+            {% endif %}
+          </dd>
         </div>
       </dl>
     </div>

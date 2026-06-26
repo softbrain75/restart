@@ -16,6 +16,7 @@ import xlrd
 from calculation import calculate_case_result
 from flask import Flask, redirect, render_template, request, session, url_for
 from openpyxl import load_workbook
+from itsdangerous import BadSignature, SignatureExpired, URLSafeTimedSerializer
 from werkzeug.security import check_password_hash, generate_password_hash
 
 
@@ -32,6 +33,8 @@ DOCUMENT_FIELDS = (
     ("balance_file", "재무제표"),
     ("income_file", "손익계산서"),
 )
+EMAIL_VERIFICATION_MAX_AGE_SECONDS = 60 * 60 * 24 * 7
+EMAIL_VERIFICATION_SALT = "restart-email-verification"
 
 app = Flask(__name__)
 app.config["MAX_CONTENT_LENGTH"] = 40 * 1024 * 1024
@@ -298,6 +301,82 @@ def current_user() -> dict[str, Any] | None:
 def find_user_by_email(email: str) -> dict[str, Any] | None:
     normalized = normalize_email(email)
     return next((user for user in USERS.values() if user.get("email") == normalized), None)
+
+
+def email_serializer() -> URLSafeTimedSerializer:
+    return URLSafeTimedSerializer(app.secret_key)
+
+
+def email_verification_token(user: dict[str, Any]) -> str:
+    return email_serializer().dumps(
+        {
+            "user_id": user.get("user_id"),
+            "email": normalize_email(user.get("email")),
+        },
+        salt=EMAIL_VERIFICATION_SALT,
+    )
+
+
+def load_email_verification_token(token: str) -> dict[str, Any]:
+    return email_serializer().loads(
+        token,
+        salt=EMAIL_VERIFICATION_SALT,
+        max_age=EMAIL_VERIFICATION_MAX_AGE_SECONDS,
+    )
+
+
+def app_external_url(endpoint: str, **values: Any) -> str:
+    public_url = os.environ.get("RESTART_PUBLIC_URL", "").strip().rstrip("/")
+    path = url_for(endpoint, **values)
+    if public_url:
+        return f"{public_url}{path}"
+    return url_for(endpoint, _external=True, **values)
+
+
+def send_email_verification(user: dict[str, Any]) -> tuple[bool, str]:
+    source_email = os.environ.get("SES_SOURCE_EMAIL") or os.environ.get("RESTART_EMAIL_FROM")
+    if not source_email:
+        return False, "SES_SOURCE_EMAIL 또는 RESTART_EMAIL_FROM 환경변수를 설정해 주세요."
+
+    try:
+        import boto3
+    except ImportError:
+        return False, "boto3 패키지가 설치되어 있지 않습니다."
+
+    token = email_verification_token(user)
+    verification_url = app_external_url("verify_email", token=token)
+    region_name = os.environ.get("SES_REGION", "ap-northeast-2")
+    client = boto3.client("ses", region_name=region_name)
+    subject = "[Re-Start] 이메일 인증을 완료해 주세요"
+    text_body = (
+        "Re-Start 이메일 인증 안내\n\n"
+        f"아래 링크를 열어 이메일 인증을 완료해 주세요.\n{verification_url}\n\n"
+        "이 링크는 7일 동안 유효합니다."
+    )
+    html_body = (
+        "<p>Re-Start 이메일 인증 안내입니다.</p>"
+        "<p>아래 링크를 열어 이메일 인증을 완료해 주세요.</p>"
+        f'<p><a href="{verification_url}">이메일 인증하기</a></p>'
+        "<p>이 링크는 7일 동안 유효합니다.</p>"
+    )
+
+    try:
+        client.send_email(
+            Source=source_email,
+            Destination={"ToAddresses": [normalize_email(user.get("email"))]},
+            Message={
+                "Subject": {"Data": subject, "Charset": "UTF-8"},
+                "Body": {
+                    "Text": {"Data": text_body, "Charset": "UTF-8"},
+                    "Html": {"Data": html_body, "Charset": "UTF-8"},
+                },
+            },
+        )
+    except Exception as exc:
+        return False, str(exc)
+
+    user["email_verification_sent_at"] = now_iso()
+    return True, ""
 
 
 def remember_session_case(case_id: str) -> None:
@@ -1482,6 +1561,27 @@ def copy_case_for_user(source_case: dict[str, Any], user_id: str) -> dict[str, A
     return copied_case
 
 
+def clean_url_values(values: dict[str, Any]) -> dict[str, Any]:
+    return {key: value for key, value in values.items() if value not in (None, "")}
+
+
+def mypage_message_from_request() -> str | None:
+    messages = [
+        ("joined", "회원가입이 완료되었습니다. 분석 이력을 이곳에서 확인할 수 있습니다."),
+        ("deleted", "분석 이력을 삭제했습니다."),
+        ("account_updated", "회원 정보를 수정했습니다."),
+        ("email_verified", "이메일 인증이 완료되었습니다."),
+        ("email_sent", "인증 메일을 발송했습니다."),
+        ("email_not_sent", "인증 메일을 발송하지 못했습니다. AWS SES 설정을 확인해 주세요."),
+        ("copied", "복사본을 생성했습니다."),
+        ("renamed", "분석 이름을 저장했습니다."),
+    ]
+    for key, message in messages:
+        if request.args.get(key) == "1":
+            return message
+    return None
+
+
 @app.get("/")
 def index():
     return render_template("landing.html", active_page="home")
@@ -1540,7 +1640,20 @@ def signup():
             USERS[user_id] = user
             save_users()
             login_user(user)
-            return redirect(url_for("mypage", joined="1"))
+            sent, _ = send_email_verification(user)
+            save_users()
+            return redirect(
+                url_for(
+                    "mypage",
+                    **clean_url_values(
+                        {
+                            "joined": "1",
+                            "email_sent": "1" if sent else "",
+                            "email_not_sent": "" if sent else "1",
+                        }
+                    ),
+                )
+            )
 
     return render_template(
         "signup.html",
@@ -1558,6 +1671,7 @@ def login():
 
     email = normalize_email(request.form.get("email"))
     error = None
+    message = "회원탈퇴가 완료되었습니다." if request.args.get("account_deleted") == "1" else None
     if request.method == "POST":
         user = find_user_by_email(email)
         password = request.form.get("password", "")
@@ -1576,6 +1690,7 @@ def login():
         email=email,
         next_path=request.args.get("next", ""),
         error=error,
+        message=message,
     )
 
 
@@ -1594,6 +1709,7 @@ def profile():
 
     if request.method == "POST":
         email_owner = find_user_by_email(form["email"]) if form["email"] else None
+        email_changed = form["email"] != normalize_email(user.get("email"))
         if not form["company"]:
             error = "회사명을 입력해 주세요."
         elif not form["contact_name"]:
@@ -1611,14 +1727,133 @@ def profile():
             user["contact_name"] = form["contact_name"]
             user["phone"] = form["phone"]
             user["email"] = form["email"]
+            if email_changed:
+                user["email_verified"] = False
+                user.pop("email_verified_at", None)
+                sent, _ = send_email_verification(user)
+            else:
+                sent = False
             user["updated_at"] = now_iso()
             save_users()
-            return redirect(url_for("mypage", profile_updated="1"))
+            return redirect(
+                url_for(
+                    "mypage",
+                    **clean_url_values(
+                        {
+                            "account_updated": "1",
+                            "email_sent": "1" if email_changed and sent else "",
+                            "email_not_sent": "1" if email_changed and not sent else "",
+                        }
+                    ),
+                )
+            )
 
     return render_template(
         "profile.html",
         active_page="mypage",
         form=form,
+        error=error,
+        message=(
+            "인증 메일을 발송했습니다."
+            if request.args.get("email_sent") == "1"
+            else (
+                "이메일 인증이 이미 완료되어 있습니다."
+                if request.args.get("email_already_verified") == "1"
+                else None
+            )
+        ),
+        warning=(
+            "인증 메일을 발송하지 못했습니다. AWS SES 설정을 확인해 주세요."
+            if request.args.get("email_not_sent") == "1"
+            else None
+        ),
+    )
+
+
+@app.post("/email-verification/send")
+@login_required
+def send_email_verification_route():
+    user = current_user()
+    assert user is not None
+    if user.get("email_verified"):
+        return redirect(url_for("profile", email_already_verified="1"))
+    sent, _ = send_email_verification(user)
+    save_users()
+    return redirect(
+        url_for(
+            "profile",
+            **clean_url_values(
+                {
+                    "email_sent": "1" if sent else "",
+                    "email_not_sent": "" if sent else "1",
+                }
+            ),
+        )
+    )
+
+
+@app.get("/verify-email")
+def verify_email():
+    token = request.args.get("token", "")
+    status = "invalid"
+    title = "이메일 인증 실패"
+    message = "인증 링크가 올바르지 않습니다. 다시 인증 메일을 요청해 주세요."
+    try:
+        payload = load_email_verification_token(token)
+    except SignatureExpired:
+        status = "expired"
+        message = "인증 링크 유효기간이 만료되었습니다. 다시 인증 메일을 요청해 주세요."
+    except BadSignature:
+        message = "인증 링크를 확인할 수 없습니다. 다시 인증 메일을 요청해 주세요."
+    else:
+        user = USERS.get(str(payload.get("user_id")))
+        email = normalize_email(payload.get("email"))
+        if user and normalize_email(user.get("email")) == email:
+            user["email_verified"] = True
+            user["email_verified_at"] = now_iso()
+            save_users()
+            if current_user_id() == user.get("user_id"):
+                return redirect(url_for("mypage", email_verified="1"))
+            status = "success"
+            title = "이메일 인증 완료"
+            message = "이메일 인증이 완료되었습니다. 이제 로그인하여 분석 이력을 확인할 수 있습니다."
+
+    return render_template(
+        "email_verification_result.html",
+        active_page="login",
+        status=status,
+        title=title,
+        message=message,
+    )
+
+
+@app.route("/account/delete", methods=["GET", "POST"])
+@login_required
+def delete_account():
+    user = current_user()
+    assert user is not None
+    error = None
+
+    if request.method == "POST":
+        email = normalize_email(request.form.get("email"))
+        if email != normalize_email(user.get("email")):
+            error = "현재 이메일을 정확히 입력해 주세요."
+        elif request.form.get("confirm_delete") != "on":
+            error = "회원탈퇴 확인에 체크해 주세요."
+        else:
+            user_id = user["user_id"]
+            for case in CASE_STORE.values():
+                if case.get("user_id") == user_id and not case.get("deleted_at"):
+                    case["deleted_at"] = now_iso()
+                    save_case(case)
+            USERS.pop(user_id, None)
+            save_users()
+            session.clear()
+            return redirect(url_for("login", account_deleted="1"))
+
+    return render_template(
+        "delete_account.html",
+        active_page="mypage",
         error=error,
     )
 
@@ -1638,27 +1873,7 @@ def mypage():
         "mypage.html",
         active_page="mypage",
         cases=case_listing_for_user(user["user_id"], request.args.get("copied_id", "")),
-        message=(
-            "회원가입이 완료되었습니다. 분석 이력을 이곳에서 확인할 수 있습니다."
-            if request.args.get("joined") == "1"
-            else (
-                "분석 이력을 삭제했습니다."
-                if request.args.get("deleted") == "1"
-                else (
-                    "회원 정보를 수정했습니다."
-                    if request.args.get("profile_updated") == "1"
-                    else (
-                        "복사본을 생성했습니다."
-                        if request.args.get("copied") == "1"
-                        else (
-                            "분석 이름을 저장했습니다."
-                            if request.args.get("renamed") == "1"
-                            else None
-                        )
-                    )
-                )
-            )
-        ),
+        message=mypage_message_from_request(),
     )
 
 

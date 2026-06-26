@@ -13,6 +13,12 @@
     {% if error %}
       <div class="notice notice-error" role="alert">{{ error }}</div>
     {% endif %}
+    {% if warning %}
+      <div class="notice notice-error" role="alert">{{ warning }}</div>
+    {% endif %}
+    {% if message %}
+      <div class="notice notice-success" role="status">{{ message }}</div>
+    {% endif %}
 
     <form class="account-form" action="{{ url_for('profile') }}" method="post">
       <div class="account-form__grid">
@@ -41,5 +47,33 @@
         <button class="button button-primary" type="submit">저장</button>
       </div>
     </form>
+
+    <section class="account-subsection" aria-label="이메일 인증">
+      <div>
+        <h2>이메일 인증</h2>
+        <p>
+          현재 이메일:
+          <strong>{{ current_user.email }}</strong>
+          {% if current_user.email_verified %}
+            <span class="status-badge is-verified">인증완료</span>
+          {% else %}
+            <span class="status-badge is-unverified">미인증</span>
+          {% endif %}
+        </p>
+      </div>
+      {% if not current_user.email_verified %}
+        <form action="{{ url_for('send_email_verification_route') }}" method="post">
+          <button class="button button-secondary" type="submit">인증 메일 보내기</button>
+        </form>
+      {% endif %}
+    </section>
+
+    <section class="account-danger-zone" aria-label="회원탈퇴">
+      <div>
+        <h2>회원탈퇴</h2>
+        <p>계정을 삭제하면 로그인할 수 없고, 저장된 분석 이력도 더 이상 마이페이지에서 확인할 수 없습니다.</p>
+      </div>
+      <a class="button button-danger" href="{{ url_for('delete_account') }}">회원탈퇴</a>
+    </section>
   </section>
 {% endblock %}

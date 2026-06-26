@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }} - 기업회생 분석{% endblock %}
+{% block main_class %}account-main{% endblock %}
+
+{% block content %}
+  <section class="account-card account-card--narrow" aria-label="이메일 인증 결과">
+    <div class="account-card__header">
+      <h1>{{ title }}</h1>
+      <p>{{ message }}</p>
+    </div>
+
+    <div class="account-actions">
+      {% if current_user %}
+        <a class="button button-primary" href="{{ url_for('mypage') }}">마이페이지로 이동</a>
+      {% else %}
+        <a class="button button-primary" href="{{ url_for('login') }}">로그인</a>
+      {% endif %}
+      <a class="button button-secondary" href="{{ url_for('index') }}">처음으로</a>
+    </div>
+  </section>
+{% endblock %}
