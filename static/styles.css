@@ -1779,7 +1779,7 @@ button {
 
 .input,
 .select {
-  background: #ffffff;
+  background-color: #ffffff;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
   color: var(--color-text);
@@ -1788,9 +1788,19 @@ button {
   width: 100%;
 }
 
+.select,
+select.input {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='16'%20height='16'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='%23132421'%20stroke-width='2.4'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpath%20d='m6%209%206%206%206-6'/%3E%3C/svg%3E");
+  background-position: right 12px center;
+  background-repeat: no-repeat;
+  background-size: 14px 14px;
+  padding-right: 36px;
+}
+
 .data-table .input-cell .input,
 .data-table .input-cell .select {
-  background: #fffefa;
+  background-color: #fffefa;
   border-color: #d7bf75;
 }
 
