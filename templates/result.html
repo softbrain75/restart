@@ -16,11 +16,11 @@
     {% set consultation_form = consultation_form or case.get("consultation", {}) %}
 
     {% set current_step = "result" %}
-    {% set show_worksheet_tab = detailed_unlocked %}
+    {% set show_worksheet_tab = current_admin %}
     {% set workflow_meta_label = case.company_name %}
     {% include "_workflow_steps.html" %}
 
-    <section class="result-workbench" aria-label="{{ '결과와 작업시트 확인' if detailed_unlocked else '결과와 상담 신청' }}">
+    <section class="result-workbench" aria-label="{{ '결과와 작업시트 확인' if current_admin else ('결과 확인' if detailed_unlocked else '결과와 상담 신청') }}">
       <div class="result-pane tab-panel is-active" data-result-panel="summary">
         <section class="section-header">
           <div>
@@ -336,7 +336,7 @@
         {% endif %}
       </div>
 
-      {% if detailed_unlocked %}
+      {% if current_admin %}
       <aside class="result-pane result-pane--worksheet tab-panel" data-result-panel="worksheet">
         <div class="result-pane__header">
           <div>
