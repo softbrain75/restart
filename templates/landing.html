@@ -6,13 +6,23 @@
     <title>Re-Start - 기업회생 재무분석 시스템</title>
     <meta name="description" content="기업회생 재무분석을 위한 시스템">
     <link rel="stylesheet" href="{{ url_for('static', filename='top-nav.css') }}?v=3">
-    <link rel="stylesheet" href="{{ url_for('static', filename='landing.css') }}?v=7">
+    <link rel="stylesheet" href="{{ url_for('static', filename='landing.css') }}?v=8">
   </head>
   <body>
     {% set active_page = "home" %}
     {% include "_top_nav.html" %}
 
     <main class="landing-page">
+      <section class="landing-slogan" aria-label="Re-Start 슬로건">
+        <div class="landing-container landing-slogan__inner">
+          <span>Re-Start만의 기업회생 예비진단</span>
+          <strong>
+            <span class="landing-slogan__line">감이 아니라 숫자로</span>
+            <span class="landing-slogan__line">먼저 판단합니다</span>
+          </strong>
+        </div>
+      </section>
+
       <section class="landing-hero" aria-label="기업회생 예비진단">
         <div class="analysis-stage" aria-hidden="true">
           <div class="analysis-grid"></div>
@@ -82,10 +92,6 @@
 
         <div class="landing-container landing-hero__content">
           <div class="landing-hero__copy">
-            <div class="landing-claim">
-              <span>Re-Start만의 기업회생 예비진단</span>
-              <strong>감이 아니라 숫자로 먼저 판단합니다</strong>
-            </div>
             <span class="landing-eyebrow">Re-Start Financial Recovery Check</span>
             <h1>기업회생 예비진단</h1>
             <p>재무자료를 기반으로 회생절차 검토에 필요한 핵심 수치를 빠르게 확인합니다.</p>
