@@ -280,7 +280,8 @@ svg {
   font-weight: 700;
   line-height: 1.62;
   margin: 0;
-  max-width: 720px;
+  max-width: 960px;
+  white-space: nowrap;
 }
 
 .landing-slogan__actions {
@@ -1092,6 +1093,7 @@ svg {
 
   .landing-slogan__copy {
     max-width: 600px;
+    white-space: normal;
   }
 
   .slogan-data-card {
