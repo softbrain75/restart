@@ -1060,6 +1060,11 @@ button {
   color: var(--color-text);
 }
 
+.workflow-panel__download {
+  min-height: 34px;
+  padding: 0 12px;
+}
+
 .summary-grid {
   align-items: stretch;
   display: grid;

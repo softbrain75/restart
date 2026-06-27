@@ -44,6 +44,9 @@
   </nav>
   {% if workflow_meta_label %}
     <div class="workflow-panel__meta">
+      {% if current_admin and case %}
+        <a class="button button-secondary workflow-panel__download" href="{{ url_for('admin_case_extracted_workbook', case_id=case.case_id) }}">엑셀 다운로드</a>
+      {% endif %}
       <strong>{{ workflow_meta_label }}</strong>
     </div>
   {% endif %}
