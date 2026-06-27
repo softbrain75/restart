@@ -1659,8 +1659,8 @@ def append_table_sheet(
     return worksheet
 
 
-def append_case_input_sheets(workbook: Workbook, case: dict[str, Any], used_titles: set[str]) -> None:
-    append_table_sheet(
+def append_case_input_sheets(workbook: Workbook, case: dict[str, Any], used_titles: set[str]) -> dict[str, str]:
+    asset_sheet = append_table_sheet(
         workbook,
         "자산가치산정",
         ["계정과목", "장부금액", "실사가치", "청산가치", "편집가능"],
@@ -1677,7 +1677,7 @@ def append_case_input_sheets(workbook: Workbook, case: dict[str, Any], used_titl
         used_titles,
     )
 
-    append_table_sheet(
+    debt_sheet = append_table_sheet(
         workbook,
         "채무입력",
         ["구분", "채무금액"],
@@ -1686,7 +1686,7 @@ def append_case_input_sheets(workbook: Workbook, case: dict[str, Any], used_titl
     )
 
     income_rows = case.get("income_rows", [])
-    append_table_sheet(
+    income_sheet = append_table_sheet(
         workbook,
         "손익추정",
         ["구분", "항목", "전전년도(Y-2)", "전년도(Y-1)", "성장률/원가율 또는 고정/변동", "월평균(기본값)", "최종입력값"],
@@ -1710,13 +1710,19 @@ def append_case_input_sheets(workbook: Workbook, case: dict[str, Any], used_titl
         for row in case.get("collateral_rows", [])
     ]
     rent_rows = [["재임차", row.get("category", ""), row.get("amount", ""), ""] for row in case.get("rent_rows", [])]
-    append_table_sheet(
+    collateral_sheet = append_table_sheet(
         workbook,
         "담보",
         ["구분", "항목", "실사가치/금액", "청산가치"],
         collateral_rows + rent_rows,
         used_titles,
     )
+    return {
+        "assets": asset_sheet.title,
+        "debts": debt_sheet.title,
+        "income": income_sheet.title,
+        "collateral": collateral_sheet.title,
+    }
 
 
 def append_result_sheets(
@@ -1767,11 +1773,11 @@ def append_result_sheets(
                 row.get("label", ""),
                 row.get("debt", 0),
                 row.get("liquidation_repayment", 0),
-                row.get("liquidation_rate", 0) / 100,
+                row.get("liquidation_rate", 0),
                 row.get("going_repayment", 0),
-                row.get("going_rate", 0) / 100,
+                row.get("going_rate", 0),
                 row.get("repayment_difference", 0),
-                row.get("rate_difference", 0) / 100,
+                row.get("rate_difference", 0),
             ]
             for row in result.get("comparison_rows", [])
         ],
@@ -1779,14 +1785,427 @@ def append_result_sheets(
     )
 
 
-def append_worksheet_review_sheet(workbook: Workbook, result: dict[str, Any], used_titles: set[str]) -> None:
+REVIEW_COLUMNS = ("C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N")
+REVIEW_PERIOD_COLUMNS = REVIEW_COLUMNS[:11]
+
+
+def quote_excel_sheet_name(sheet_name: str) -> str:
+    escaped = sheet_name.replace("'", "''")
+    return f"'{escaped}'"
+
+
+def external_cell(sheet_name: str, cell: str) -> str:
+    return f"{quote_excel_sheet_name(sheet_name)}!{cell}"
+
+
+def excel_sum(terms: list[str]) -> str:
+    terms = [term for term in terms if term]
+    if not terms:
+        return "0"
+    if len(terms) == 1:
+        return terms[0]
+    return f"SUM({','.join(terms)})"
+
+
+def excel_formula_value(value: Any) -> str:
+    if isinstance(value, date):
+        return f"DATE({value.year},{value.month},{value.day})"
+    if value in (None, ""):
+        return '""'
+    if isinstance(value, (int, float)):
+        return repr(float(value))
+    escaped = str(value).replace('"', '""')
+    return f'"{escaped}"'
+
+
+def worksheet_formula_sources(case: dict[str, Any], sheet_titles: dict[str, str]) -> dict[str, Any]:
+    financial_rows = case.get("financial_rows", [])
+    current_rows: list[int] = []
+    non_current_rows: list[int] = []
+    cash_row = None
+    section = None
+
+    for index, row in enumerate(financial_rows, start=2):
+        account = str(row.get("account", ""))
+        if "비유동자산" in account:
+            section = "non_current"
+            continue
+        if "유동자산" in account:
+            section = "current"
+            continue
+        if section is None or not row.get("is_editable"):
+            continue
+        if section == "current":
+            current_rows.append(index)
+        else:
+            non_current_rows.append(index)
+        if cash_row is None and "현금" in account:
+            cash_row = index
+
+    debt_rows = {
+        row.get("field"): index
+        for index, row in enumerate(case.get("debt_rows", []), start=2)
+        if row.get("field")
+    }
+    income_rows = case.get("income_rows", [])
+    income_by_text = {
+        text: next((index for index, row in enumerate(income_rows, start=2) if text in str(row.get("account", ""))), None)
+        for text in ("매출액", "매출원가", "영업이익")
+    }
+    expense_rows = [
+        (index, row)
+        for index, row in enumerate(income_rows, start=2)
+        if row.get("section") == "expense" and row.get("is_editable")
+    ]
+    collateral_rows = {
+        row.get("field"): index
+        for index, row in enumerate(case.get("collateral_rows", []), start=2)
+        if row.get("field")
+    }
+    rent_start = 2 + len(case.get("collateral_rows", []))
+    rent_rows = {
+        row.get("field"): index
+        for index, row in enumerate(case.get("rent_rows", []), start=rent_start)
+        if row.get("field")
+    }
+
+    return {
+        "sheet_titles": sheet_titles,
+        "current_asset_rows": current_rows,
+        "non_current_asset_rows": non_current_rows,
+        "cash_row": cash_row,
+        "debt_rows": debt_rows,
+        "income_by_text": income_by_text,
+        "expense_rows": expense_rows,
+        "collateral_rows": collateral_rows,
+        "rent_rows": rent_rows,
+    }
+
+
+def worksheet_review_formulas(
+    case: dict[str, Any],
+    result: dict[str, Any],
+    sheet_titles: dict[str, str],
+    row_index_by_number: dict[int, int],
+) -> tuple[dict[tuple[int, str], str], dict[tuple[int, str], str]]:
+    sources = worksheet_formula_sources(case, sheet_titles)
+    formulas: dict[tuple[int, str], str] = {}
+    formats: dict[tuple[int, str], str] = {}
+
+    def cell(row_number_value: int, column: str) -> str:
+        return f"{column}{row_index_by_number[row_number_value]}"
+
+    def set_formula(row_number_value: int, column: str, formula: str, number_format: str | None = "#,##0") -> None:
+        formulas[(row_number_value, column)] = formula if formula.startswith("=") else f"={formula}"
+        if number_format:
+            formats[(row_number_value, column)] = number_format
+
+    def set_value(row_number_value: int, column: str, value: Any, number_format: str | None = "#,##0") -> None:
+        set_formula(row_number_value, column, excel_formula_value(value), number_format)
+
+    def source(sheet_key: str, column: str, row_index: int | None, default: str = "0") -> str:
+        if not row_index:
+            return default
+        return external_cell(sources["sheet_titles"][sheet_key], f"{column}{row_index}")
+
+    def source_sum(sheet_key: str, column: str, row_indexes: list[int]) -> str:
+        return excel_sum([source(sheet_key, column, row_index) for row_index in row_indexes])
+
+    def safe_div(numerator: str, denominator: str) -> str:
+        return f"IFERROR({numerator}/{denominator},0)"
+
+    current_rows = sources["current_asset_rows"]
+    non_current_rows = sources["non_current_asset_rows"]
+    for row_number_value, source_rows in ((7, current_rows), (38, non_current_rows)):
+        set_formula(row_number_value, "C", source_sum("assets", "B", source_rows))
+        set_formula(row_number_value, "D", source_sum("assets", "C", source_rows))
+        set_formula(row_number_value, "E", source_sum("assets", "D", source_rows))
+    for column in ("C", "D", "E"):
+        set_formula(315, column, f"SUM({cell(7, column)},{cell(38, column)})")
+
+    debt_row_map = sources["debt_rows"]
+    debt_rows = [
+        (71, "secured_debt"),
+        (72, "unsecured_financial_debt"),
+        (73, "other_unsecured_debt"),
+        (74, "related_party_debt"),
+        (75, "unpaid_wages"),
+        (76, "retirement_benefit"),
+        (77, "tax_arrears"),
+    ]
+    for row_number_value, key in debt_rows:
+        set_formula(row_number_value, "C", source("debts", "B", debt_row_map.get(key)))
+    set_formula(78, "C", f"SUM({cell(71, 'C')}:{cell(77, 'C')})")
+
+    income_rows = sources["income_by_text"]
+    sales_row = income_rows.get("매출액")
+    cost_row = income_rows.get("매출원가")
+    operating_profit_row = income_rows.get("영업이익")
+    for row_number_value, income_row in ((86, sales_row), (87, cost_row)):
+        set_formula(row_number_value, "C", source("income", "C", income_row))
+        set_formula(row_number_value, "D", source("income", "D", income_row))
+        set_formula(row_number_value, "F", source("income", "E", income_row, '""'), None)
+        set_formula(row_number_value, "G", source("income", "G", income_row), "0.00%")
+    set_formula(129, "C", source("income", "C", operating_profit_row))
+    set_formula(129, "D", source("income", "D", operating_profit_row))
+
+    collateral_row_map = sources["collateral_rows"]
+    collateral_rows = [
+        (136, "collateral_except_machinery"),
+        (137, "collateral_machinery"),
+        (138, "savings"),
+        (139, "insurance"),
+        (140, "securities"),
+        (141, "other_non_business_assets"),
+    ]
+    for row_number_value, key in collateral_rows:
+        set_formula(row_number_value, "C", source("collateral", "C", collateral_row_map.get(key)))
+        set_formula(row_number_value, "D", source("collateral", "D", collateral_row_map.get(key)))
+    set_formula(142, "C", f"SUM({cell(136, 'C')}:{cell(141, 'C')})")
+    set_formula(142, "D", f"SUM({cell(136, 'D')}:{cell(141, 'D')})")
+
+    rent_row_map = sources["rent_rows"]
+    set_formula(146, "C", source("collateral", "C", rent_row_map.get("rent_deposit")))
+    set_formula(147, "C", source("collateral", "C", rent_row_map.get("monthly_rent")))
+
+    assumptions = result.get("assumptions")
+    dates = result.get("dates", {})
+    set_value(161, "C", getattr(assumptions, "cpi_rate", 0.019), "0.00%")
+    set_value(162, "C", getattr(assumptions, "bond_yield_3y", 0.02335), "0.00%")
+    set_value(163, "C", getattr(assumptions, "repayment_present_value_rate", 0.0542), "0.00%")
+    set_value(164, "C", dates.get("prep_days", 0))
+    set_value(165, "C", dates.get("total_days", 0))
+    set_value(168, "C", dates.get("today", ""), "yyyy-mm-dd")
+    set_value(169, "C", dates.get("end", ""), "yyyy-mm-dd")
+    set_formula(169, "D", cell(164, "C"))
+    set_value(170, "C", dates.get("start", ""), "yyyy-mm-dd")
+    set_formula(170, "D", cell(165, "C"))
+
+    set_formula(185, "D", f"SUM({cell(136, 'C')},{cell(137, 'C')})")
+    set_formula(185, "E", f"{cell(315, 'E')}-{cell(185, 'D')}")
+    set_formula(185, "G", cell(315, "E"))
+    set_formula(186, "D", f"-{cell(185, 'D')}*0.05")
+    set_formula(186, "E", f"-{cell(185, 'E')}*0.05")
+    set_formula(186, "G", f"-{cell(185, 'G')}*0.05")
+    for column in ("D", "E", "G"):
+        set_formula(187, column, f"{cell(185, column)}+{cell(186, column)}")
+
+    liquidation_debt_sources = {
+        189: 75,
+        190: 76,
+        191: 77,
+        192: 71,
+        193: 72,
+        194: 73,
+        195: 74,
+    }
+    for row_number_value, source_row in liquidation_debt_sources.items():
+        set_formula(row_number_value, "C", cell(source_row, "C"))
+
+    set_formula(192, "D", f"MIN({cell(192, 'C')},{cell(187, 'D')})")
+    set_formula(189, "D", f"MIN({cell(189, 'C')},{cell(187, 'D')}-{cell(192, 'D')})")
+    set_formula(190, "D", f"MIN({cell(190, 'C')},{cell(187, 'D')}-{cell(192, 'D')}-{cell(189, 'D')})")
+    set_formula(191, "D", f"MIN({cell(191, 'C')},{cell(187, 'D')}-{cell(192, 'D')}-{cell(189, 'D')}-{cell(190, 'D')})")
+    for row_number_value in (193, 194, 195):
+        set_value(row_number_value, "D", 0)
+
+    set_formula(189, "E", f"MIN({cell(189, 'C')}-{cell(189, 'D')},{cell(187, 'E')})")
+    set_formula(190, "E", f"MIN({cell(190, 'C')}-{cell(190, 'D')},{cell(187, 'E')}-{cell(189, 'E')})")
+    set_formula(191, "E", f"MIN({cell(191, 'C')}-{cell(191, 'D')},{cell(187, 'E')}-{cell(189, 'E')}-{cell(190, 'E')})")
+    secured_unsecured_denominator = f"SUM({cell(192, 'C')}:{cell(195, 'C')})"
+    unsecured_priority_remainder = f"{cell(187, 'E')}-SUM({cell(189, 'E')}:{cell(191, 'E')})"
+    for row_number_value in (192, 193, 194, 195):
+        set_formula(
+            row_number_value,
+            "E",
+            f"MIN({cell(row_number_value, 'C')}-{cell(row_number_value, 'D')},IFERROR(({unsecured_priority_remainder})*{cell(row_number_value, 'C')}/({secured_unsecured_denominator}),0))",
+        )
+
+    residual_pool = f"{cell(187, 'E')}-SUM({cell(189, 'E')}:{cell(195, 'E')})"
+    residual_denominator = f"SUM({cell(193, 'C')}:{cell(195, 'C')})"
+    for row_number_value in (189, 190, 191, 192):
+        set_value(row_number_value, "F", 0)
+    for row_number_value in (193, 194, 195):
+        set_formula(
+            row_number_value,
+            "F",
+            f"MIN({cell(row_number_value, 'C')}-{cell(row_number_value, 'D')}-{cell(row_number_value, 'E')},IFERROR(({residual_pool})*{cell(row_number_value, 'C')}/({residual_denominator}),0))",
+        )
+    for row_number_value in range(189, 196):
+        set_formula(row_number_value, "G", f"SUM({cell(row_number_value, 'D')}:{cell(row_number_value, 'F')})")
+        set_formula(row_number_value, "H", f"{cell(row_number_value, 'C')}-{cell(row_number_value, 'G')}")
+        set_formula(row_number_value, "I", safe_div(cell(row_number_value, "G"), cell(row_number_value, "C")), "0.00%")
+    for column in ("C", "D", "E", "F", "G", "H"):
+        set_formula(196, column, f"SUM({cell(189, column)}:{cell(195, column)})")
+
+    prep_ratio = safe_div(cell(164, "C"), cell(165, "C"))
+    set_formula(204, "C", f"IFERROR({cell(86, 'D')}*(1+{cell(86, 'G')})*{cell(164, 'C')}/{cell(165, 'C')},0)")
+    set_formula(204, "D", f"IFERROR({cell(204, 'C')}/({prep_ratio})*(1+{cell(86, 'G')}),0)")
+    previous_column = "D"
+    for column in REVIEW_PERIOD_COLUMNS[2:]:
+        set_formula(204, column, f"{cell(204, previous_column)}*(1+{cell(86, 'G')})")
+        previous_column = column
+    for column in REVIEW_PERIOD_COLUMNS:
+        set_formula(205, column, f"{cell(204, column)}*{cell(87, 'G')}")
+        set_formula(206, column, f"{cell(204, column)}-{cell(205, column)}")
+
+    expense_rows = sources["expense_rows"]
+
+    def expense_term(row_index: int, row: dict[str, Any], period_index: int, period_column: str) -> str:
+        final_value_ref = f"N({source('income', 'G', row_index)})"
+        if row.get("cost_type") == "variable":
+            return f"{cell(204, period_column)}*{final_value_ref}"
+        if period_index == 0:
+            return f"{final_value_ref}*12*{prep_ratio}"
+        return f"{final_value_ref}*12*(1+{cell(161, 'C')})^{period_index}"
+
+    for period_index, column in enumerate(REVIEW_PERIOD_COLUMNS):
+        terms = [
+            expense_term(row_index, row, period_index, column)
+            for row_index, row in expense_rows
+        ]
+        rent_term = (
+            f"{cell(147, 'C')}*12*{prep_ratio}"
+            if period_index == 0
+            else f"{cell(147, 'C')}*12*(1+{cell(161, 'C')})^{period_index}"
+        )
+        terms.append(rent_term)
+        set_formula(207, column, excel_sum(terms))
+        set_formula(248, column, f"{cell(206, column)}-{cell(207, column)}")
+        set_formula(254, column, cell(248, column))
+    set_formula(254, "N", f"SUM({cell(254, 'C')}:{cell(254, 'M')})")
+
+    set_formula(258, "C", f"{cell(162, 'C')}+0.065", "0.00%")
+    for period_index, column in enumerate(REVIEW_PERIOD_COLUMNS):
+        if period_index == 0:
+            set_formula(261, column, prep_ratio, "0.0000")
+        else:
+            previous = REVIEW_PERIOD_COLUMNS[period_index - 1]
+            set_formula(261, column, f"{cell(261, previous)}+1", "0.0000")
+        set_formula(255, column, f"1/(1+{cell(258, 'C')})^{cell(261, column)}", "0.0000")
+        set_formula(262, column, cell(255, column), "0.0000")
+        set_formula(256, column, f"{cell(254, column)}*{cell(255, column)}")
+    set_formula(256, "N", f"SUM({cell(256, 'C')}:{cell(256, 'M')})")
+    set_formula(266, "C", safe_div(cell(248, "M"), cell(258, "C")))
+    set_formula(267, "C", cell(255, "M"), "0.0000")
+    set_formula(268, "C", f"{cell(266, 'C')}*{cell(267, 'C')}")
+    set_formula(272, "C", f"{cell(256, 'N')}+{cell(268, 'C')}")
+    set_formula(273, "C", cell(256, "N"))
+    set_formula(274, "C", cell(268, "C"))
+    set_formula(275, "C", f"{cell(142, 'C')}-{cell(137, 'C')}")
+    set_formula(276, "C", f"{cell(272, 'C')}+{cell(275, 'C')}")
+
+    cash_row = sources["cash_row"]
+    set_formula(281, "D", source("assets", "C", cash_row))
+    set_formula(282, "D", cell(254, "N"))
+    set_formula(284, "D", f"({cell(142, 'C')}-{cell(137, 'C')})*0.95")
+    set_formula(285, "D", f"-{cell(146, 'C')}")
+    set_formula(283, "D", f"{cell(284, 'D')}+{cell(285, 'D')}")
+    set_formula(286, "D", f"SUM({cell(281, 'D')}:{cell(283, 'D')})")
+
+    going_debt_sources = {
+        287: 75,
+        288: 76,
+        289: 77,
+        290: 71,
+        291: None,
+        292: 72,
+        293: 73,
+        294: 74,
+    }
+    for row_number_value, source_row in going_debt_sources.items():
+        set_formula(row_number_value, "C", cell(source_row, "C") if source_row else "0")
+    set_formula(287, "D", f"MAX(MIN({cell(287, 'C')},{cell(286, 'D')}),0)")
+    set_value(288, "D", 0)
+    set_formula(289, "D", f"MAX(MIN({cell(289, 'C')},{cell(286, 'D')}-{cell(287, 'D')}),0)")
+    set_formula(290, "D", f"MAX(MIN({cell(286, 'D')}-{cell(287, 'D')}-{cell(289, 'D')},MAX({cell(290, 'C')},{cell(192, 'G')})),0)")
+    set_formula(291, "D", f"MIN({cell(286, 'D')}-{cell(287, 'D')}-{cell(289, 'D')}-{cell(290, 'D')},{cell(290, 'D')}*{cell(300, 'C')}/365*{cell(301, 'C')})")
+    unsecured_denominator = f"{cell(292, 'C')}+{cell(293, 'C')}"
+    unsecured_remainder = f"{cell(286, 'D')}-{cell(287, 'D')}-{cell(289, 'D')}-{cell(290, 'D')}-{cell(291, 'D')}"
+    for row_number_value in (292, 293):
+        set_formula(
+            row_number_value,
+            "D",
+            f"MAX(MIN({cell(row_number_value, 'C')},({unsecured_remainder})*IFERROR({cell(row_number_value, 'C')}/({unsecured_denominator}),0)),0)",
+        )
+    set_value(294, "D", 0)
+    for row_number_value in range(287, 295):
+        set_formula(row_number_value, "E", f'IF({cell(row_number_value, "C")}=0,"",{cell(row_number_value, "D")}/{cell(row_number_value, "C")})', "0.00%")
+    for column in ("C", "D"):
+        set_formula(295, column, f"SUM({cell(287, column)}:{cell(294, column)})")
+    set_formula(296, "D", f"{cell(286, 'D')}-{cell(295, 'D')}")
+    set_formula(300, "C", f"{cell(164, 'C')}+{cell(165, 'C')}")
+    set_formula(301, "C", f"{cell(163, 'C')}+0.005", "0.00%")
+
+    set_formula(320, "C", cell(315, "E"))
+    set_formula(320, "D", cell(276, "C"))
+    set_formula(320, "E", f"{cell(320, 'D')}-{cell(320, 'C')}")
+
+    comparison_sources = {
+        326: (189, 287),
+        327: (191, 289),
+        328: (192, 290),
+        329: (193, 292),
+        330: (194, 293),
+        331: (195, 294),
+    }
+    for row_number_value, (liquidation_row, going_row) in comparison_sources.items():
+        set_formula(row_number_value, "C", cell(liquidation_row, "C"))
+        set_formula(row_number_value, "D", cell(liquidation_row, "G"))
+        set_formula(row_number_value, "E", cell(liquidation_row, "I"), "0.00%")
+        set_formula(row_number_value, "F", cell(going_row, "D"))
+        set_formula(row_number_value, "G", cell(going_row, "E"), "0.00%")
+        set_formula(row_number_value, "H", f"{cell(row_number_value, 'F')}-{cell(row_number_value, 'D')}")
+        set_formula(row_number_value, "I", f"{cell(row_number_value, 'G')}-{cell(row_number_value, 'E')}", "0.00%")
+    for column in ("C", "D", "F", "H"):
+        set_formula(332, column, f"SUM({cell(326, column)}:{cell(331, column)})")
+    set_formula(337, "C", f'IF({cell(320, "D")}>{cell(320, "C")},"Positive","Negative")', None)
+    set_formula(
+        342,
+        "C",
+        f'IF(AND({cell(326, "I")}>=0,{cell(327, "I")}>=0,{cell(328, "I")}>=0,{cell(329, "I")}>=0,{cell(330, "I")}>=0),"Positive","Negative")',
+        None,
+    )
+    set_formula(
+        347,
+        "C",
+        f'IF(AND({cell(337, "C")}="Positive",{cell(342, "C")}="Positive",{cell(329, "G")}>=30%),"Positive","Negative")',
+        None,
+    )
+    set_formula(352, "C", cell(347, "C"), None)
+
+    return formulas, formats
+
+
+def append_worksheet_review_sheet(
+    workbook: Workbook,
+    case: dict[str, Any],
+    result: dict[str, Any],
+    sheet_titles: dict[str, str],
+    used_titles: set[str],
+) -> None:
     review = result.get("worksheet_review", {})
     columns = ["행", "작업시트 항목"] + list(review.get("columns", []))
-    rows = [
-        [row.get("row_number", ""), row.get("label", "")] + list(row.get("values", []))
-        for row in review.get("rows", [])
-    ]
-    append_table_sheet(workbook, "작업시트 확인", columns, rows, used_titles)
+    review_rows = list(review.get("rows", []))
+    row_index_by_number = {
+        row.get("row_number"): index
+        for index, row in enumerate(review_rows, start=2)
+        if isinstance(row.get("row_number"), int)
+    }
+    formulas, formats = worksheet_review_formulas(case, result, sheet_titles, row_index_by_number)
+    rows = []
+    for row in review_rows:
+        row_number_value = row.get("row_number", "")
+        values = []
+        for column, value in zip(REVIEW_COLUMNS, row.get("values", [])):
+            values.append(formulas.get((row_number_value, column), value))
+        rows.append([row_number_value, row.get("label", "")] + values)
+
+    worksheet = append_table_sheet(workbook, "작업시트 확인", columns, rows, used_titles)
+    for (row_number_value, column), number_format in formats.items():
+        row_index = row_index_by_number.get(row_number_value)
+        if row_index:
+            worksheet[f"{column}{row_index}"].number_format = number_format
 
 
 def build_extracted_workbook_download(case: dict[str, Any]) -> io.BytesIO:
@@ -1825,7 +2244,7 @@ def build_extracted_workbook_download(case: dict[str, Any]) -> io.BytesIO:
 
             style_extracted_worksheet(worksheet)
 
-    append_case_input_sheets(workbook, case, used_titles)
+    sheet_titles = append_case_input_sheets(workbook, case, used_titles)
 
     try:
         result = calculate_case_result(case)
@@ -1833,8 +2252,11 @@ def build_extracted_workbook_download(case: dict[str, Any]) -> io.BytesIO:
         result = None
     if result:
         append_result_sheets(workbook, result, used_titles)
-        append_worksheet_review_sheet(workbook, result, used_titles)
+        append_worksheet_review_sheet(workbook, case, result, sheet_titles, used_titles)
 
+    workbook.calculation.calcMode = "auto"
+    workbook.calculation.fullCalcOnLoad = True
+    workbook.calculation.forceFullCalc = True
     output = io.BytesIO()
     workbook.save(output)
     output.seek(0)
