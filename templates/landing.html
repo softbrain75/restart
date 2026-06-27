@@ -6,7 +6,7 @@
     <title>Re-Start - 기업회생 재무분석 시스템</title>
     <meta name="description" content="기업회생 재무분석을 위한 시스템">
     <link rel="stylesheet" href="{{ url_for('static', filename='top-nav.css') }}?v=3">
-    <link rel="stylesheet" href="{{ url_for('static', filename='landing.css') }}?v=11">
+    <link rel="stylesheet" href="{{ url_for('static', filename='landing.css') }}?v=13">
   </head>
   <body>
     {% set active_page = "home" %}
@@ -181,6 +181,46 @@
               <h2>웹 기반 처리</h2>
               <p>엑셀 파일을 업로드하면 서버에서 분석하고 결과를 제공합니다.</p>
             </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="landing-free" id="free-diagnosis" aria-label="무료 예비진단 안내">
+        <div class="landing-container landing-free__inner">
+          <div class="landing-free__copy">
+            <span class="landing-free__eyebrow">무료 예비진단</span>
+            <h2>횟수 제한 없이<br>무료로 확인하세요</h2>
+            <p>
+              기업회생 가능성은 조건을 바꿔가며 여러 번 검토해야 합니다. 파일을 다시 올리거나 입력값을 조정해도 비용이 발생하지 않습니다.
+            </p>
+            <div class="landing-free__badges" aria-label="무료 진단 특징">
+              <span>진단 횟수 제한 없음</span>
+              <span>결제 정보 없음</span>
+              <span>상담 전 사전 검토</span>
+            </div>
+          </div>
+
+          <div class="free-meter" aria-hidden="true">
+            <div class="free-meter__ring"></div>
+            <div class="free-meter__count">
+              <span>진단 횟수</span>
+              <strong>
+                <i>1회</i>
+                <i>10회</i>
+                <i>100회</i>
+              </strong>
+            </div>
+            <div class="free-meter__price">
+              <span>이용 금액</span>
+              <strong>0원</strong>
+            </div>
+            <div class="free-meter__track">
+              <i></i>
+            </div>
+            <div class="free-meter__note">
+              <span>반복 분석 가능</span>
+              <span>무료</span>
+            </div>
           </div>
         </div>
       </section>
