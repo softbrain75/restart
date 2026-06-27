@@ -1592,6 +1592,203 @@ def style_extracted_worksheet(worksheet: Any) -> None:
     worksheet.freeze_panes = "A2"
 
 
+def excel_display_value(value: Any) -> Any:
+    if value in (None, ""):
+        return None
+    if isinstance(value, (int, float)):
+        return value
+
+    text = str(value).strip()
+    if not text:
+        return None
+    if text.endswith("%"):
+        percent = parse_percent_text(text)
+        return text if percent is None else percent / 100
+
+    number = parse_number_text(text)
+    if number is not None:
+        return int(number) if number.is_integer() else number
+    return text
+
+
+def append_table_sheet(
+    workbook: Workbook,
+    title: str,
+    headers: list[str],
+    rows: list[list[Any]],
+    used_titles: set[str],
+) -> Any:
+    worksheet = workbook.create_sheet(safe_excel_sheet_title(title, used_titles))
+    worksheet.append(headers)
+    for row in rows:
+        worksheet.append([excel_display_value(value) for value in row])
+
+    header_fill = PatternFill("solid", fgColor="EAF1F0")
+    border_color = "D6DEDB"
+    thin_border = Border(
+        left=Side(style="thin", color=border_color),
+        right=Side(style="thin", color=border_color),
+        top=Side(style="thin", color=border_color),
+        bottom=Side(style="thin", color=border_color),
+    )
+
+    for cell in worksheet[1]:
+        cell.fill = header_fill
+        cell.font = Font(bold=True)
+        cell.alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
+
+    for row in worksheet.iter_rows():
+        for cell in row:
+            cell.border = thin_border
+            cell.alignment = Alignment(vertical="center", wrap_text=True)
+            if isinstance(cell.value, (int, float)):
+                cell.alignment = Alignment(horizontal="right", vertical="center", wrap_text=True)
+                if "율" in str(worksheet.cell(row=1, column=cell.column).value or "") or str(cell.value).endswith("%"):
+                    cell.number_format = "0.00%"
+                else:
+                    cell.number_format = "#,##0"
+
+    for column_index in range(1, worksheet.max_column + 1):
+        max_length = 10
+        for cell in worksheet.iter_cols(min_col=column_index, max_col=column_index, values_only=False).__next__():
+            value = "" if cell.value is None else str(cell.value)
+            max_length = max(max_length, min(len(value) + 2, 42))
+        worksheet.column_dimensions[get_column_letter(column_index)].width = max_length
+
+    worksheet.freeze_panes = "A2"
+    return worksheet
+
+
+def append_case_input_sheets(workbook: Workbook, case: dict[str, Any], used_titles: set[str]) -> None:
+    append_table_sheet(
+        workbook,
+        "자산가치산정",
+        ["계정과목", "장부금액", "실사가치", "청산가치", "편집가능"],
+        [
+            [
+                row.get("account", ""),
+                row.get("amount", ""),
+                row.get("audit_value", ""),
+                row.get("liquidation_value", ""),
+                "Y" if row.get("is_editable") else "N",
+            ]
+            for row in case.get("financial_rows", [])
+        ],
+        used_titles,
+    )
+
+    append_table_sheet(
+        workbook,
+        "채무입력",
+        ["구분", "채무금액"],
+        [[row.get("category", ""), row.get("debt_amount", "")] for row in case.get("debt_rows", [])],
+        used_titles,
+    )
+
+    income_rows = case.get("income_rows", [])
+    append_table_sheet(
+        workbook,
+        "손익추정",
+        ["구분", "항목", "전전년도(Y-2)", "전년도(Y-1)", "성장률/원가율 또는 고정/변동", "월평균(기본값)", "최종입력값"],
+        [
+            [
+                "매출" if row.get("section") == "sales" else "판매비와 관리비",
+                row.get("account", ""),
+                row.get("y_minus_1", ""),
+                row.get("y", ""),
+                row.get("metric_display") or row.get("cost_type", ""),
+                row.get("monthly_average_display", ""),
+                row.get("final_value", ""),
+            ]
+            for row in income_rows
+        ],
+        used_titles,
+    )
+
+    collateral_rows = [
+        ["담보등자산", row.get("category", ""), row.get("audit_value", ""), row.get("liquidation_value", "")]
+        for row in case.get("collateral_rows", [])
+    ]
+    rent_rows = [["재임차", row.get("category", ""), row.get("amount", ""), ""] for row in case.get("rent_rows", [])]
+    append_table_sheet(
+        workbook,
+        "담보",
+        ["구분", "항목", "실사가치/금액", "청산가치"],
+        collateral_rows + rent_rows,
+        used_titles,
+    )
+
+
+def append_result_sheets(
+    workbook: Workbook,
+    result: dict[str, Any],
+    used_titles: set[str],
+) -> None:
+    rows: list[list[Any]] = []
+    summary = result.get("summary", {})
+    assets = result.get("assets", {})
+    sections = assets.get("sections", {})
+    current = sections.get("current", {})
+    non_current = sections.get("non_current", {})
+    enterprise_value = result.get("enterprise_value", {})
+    diagnosis = result.get("diagnosis", {})
+
+    rows.extend(
+        [
+            ["핵심 결과", "청산가치", summary.get("liquidation_value", 0)],
+            ["핵심 결과", "계속기업가치", summary.get("going_concern_value", 0)],
+            ["핵심 결과", "가치 차이", summary.get("value_difference", 0)],
+            ["핵심 결과", "총 채무", summary.get("total_debt", 0)],
+            ["자산평가 요약", "유동자산 재무제표상 금액", current.get("statement", 0)],
+            ["자산평가 요약", "유동자산 실사가치", current.get("audit", 0)],
+            ["자산평가 요약", "유동자산 청산가치", current.get("liquidation", 0)],
+            ["자산평가 요약", "비유동자산 재무제표상 금액", non_current.get("statement", 0)],
+            ["자산평가 요약", "비유동자산 실사가치", non_current.get("audit", 0)],
+            ["자산평가 요약", "비유동자산 청산가치", non_current.get("liquidation", 0)],
+            ["가치 비교", "영업활동현금흐름 현재가치", enterprise_value.get("pv_10_years", 0) + enterprise_value.get("terminal_value", 0)],
+            ["가치 비교", "비영업용자산 처분가치", enterprise_value.get("non_business_asset_value", 0)],
+            ["가치 비교", "계속기업가치", summary.get("going_concern_value", 0)],
+            ["가치 비교", "청산가치", summary.get("liquidation_value", 0)],
+            ["가치 비교", "차이", summary.get("value_difference", 0)],
+            ["진단 결과", "가치 비교", diagnosis.get("value_message", "")],
+            ["진단 결과", "변제율 비교", diagnosis.get("repayment_message", "")],
+            ["진단 결과", "채권자 동의 가능성", diagnosis.get("consent_message", "")],
+            ["진단 결과", "종합 결론", diagnosis.get("overall_message", "")],
+        ]
+    )
+    append_table_sheet(workbook, "결과", ["구분", "항목", "값"], rows, used_titles)
+
+    append_table_sheet(
+        workbook,
+        "변제율 비교",
+        ["구분", "채무금액", "청산 시 변제금액", "청산 시 변제율", "계속기업 변제금액", "계속기업 변제율", "변제금액 차이", "변제율 차이"],
+        [
+            [
+                row.get("label", ""),
+                row.get("debt", 0),
+                row.get("liquidation_repayment", 0),
+                row.get("liquidation_rate", 0) / 100,
+                row.get("going_repayment", 0),
+                row.get("going_rate", 0) / 100,
+                row.get("repayment_difference", 0),
+                row.get("rate_difference", 0) / 100,
+            ]
+            for row in result.get("comparison_rows", [])
+        ],
+        used_titles,
+    )
+
+
+def append_worksheet_review_sheet(workbook: Workbook, result: dict[str, Any], used_titles: set[str]) -> None:
+    review = result.get("worksheet_review", {})
+    columns = ["행", "작업시트 항목"] + list(review.get("columns", []))
+    rows = [
+        [row.get("row_number", ""), row.get("label", "")] + list(row.get("values", []))
+        for row in review.get("rows", [])
+    ]
+    append_table_sheet(workbook, "작업시트 확인", columns, rows, used_titles)
+
+
 def build_extracted_workbook_download(case: dict[str, Any]) -> io.BytesIO:
     workbook = Workbook()
     default_sheet = workbook.active
@@ -1627,6 +1824,16 @@ def build_extracted_workbook_download(case: dict[str, Any]) -> io.BytesIO:
                     continue
 
             style_extracted_worksheet(worksheet)
+
+    append_case_input_sheets(workbook, case, used_titles)
+
+    try:
+        result = calculate_case_result(case)
+    except Exception:
+        result = None
+    if result:
+        append_result_sheets(workbook, result, used_titles)
+        append_worksheet_review_sheet(workbook, result, used_titles)
 
     output = io.BytesIO()
     workbook.save(output)
@@ -2223,7 +2430,7 @@ def admin_case_extracted_workbook(case_id: str):
     return send_file(
         output,
         as_attachment=True,
-        download_name=f"{company_name}_추출데이터.xlsx",
+        download_name=f"{company_name}_검증데이터.xlsx",
         mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     )
 
