@@ -98,6 +98,29 @@ svg {
   padding-top: 34px;
 }
 
+.landing-claim {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 24px;
+  max-width: 640px;
+}
+
+.landing-claim span {
+  color: var(--landing-amber);
+  font-size: 14px;
+  font-weight: 900;
+}
+
+.landing-claim strong {
+  color: #122019;
+  display: block;
+  font-size: clamp(28px, 2.6vw, 36px);
+  font-weight: 900;
+  letter-spacing: 0;
+  line-height: 1.16;
+  overflow-wrap: break-word;
+}
+
 .landing-eyebrow {
   color: var(--landing-amber);
   display: inline-block;
@@ -365,8 +388,8 @@ svg {
 
 .metric-panel--value {
   animation: floatMetricA 8s ease-in-out infinite;
-  right: 42%;
-  top: 292px;
+  right: 24%;
+  top: 316px;
 }
 
 .metric-panel--risk {
@@ -828,7 +851,23 @@ svg {
   }
 
   .landing-hero__content {
-    min-height: 430px;
+    min-height: 560px;
+  }
+
+  .landing-claim {
+    gap: 8px;
+    margin-bottom: 18px;
+    max-width: 330px;
+  }
+
+  .landing-claim span {
+    font-size: 12px;
+  }
+
+  .landing-claim strong {
+    font-size: 30px;
+    line-height: 1.18;
+    max-width: 330px;
   }
 
   .landing-eyebrow {
@@ -839,7 +878,7 @@ svg {
   .landing-hero__copy h1,
   .section-heading h2,
   .landing-cta h2 {
-    font-size: 36px;
+    font-size: 34px;
     overflow-wrap: break-word;
   }
 
@@ -863,9 +902,9 @@ svg {
   .analysis-stage {
     bottom: 18px;
     left: 18px;
-    opacity: 0.36;
+    opacity: 0.26;
     right: 18px;
-    top: 180px;
+    top: 330px;
   }
 
   .analysis-grid {
@@ -876,7 +915,7 @@ svg {
     left: 20px;
     right: auto;
     top: 34px;
-    transform: scale(0.72);
+    transform: scale(0.68);
     transform-origin: top left;
   }
 
@@ -885,7 +924,7 @@ svg {
     left: 28px;
     right: auto;
     top: auto;
-    transform: scale(0.86);
+    transform: scale(0.78);
     transform-origin: left bottom;
   }
 
