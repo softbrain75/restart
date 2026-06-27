@@ -73,9 +73,9 @@ svg {
     var(--landing-bg);
   border-bottom: 1px solid rgba(25, 69, 58, 0.08);
   display: flex;
-  min-height: min(680px, calc(100vh - 88px));
+  min-height: min(760px, calc(100vh - 88px));
   overflow: hidden;
-  padding: 80px 0 72px;
+  padding: 104px 0 96px;
   position: relative;
 }
 
@@ -315,7 +315,7 @@ svg {
   background: var(--landing-bg);
   min-height: min(720px, calc(100vh - 88px));
   overflow: hidden;
-  padding: 126px 0 108px;
+  padding: 146px 0 132px;
   position: relative;
 }
 
@@ -724,12 +724,12 @@ svg {
 
 .landing-section {
   background: var(--landing-white);
-  padding: 80px 0;
+  padding: 116px 0;
 }
 
 .landing-section--compact {
   background: var(--landing-bg-soft);
-  padding-top: 46px;
+  padding: 96px 0 112px;
 }
 
 .landing-section--muted {
@@ -792,7 +792,7 @@ svg {
     linear-gradient(180deg, var(--landing-bg-soft), var(--landing-white));
   border-top: 1px solid rgba(25, 69, 58, 0.08);
   overflow: hidden;
-  padding: 78px 0;
+  padding: 118px 0;
   position: relative;
 }
 
@@ -986,7 +986,7 @@ svg {
 }
 
 .section-heading {
-  margin-bottom: 56px;
+  margin-bottom: 70px;
 }
 
 .section-heading--center {
@@ -1029,7 +1029,7 @@ svg {
 
 .process-list {
   display: grid;
-  gap: 18px;
+  gap: 26px;
 }
 
 .process-card {
@@ -1040,7 +1040,7 @@ svg {
   display: grid;
   gap: 28px;
   grid-template-columns: auto 1fr;
-  padding: 34px 40px;
+  padding: 40px 46px;
   transition: box-shadow 180ms ease, transform 180ms ease;
 }
 
@@ -1077,7 +1077,7 @@ svg {
 
 .landing-cta {
   background: var(--landing-white);
-  padding: 80px 0;
+  padding: 116px 0;
 }
 
 .landing-cta p {
@@ -1321,7 +1321,7 @@ svg {
 
   .landing-slogan {
     min-height: 660px;
-    padding: 70px 0 64px;
+    padding: 86px 0 78px;
   }
 
   .landing-slogan__title {
@@ -1353,7 +1353,7 @@ svg {
 
   .landing-hero {
     min-height: auto;
-    padding: 76px 0 68px;
+    padding: 96px 0 88px;
   }
 
   .landing-hero__content {
@@ -1386,11 +1386,11 @@ svg {
 
   .feature-card,
   .process-card {
-    padding: 30px;
+    padding: 34px;
   }
 
   .landing-free {
-    padding: 68px 0;
+    padding: 92px 0;
   }
 
   .landing-free__inner {
@@ -1408,7 +1408,7 @@ svg {
 
   .landing-section,
   .landing-cta {
-    padding: 68px 0;
+    padding: 92px 0;
   }
 }
 
@@ -1425,7 +1425,7 @@ svg {
 
   .landing-slogan {
     min-height: 660px;
-    padding: 54px 0 48px;
+    padding: 66px 0 60px;
   }
 
   .landing-slogan::after {
@@ -1492,7 +1492,7 @@ svg {
   }
 
   .landing-hero {
-    padding: 54px 0 44px;
+    padding: 70px 0 60px;
   }
 
   .landing-hero::after {
@@ -1566,16 +1566,16 @@ svg {
   }
 
   .feature-grid {
-    gap: 18px;
+    gap: 22px;
   }
 
   .feature-card {
     min-height: auto;
-    padding: 26px;
+    padding: 30px;
   }
 
   .landing-free {
-    padding: 54px 0;
+    padding: 72px 0;
   }
 
   .landing-free__inner,
@@ -1615,7 +1615,7 @@ svg {
   }
 
   .section-heading {
-    margin-bottom: 38px;
+    margin-bottom: 46px;
   }
 
   .notice-copy > p {
@@ -1630,12 +1630,12 @@ svg {
 
   .landing-section,
   .landing-cta {
-    padding: 54px 0;
+    padding: 72px 0;
   }
 
   .process-card {
     grid-template-columns: 1fr;
-    padding: 26px;
+    padding: 30px;
   }
 
   .process-card__number {
