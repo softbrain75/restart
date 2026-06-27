@@ -67,48 +67,230 @@ svg {
 }
 
 .landing-slogan {
-  background: var(--landing-bg);
+  align-items: center;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.52), rgba(236, 235, 228, 0)),
+    var(--landing-bg);
   border-bottom: 1px solid rgba(25, 69, 58, 0.08);
+  display: flex;
+  min-height: min(680px, calc(100vh - 88px));
   overflow: hidden;
-  padding: 68px 0 34px;
+  padding: 80px 0 72px;
   position: relative;
 }
 
-.landing-slogan::before {
-  border: 1px solid rgba(36, 107, 146, 0.1);
-  border-radius: 50%;
+.landing-slogan::after {
+  background:
+    linear-gradient(rgba(23, 69, 58, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(23, 69, 58, 0.05) 1px, transparent 1px);
+  background-size: 76px 76px;
   content: "";
-  height: 420px;
+  inset: 0;
+  opacity: 0.32;
+  position: absolute;
+}
+
+.landing-slogan__motion {
+  inset: 0;
+  pointer-events: none;
+  position: absolute;
+  z-index: 0;
+}
+
+.slogan-ring {
+  border: 1px solid rgba(36, 107, 146, 0.13);
+  border-radius: 50%;
   left: 50%;
   position: absolute;
-  top: 24px;
-  transform: translateX(-50%);
+  top: 52%;
+  transform: translate(-50%, -50%);
+}
+
+.slogan-ring--outer {
+  animation: ringBreath 8s ease-in-out infinite;
+  height: 760px;
+  width: min(980px, 112vw);
+}
+
+.slogan-ring--middle {
+  animation: ringBreath 9s ease-in-out infinite reverse;
+  height: 570px;
   width: min(760px, 92vw);
+}
+
+.slogan-ring--inner {
+  animation: ringBreath 7s ease-in-out infinite;
+  height: 390px;
+  width: min(520px, 72vw);
+}
+
+.slogan-sweep {
+  animation: orbitSweep 12s linear infinite;
+  border: 2px solid transparent;
+  border-radius: 50%;
+  border-right-color: rgba(15, 111, 95, 0.18);
+  border-top-color: rgba(36, 107, 146, 0.46);
+  height: 610px;
+  left: 50%;
+  position: absolute;
+  top: 52%;
+  transform: translate(-50%, -50%);
+  width: min(820px, 98vw);
+}
+
+.slogan-sweep::after {
+  background: var(--landing-blue);
+  border-radius: 999px;
+  box-shadow: 0 0 0 6px rgba(36, 107, 146, 0.16);
+  content: "";
+  height: 9px;
+  position: absolute;
+  right: 72px;
+  top: 52px;
+  width: 9px;
+}
+
+.slogan-sweep--two {
+  animation-direction: reverse;
+  animation-duration: 16s;
+  border-right-color: rgba(184, 91, 63, 0.18);
+  border-top-color: rgba(185, 128, 23, 0.42);
+  height: 420px;
+  opacity: 0.82;
+  width: min(580px, 74vw);
+}
+
+.slogan-sweep--two::after {
+  background: var(--landing-amber);
+  right: 46px;
+  top: 36px;
+}
+
+.slogan-data-card {
+  animation: floatSloganCard 8s ease-in-out infinite;
+  background: rgba(255, 255, 255, 0.88);
+  border: 1px solid rgba(25, 69, 58, 0.14);
+  border-radius: 14px;
+  box-shadow: 0 22px 52px rgba(18, 54, 43, 0.12);
+  display: grid;
+  gap: 8px;
+  min-width: 168px;
+  padding: 16px 18px;
+  position: absolute;
+}
+
+.slogan-data-card span {
+  color: var(--landing-muted);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.slogan-data-card strong {
+  color: var(--landing-ink);
+  font-size: 21px;
+  line-height: 1.1;
+}
+
+.slogan-data-card i {
+  background: #edf1ef;
+  border-radius: 999px;
+  display: block;
+  height: 8px;
+  overflow: hidden;
+  position: relative;
+}
+
+.slogan-data-card i::after {
+  animation: sloganBar 4s ease-in-out infinite;
+  background: var(--landing-blue);
+  border-radius: inherit;
+  content: "";
+  height: 100%;
+  left: 0;
+  position: absolute;
+  top: 0;
+  width: 66%;
+}
+
+.slogan-data-card--value {
+  left: max(38px, calc(50% - 580px));
+  top: 144px;
+}
+
+.slogan-data-card--going {
+  animation-delay: 800ms;
+  right: max(44px, calc(50% - 580px));
+  top: 186px;
+}
+
+.slogan-data-card--going i::after {
+  background: #0f6f5f;
+  width: 82%;
+}
+
+.slogan-data-card--vote {
+  animation-delay: 1400ms;
+  bottom: 106px;
+  right: max(120px, calc(50% - 490px));
+}
+
+.slogan-data-card--vote i::after {
+  background: var(--landing-amber);
+  width: 48%;
 }
 
 .landing-slogan__inner {
   display: grid;
-  gap: 16px;
+  gap: 18px;
   justify-items: center;
+  max-width: 980px;
   position: relative;
   text-align: center;
   z-index: 1;
 }
 
-.landing-slogan__inner > span {
+.landing-slogan__brand {
+  align-items: center;
+  color: var(--landing-ink);
+  display: inline-flex;
+  font-size: 30px;
+  font-weight: 900;
+  gap: 12px;
+  justify-content: center;
+}
+
+.landing-slogan__logo {
+  align-items: center;
+  background: var(--landing-ink);
+  border-radius: 999px;
+  color: var(--landing-white);
+  display: inline-flex;
+  height: 52px;
+  justify-content: center;
+  width: 52px;
+}
+
+.landing-slogan__logo svg {
+  height: 28px;
+  width: 28px;
+}
+
+.landing-slogan__kicker {
   color: var(--landing-amber);
   font-size: 15px;
   font-weight: 900;
+  margin: 4px 0 0;
 }
 
-.landing-slogan strong {
+.landing-slogan__title {
   color: #122019;
   display: block;
-  font-size: clamp(38px, 5.2vw, 72px);
+  font-size: clamp(46px, 6.2vw, 86px);
   font-weight: 900;
   letter-spacing: 0;
   line-height: 1.14;
-  max-width: 940px;
+  margin: 0;
+  max-width: 1040px;
   overflow-wrap: break-word;
 }
 
@@ -116,6 +298,42 @@ svg {
   color: inherit;
   display: block;
   font: inherit;
+}
+
+.landing-slogan__copy {
+  color: rgba(20, 48, 41, 0.76);
+  font-size: clamp(17px, 1.8vw, 22px);
+  font-weight: 700;
+  line-height: 1.62;
+  margin: 0;
+  max-width: 720px;
+}
+
+.landing-slogan__actions {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  justify-content: center;
+  margin-top: 8px;
+}
+
+.landing-slogan__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  margin-top: 8px;
+}
+
+.landing-slogan__chips span {
+  background: rgba(15, 111, 95, 0.1);
+  border: 1px solid rgba(15, 111, 95, 0.16);
+  border-radius: 999px;
+  color: var(--landing-ink);
+  font-size: 13px;
+  font-weight: 900;
+  padding: 7px 12px;
 }
 
 .landing-hero {
@@ -213,6 +431,21 @@ svg {
 
 .landing-button:hover svg {
   transform: translateX(4px);
+}
+
+.landing-button--soft {
+  background: rgba(255, 255, 255, 0.78);
+  border: 1px solid rgba(25, 69, 58, 0.16);
+  color: var(--landing-ink);
+}
+
+.landing-button--soft:hover {
+  background: var(--landing-white);
+  color: var(--landing-ink);
+}
+
+.landing-button--soft svg {
+  display: none;
 }
 
 .analysis-stage {
@@ -681,6 +914,52 @@ svg {
   margin: 28px 0 44px;
 }
 
+@keyframes ringBreath {
+  0%,
+  100% {
+    opacity: 0.42;
+    transform: translate(-50%, -50%) scale(0.98);
+  }
+  50% {
+    opacity: 0.78;
+    transform: translate(-50%, -50%) scale(1.03);
+  }
+}
+
+@keyframes orbitSweep {
+  0% {
+    transform: translate(-50%, -50%) rotate(0deg);
+  }
+  100% {
+    transform: translate(-50%, -50%) rotate(360deg);
+  }
+}
+
+@keyframes floatSloganCard {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(0, -12px, 0);
+  }
+}
+
+@keyframes sloganBar {
+  0% {
+    transform: scaleX(0.42);
+    transform-origin: left;
+  }
+  50% {
+    transform: scaleX(1);
+    transform-origin: left;
+  }
+  100% {
+    transform: scaleX(0.42);
+    transform-origin: left;
+  }
+}
+
 @keyframes gridDrift {
   0% {
     transform: translateX(0);
@@ -781,6 +1060,18 @@ svg {
 }
 
 @media (max-width: 1040px) {
+  .slogan-data-card--value {
+    left: 26px;
+  }
+
+  .slogan-data-card--going {
+    right: 26px;
+  }
+
+  .slogan-data-card--vote {
+    right: 70px;
+  }
+
   .landing-hero {
     min-height: 680px;
   }
@@ -814,6 +1105,37 @@ svg {
 @media (max-width: 900px) {
   .landing-container {
     padding: 0 20px;
+  }
+
+  .landing-slogan {
+    min-height: 660px;
+    padding: 70px 0 64px;
+  }
+
+  .landing-slogan__title {
+    max-width: 720px;
+  }
+
+  .landing-slogan__copy {
+    max-width: 600px;
+  }
+
+  .slogan-data-card {
+    opacity: 0.48;
+  }
+
+  .slogan-data-card--value {
+    left: 18px;
+    top: 118px;
+  }
+
+  .slogan-data-card--going {
+    right: 18px;
+    top: 160px;
+  }
+
+  .slogan-data-card--vote {
+    display: none;
   }
 
   .landing-hero {
@@ -872,23 +1194,86 @@ svg {
   }
 
   .landing-slogan {
-    padding: 58px 0 28px;
+    min-height: 660px;
+    padding: 54px 0 48px;
   }
 
-  .landing-slogan::before {
-    height: 360px;
-    top: 26px;
+  .landing-slogan::after {
+    background-size: 56px 56px;
+    opacity: 0.24;
+  }
+
+  .slogan-ring--outer {
+    height: 560px;
     width: 560px;
   }
 
-  .landing-slogan__inner > span {
+  .slogan-ring--middle {
+    height: 420px;
+    width: 420px;
+  }
+
+  .slogan-ring--inner {
+    height: 300px;
+    width: 300px;
+  }
+
+  .slogan-sweep {
+    height: 480px;
+    opacity: 0.62;
+    width: 480px;
+  }
+
+  .slogan-sweep--two {
+    height: 320px;
+    width: 320px;
+  }
+
+  .slogan-data-card {
+    display: none;
+  }
+
+  .landing-slogan__brand {
+    font-size: 23px;
+    gap: 10px;
+  }
+
+  .landing-slogan__logo {
+    height: 44px;
+    width: 44px;
+  }
+
+  .landing-slogan__logo svg {
+    height: 24px;
+    width: 24px;
+  }
+
+  .landing-slogan__kicker {
     font-size: 13px;
   }
 
-  .landing-slogan strong {
-    font-size: 31px;
+  .landing-slogan__title {
+    font-size: 32px;
     line-height: 1.22;
-    max-width: 330px;
+    max-width: 320px;
+  }
+
+  .landing-slogan__copy {
+    font-size: 15px;
+    max-width: 318px;
+  }
+
+  .landing-slogan__actions {
+    gap: 10px;
+    width: 100%;
+  }
+
+  .landing-slogan__actions .landing-button {
+    min-width: min(100%, 236px);
+  }
+
+  .landing-slogan__chips {
+    max-width: 320px;
   }
 
   .landing-hero {
