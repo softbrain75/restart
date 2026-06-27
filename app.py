@@ -143,6 +143,7 @@ NON_EDITABLE_ACCOUNT_RE = re.compile(
     r"^(?:[\dIVXLCDMivxlcdm\u2160-\u217F\u2460-\u24FF]|"
     r"[\(\[（［]\s*(?:\d+|[IVXLCDMivxlcdm]+|[\u2160-\u217F]+|[\u2460-\u24FF]|[가-힣])\s*[\)\]）］])"
 )
+ACCOUNT_CODE_RE = re.compile(r"^\[(?P<code>\d{4,})\]")
 PREPAID_ACCOUNTS = {"선급금", "선급비용"}
 ASSET_TOTAL_ACCOUNTS = {"자산총계"}
 LIABILITY_SECTION_START_ACCOUNTS = {"부채", "부채및자본"}
@@ -203,6 +204,18 @@ def format_date_value(value: datetime | date) -> str:
 
 def compact_text(value: str) -> str:
     return WHITESPACE_RE.sub("", value)
+
+
+def split_account_text(value: str | None) -> tuple[str, str]:
+    compacted = compact_text(str(value or ""))
+    match = ACCOUNT_CODE_RE.match(compacted)
+    if not match:
+        return "", compacted
+    return match.group("code"), compacted[match.end() :]
+
+
+def normalize_account_text(value: str | None) -> str:
+    return split_account_text(value)[1]
 
 
 def parse_number_text(value: str) -> float | None:
@@ -499,19 +512,19 @@ def inject_auth_context():
 
 
 def is_editable_financial_account(account: str) -> bool:
-    compacted = compact_text(account)
+    compacted = normalize_account_text(account)
     if not compacted or compacted in {"자산", *ASSET_TOTAL_ACCOUNTS}:
         return False
     return NON_EDITABLE_ACCOUNT_RE.match(compacted) is None
 
 
 def is_deductible_asset_account(account: str) -> bool:
-    compacted = compact_text(account)
+    compacted = normalize_account_text(account)
     return any(keyword in compacted for keyword in DEDUCTIBLE_ASSET_ACCOUNTS)
 
 
 def is_numbered_section_account(account: str) -> bool:
-    return NON_EDITABLE_ACCOUNT_RE.match(compact_text(account)) is not None
+    return NON_EDITABLE_ACCOUNT_RE.match(normalize_account_text(account)) is not None
 
 
 def subtract_from_financial_row(row: dict[str, Any], deduction: float) -> None:
@@ -553,7 +566,7 @@ def extract_financial_rows(sheet: dict[str, Any]) -> list[dict[str, Any]]:
             (cell for cell in row["cells"] if cell.get("source_col") == 0),
             None,
         )
-        account = compact_text(subject_cell["text"]) if subject_cell else ""
+        account_code, account = split_account_text(subject_cell["text"] if subject_cell else "")
         if not account or account in {"과목", "금액"}:
             continue
         if rows and account in LIABILITY_SECTION_START_ACCOUNTS:
@@ -585,6 +598,7 @@ def extract_financial_rows(sheet: dict[str, Any]) -> list[dict[str, Any]]:
             {
                 "row": row["index"],
                 "source_row": row.get("source_index", row["index"]),
+                "account_code": account_code,
                 "account": account,
                 "amount": display_number(amount_number),
                 "amount_number": amount_number,
@@ -602,7 +616,7 @@ def extract_financial_rows(sheet: dict[str, Any]) -> list[dict[str, Any]]:
 
 
 def income_roman_stage(account: str) -> int | None:
-    compacted = compact_text(account)
+    compacted = normalize_account_text(account)
     unicode_stages = (
         ("Ⅰ", 1),
         ("Ⅱ", 2),
@@ -685,7 +699,7 @@ def remove_income_rows_between_sales_roman(rows: list[dict[str, Any]]) -> list[d
 
 
 def is_editable_income_row(account: str, section: str) -> bool:
-    compacted = compact_text(account)
+    compacted = normalize_account_text(account)
     if not compacted:
         return False
     if section == "sales":
@@ -707,7 +721,7 @@ def extract_income_rows(sheet: dict[str, Any]) -> list[dict[str, Any]]:
             (cell for cell in row["cells"] if cell.get("source_col") == 0),
             None,
         )
-        account = compact_text(subject_cell["text"]) if subject_cell else ""
+        account_code, account = split_account_text(subject_cell["text"] if subject_cell else "")
         if not account or account in {"과목", "금액"}:
             continue
         if "영업외" in account:
@@ -721,6 +735,7 @@ def extract_income_rows(sheet: dict[str, Any]) -> list[dict[str, Any]]:
             {
                 "row": len(raw_rows) + 1,
                 "source_row": row.get("source_index", row["index"]),
+                "account_code": account_code,
                 "account": account,
                 "y_minus_1": first_display,
                 "y_minus_1_number": first_number,
@@ -924,14 +939,14 @@ def normalize_label_cells(row: dict[str, Any]) -> None:
 def normalize_subject_cell(row: dict[str, Any], layout: dict[str, Any]) -> None:
     for cell in row["cells"]:
         if cell_overlaps_cols(cell, layout["subject_cols"]):
-            cell["text"] = compact_text(cell["text"])
+            cell["text"] = normalize_account_text(cell["text"])
 
 
 def subject_text(row: dict[str, Any], layout: dict[str, Any]) -> str:
     texts: list[str] = []
     for cell in row["cells"]:
         if cell_overlaps_cols(cell, layout["subject_cols"]):
-            text = compact_text(cell["text"])
+            text = normalize_account_text(cell["text"])
             if text:
                 texts.append(text)
     return "".join(texts)
