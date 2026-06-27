@@ -249,37 +249,11 @@ svg {
   z-index: 1;
 }
 
-.landing-slogan__brand {
-  align-items: center;
-  color: var(--landing-ink);
-  display: inline-flex;
-  font-size: 30px;
-  font-weight: 900;
-  gap: 12px;
-  justify-content: center;
-}
-
-.landing-slogan__logo {
-  align-items: center;
-  background: var(--landing-ink);
-  border-radius: 999px;
-  color: var(--landing-white);
-  display: inline-flex;
-  height: 52px;
-  justify-content: center;
-  width: 52px;
-}
-
-.landing-slogan__logo svg {
-  height: 28px;
-  width: 28px;
-}
-
 .landing-slogan__kicker {
   color: var(--landing-amber);
   font-size: 15px;
   font-weight: 900;
-  margin: 4px 0 0;
+  margin: 0 0 4px;
 }
 
 .landing-slogan__title {
@@ -1231,21 +1205,6 @@ svg {
 
   .slogan-data-card {
     display: none;
-  }
-
-  .landing-slogan__brand {
-    font-size: 23px;
-    gap: 10px;
-  }
-
-  .landing-slogan__logo {
-    height: 44px;
-    width: 44px;
-  }
-
-  .landing-slogan__logo svg {
-    height: 24px;
-    width: 24px;
   }
 
   .landing-slogan__kicker {
