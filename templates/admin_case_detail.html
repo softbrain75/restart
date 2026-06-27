@@ -142,8 +142,9 @@
     <div class="admin-panel__header">
       <div>
         <h2>업로드 파일</h2>
-        <p>사용자가 업로드한 원본 파일명입니다.</p>
+        <p>사용자가 업로드한 원본 파일명과 첫 번째 시트에서 추출·정리된 데이터입니다. 원본 파일은 저장하지 않습니다.</p>
       </div>
+      <a class="button button-secondary" href="{{ url_for('admin_case_extracted_workbook', case_id=case.case_id) }}">엑셀 다운로드</a>
     </div>
     <ul class="admin-file-list">
       {% for file in case.workbook.files %}

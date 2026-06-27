@@ -15,8 +15,10 @@ from typing import Any
 
 import xlrd
 from calculation import calculate_case_result
-from flask import Flask, redirect, render_template, request, session, url_for
-from openpyxl import load_workbook
+from flask import Flask, redirect, render_template, request, send_file, session, url_for
+from openpyxl import Workbook, load_workbook
+from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
+from openpyxl.utils import get_column_letter
 from itsdangerous import BadSignature, SignatureExpired, URLSafeTimedSerializer
 from werkzeug.security import check_password_hash, generate_password_hash
 
@@ -1509,6 +1511,129 @@ def build_document_workbook(uploaded_files: Any) -> dict[str, Any]:
     return {"sheets": sheets, "files": files}
 
 
+EXCEL_SHEET_INVALID_CHARS_RE = re.compile(r"[:\\/?*\[\]]")
+
+
+def safe_excel_sheet_title(title: Any, used_titles: set[str]) -> str:
+    base = EXCEL_SHEET_INVALID_CHARS_RE.sub(" ", str(title or "Sheet")).strip()
+    base = re.sub(r"\s+", " ", base) or "Sheet"
+    base = base[:31]
+    candidate = base
+    index = 2
+    while candidate in used_titles:
+        suffix = f" {index}"
+        candidate = f"{base[:31 - len(suffix)]}{suffix}"
+        index += 1
+    used_titles.add(candidate)
+    return candidate
+
+
+def safe_download_basename(value: Any, fallback: str = "restart") -> str:
+    text = re.sub(r"[\\/:*?\"<>|]+", " ", str(value or fallback)).strip()
+    text = re.sub(r"\s+", " ", text) or fallback
+    return text[:80].strip()
+
+
+def extracted_excel_value(cell: dict[str, Any]) -> Any:
+    text = str(cell.get("text") or "").strip()
+    if not text:
+        return None
+
+    kind = cell.get("kind")
+    if kind == "number":
+        number = parse_number_text(text)
+        if number is not None:
+            return int(number) if number.is_integer() else number
+    if kind == "boolean":
+        return text.upper() == "TRUE"
+    return text
+
+
+def style_extracted_worksheet(worksheet: Any) -> None:
+    header_fill = PatternFill("solid", fgColor="EAF1F0")
+    section_fill = PatternFill("solid", fgColor="F5F7F5")
+    border_color = "D6DEDB"
+    thin_border = Border(
+        left=Side(style="thin", color=border_color),
+        right=Side(style="thin", color=border_color),
+        top=Side(style="thin", color=border_color),
+        bottom=Side(style="thin", color=border_color),
+    )
+
+    for row in worksheet.iter_rows():
+        non_empty_values = [cell.value for cell in row if cell.value not in (None, "")]
+        row_index = row[0].row
+        is_header_like = len(non_empty_values) > 1
+        for cell in row:
+            cell.border = thin_border
+            cell.alignment = Alignment(vertical="center", wrap_text=True)
+            if isinstance(cell.value, (int, float)):
+                cell.number_format = "#,##0"
+                cell.alignment = Alignment(horizontal="right", vertical="center", wrap_text=True)
+        if is_header_like and row_index <= 2:
+            for cell in row:
+                cell.fill = header_fill
+                cell.font = Font(bold=True)
+                cell.alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
+        elif len(non_empty_values) == 1 and row[0].value not in (None, ""):
+            for cell in row:
+                cell.fill = section_fill
+            row[0].font = Font(bold=True)
+
+    for column_index in range(1, worksheet.max_column + 1):
+        max_length = 8
+        for cell in worksheet.iter_cols(min_col=column_index, max_col=column_index, values_only=False).__next__():
+            value = "" if cell.value is None else str(cell.value)
+            max_length = max(max_length, min(len(value) + 2, 34))
+        worksheet.column_dimensions[get_column_letter(column_index)].width = max_length
+
+    for row_index in range(1, worksheet.max_row + 1):
+        worksheet.row_dimensions[row_index].height = 24
+    worksheet.freeze_panes = "A2"
+
+
+def build_extracted_workbook_download(case: dict[str, Any]) -> io.BytesIO:
+    workbook = Workbook()
+    default_sheet = workbook.active
+    workbook.remove(default_sheet)
+    used_titles: set[str] = set()
+
+    extracted_sheets = case.get("workbook", {}).get("sheets", [])
+    if not extracted_sheets:
+        worksheet = workbook.create_sheet("추출 데이터")
+        worksheet["A1"] = "추출된 시트 데이터가 없습니다."
+        style_extracted_worksheet(worksheet)
+    else:
+        for index, sheet in enumerate(extracted_sheets, start=1):
+            title = safe_excel_sheet_title(sheet.get("document_label") or sheet.get("name") or f"Sheet{index}", used_titles)
+            worksheet = workbook.create_sheet(title)
+            pending_merges: list[tuple[int, int, int, int]] = []
+
+            for row_number, row in enumerate(sheet.get("rows", []), start=1):
+                for cell in row.get("cells", []):
+                    source_col = int(cell.get("source_col", 0))
+                    column_number = source_col + 1
+                    worksheet.cell(row=row_number, column=column_number).value = extracted_excel_value(cell)
+
+                    rowspan = max(1, int(cell.get("rowspan", 1) or 1))
+                    colspan = max(1, int(cell.get("colspan", 1) or 1))
+                    if rowspan > 1 or colspan > 1:
+                        pending_merges.append((row_number, column_number, row_number + rowspan - 1, column_number + colspan - 1))
+
+            for start_row, start_col, end_row, end_col in pending_merges:
+                try:
+                    worksheet.merge_cells(start_row=start_row, start_column=start_col, end_row=end_row, end_column=end_col)
+                except ValueError:
+                    continue
+
+            style_extracted_worksheet(worksheet)
+
+    output = io.BytesIO()
+    workbook.save(output)
+    output.seek(0)
+    return output
+
+
 def case_progress(case: dict[str, Any]) -> dict[str, str]:
     if case.get("collateral_saved"):
         return {"label": "결과 확인", "endpoint": "result"}
@@ -2083,6 +2208,23 @@ def admin_users():
         "admin_users.html",
         active_page="admin",
         users=admin_user_listing(),
+    )
+
+
+@app.get("/admin/cases/<case_id>/extracted.xlsx")
+@admin_login_required
+def admin_case_extracted_workbook(case_id: str):
+    case = CASE_STORE.get(case_id)
+    if not case or case.get("deleted_at"):
+        return redirect(url_for("admin_dashboard"))
+
+    output = build_extracted_workbook_download(case)
+    company_name = safe_download_basename(case.get("scenario_name") or case.get("company_name") or case_id)
+    return send_file(
+        output,
+        as_attachment=True,
+        download_name=f"{company_name}_추출데이터.xlsx",
+        mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     )
 
 
