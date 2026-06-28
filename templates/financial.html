@@ -151,6 +151,33 @@
       input.value = input.value.replace(/[^\d,-]/g, "");
     }
 
+    const financialValueErrorMessage = "청산가치는 실사가치보다 클 수 없습니다.";
+
+    function validateFinancialValuePair(rowIndex, { showAlert = false } = {}) {
+      const auditInput = document.querySelector(
+        `[data-audit-input][data-row-index="${rowIndex}"]`
+      );
+      const liquidationInput = document.querySelector(
+        `[data-liquidation-input][data-row-index="${rowIndex}"]`
+      );
+      const auditValue = parseNumber(auditInput?.value);
+      const liquidationValue = parseNumber(liquidationInput?.value);
+
+      if (
+        auditValue !== null &&
+        liquidationValue !== null &&
+        liquidationValue > auditValue
+      ) {
+        if (showAlert) {
+          alert(financialValueErrorMessage);
+        }
+        liquidationInput?.focus();
+        liquidationInput?.select();
+        return false;
+      }
+      return true;
+    }
+
     function financialRowNumber(row, selector) {
       const input = row.querySelector(selector);
       const value = parseNumber(input?.value);
@@ -236,32 +263,23 @@
       });
     });
 
+    document.querySelectorAll("[data-liquidation-input]").forEach((liquidationInput) => {
+      liquidationInput.addEventListener("blur", () => {
+        validateFinancialValuePair(liquidationInput.dataset.rowIndex, { showAlert: true });
+      });
+    });
+
     recalculateFinancialTotals();
 
     document.querySelector("[data-financial-form]")?.addEventListener("submit", (event) => {
-      let hasError = false;
-
-      document.querySelectorAll("[data-liquidation-input]").forEach((liquidationInput) => {
-        const rowIndex = liquidationInput.dataset.rowIndex;
-        const auditInput = document.querySelector(
-          `[data-audit-input][data-row-index="${rowIndex}"]`
+      const invalidInput = Array.from(document.querySelectorAll("[data-liquidation-input]"))
+        .find((liquidationInput) =>
+          !validateFinancialValuePair(liquidationInput.dataset.rowIndex)
         );
-        const auditValue = parseNumber(auditInput?.value);
-        const liquidationValue = parseNumber(liquidationInput.value);
 
-        if (
-          auditValue !== null &&
-          liquidationValue !== null &&
-          liquidationValue > auditValue
-        ) {
-          liquidationInput.focus();
-          hasError = true;
-        }
-      });
-
-      if (hasError) {
+      if (invalidInput) {
         event.preventDefault();
-        alert("청산가치는 실사가치보다 클 수 없습니다.");
+        alert(financialValueErrorMessage);
       }
     });
   </script>
