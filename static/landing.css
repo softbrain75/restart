@@ -1460,8 +1460,8 @@ svg {
   }
 
   .landing-slogan {
-    min-height: 660px;
-    padding: 66px 0 60px;
+    min-height: 590px;
+    padding: 34px 0 46px;
   }
 
   .landing-slogan::after {
@@ -1472,6 +1472,10 @@ svg {
   .slogan-ring--outer {
     height: 560px;
     width: 560px;
+  }
+
+  .slogan-ring {
+    top: 48%;
   }
 
   .slogan-ring--middle {
@@ -1504,7 +1508,7 @@ svg {
   }
 
   .landing-slogan__title {
-    font-size: 24px;
+    font-size: 25px;
     line-height: 1.28;
     max-width: 354px;
   }
