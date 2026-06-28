@@ -2297,7 +2297,11 @@ form[data-collateral-form] {
   }
 
   .app-main {
-    padding: 14px;
+    padding: 14px 14px 84px;
+  }
+
+  .result-main {
+    padding-bottom: 84px;
   }
 
   .summary-grid {
@@ -2306,6 +2310,32 @@ form[data-collateral-form] {
 
   .result-infographic {
     grid-template-columns: 1fr;
+  }
+
+  .result-frame {
+    gap: 14px;
+    padding: 10px;
+  }
+
+  .result-section {
+    margin: 0 -2px;
+    overflow-x: auto;
+    padding: 0 2px 4px;
+  }
+
+  .result-table {
+    min-width: 720px;
+  }
+
+  .result-comparison-table {
+    min-width: 1040px;
+  }
+
+  .result-table th,
+  .result-table td,
+  .result-comparison-table th,
+  .result-comparison-table td {
+    white-space: nowrap;
   }
 
   .result-visual-header {

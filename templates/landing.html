@@ -7,7 +7,7 @@
     <title>Re-Start - 기업회생 재무분석 시스템</title>
     <meta name="description" content="기업회생 재무분석을 위한 시스템">
     <link rel="stylesheet" href="{{ url_for('static', filename='top-nav.css') }}?v=4">
-    <link rel="stylesheet" href="{{ url_for('static', filename='landing.css') }}?v=15">
+    <link rel="stylesheet" href="{{ url_for('static', filename='landing.css') }}?v=16">
   </head>
   <body>
     {% set active_page = "home" %}
@@ -55,7 +55,6 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m17 8 4 4m0 0-4 4m4-4H3" />
               </svg>
             </a>
-            <a class="landing-button landing-button--soft" href="#diagnosis-process">분석 흐름 보기</a>
             {{ kakao_button("landing_slogan", class_name="landing-button landing-button--kakao") }}
           </div>
           <div class="landing-slogan__chips" aria-label="주요 특징">

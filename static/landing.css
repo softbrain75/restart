@@ -1450,6 +1450,7 @@ svg {
 @media (max-width: 760px) {
   .landing-page {
     height: calc(100vh - 72px);
+    padding-bottom: calc(72px + env(safe-area-inset-bottom, 0px));
   }
 }
 
@@ -1666,6 +1667,10 @@ svg {
   .landing-section,
   .landing-cta {
     padding: 72px 0;
+  }
+
+  .landing-cta {
+    padding-bottom: 112px;
   }
 
   .process-card {
