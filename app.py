@@ -529,6 +529,74 @@ def is_numbered_section_account(account: str) -> bool:
     return NON_EDITABLE_ACCOUNT_RE.match(normalize_account_text(account)) is not None
 
 
+def financial_heading_level(row: dict[str, Any]) -> int | None:
+    if row.get("is_editable"):
+        return None
+
+    account = normalize_account_text(row.get("account", ""))
+    if not account:
+        return None
+    if account in {"자산", *ASSET_TOTAL_ACCOUNTS}:
+        return 0
+    if re.match(r"^(?:[\u2460-\u24FF]|[\(\[（［])", account):
+        return 2
+    if re.match(r"^(?:\d+|[IVXLCDMivxlcdm]+|[\u2160-\u217F]+)", account):
+        return 1
+    return 1
+
+
+def financial_heading_child_rows(rows: list[dict[str, Any]], index: int) -> list[dict[str, Any]]:
+    row = rows[index]
+    account = normalize_account_text(row.get("account", ""))
+    if account in ASSET_TOTAL_ACCOUNTS:
+        return [candidate for candidate in rows[:index] if candidate.get("is_editable")]
+
+    level = financial_heading_level(row)
+    if level is None:
+        return []
+
+    child_rows: list[dict[str, Any]] = []
+    for candidate in rows[index + 1 :]:
+        candidate_level = financial_heading_level(candidate)
+        if candidate_level is not None and candidate_level <= level:
+            break
+        if candidate.get("is_editable"):
+            child_rows.append(candidate)
+    return child_rows
+
+
+def financial_heading_total(rows: list[dict[str, Any]], index: int, key: str) -> str:
+    child_rows = financial_heading_child_rows(rows, index)
+    if not child_rows:
+        return ""
+    total = 0.0
+    has_value = False
+    for child in child_rows:
+        number = parse_number_text(child.get(key, ""))
+        if number is None:
+            continue
+        total += number
+        has_value = True
+    return display_number(total) if has_value else ""
+
+
+def financial_display_rows(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    display_rows: list[dict[str, Any]] = []
+    for index, row in enumerate(rows):
+        display_row = dict(row)
+        level = financial_heading_level(row)
+        display_row["heading_level"] = level if level is not None else ""
+        display_row["is_total_row"] = normalize_account_text(row.get("account", "")) in ASSET_TOTAL_ACCOUNTS
+        if not row.get("is_editable"):
+            display_row["audit_total"] = financial_heading_total(rows, index, "audit_value")
+            display_row["liquidation_total"] = financial_heading_total(rows, index, "liquidation_value")
+        else:
+            display_row["audit_total"] = ""
+            display_row["liquidation_total"] = ""
+        display_rows.append(display_row)
+    return display_rows
+
+
 def subtract_from_financial_row(row: dict[str, Any], deduction: float) -> None:
     amount_number = row.get("amount_number")
     if amount_number is not None:
@@ -3006,7 +3074,7 @@ def financial(case_id: str):
     return render_template(
         "financial.html",
         case=case,
-        rows=case["financial_rows"],
+        rows=financial_display_rows(case["financial_rows"]),
         error=None,
         message=(
             "파일이 업로드되었습니다. 자산가치산정을 확인해 주세요."
@@ -3051,7 +3119,7 @@ def save_financial(case_id: str):
         return render_template(
             "financial.html",
             case=case,
-            rows=rows,
+            rows=financial_display_rows(rows),
             error=" ".join(errors),
             message=None,
         ), 400
@@ -3064,7 +3132,7 @@ def save_financial(case_id: str):
     return render_template(
         "financial.html",
         case=case,
-        rows=rows,
+        rows=financial_display_rows(rows),
         error=None,
         message="재무 데이터가 저장되었습니다.",
     )

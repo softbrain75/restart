@@ -71,10 +71,20 @@
             </thead>
             <tbody>
               {% for row in rows %}
-                <tr class="{% if not row.is_editable %}row-heading-data{% endif %}">
+                <tr
+                  class="{% if not row.is_editable %}row-heading-data{% endif %}"
+                  data-financial-row
+                  {% if row.is_editable %}
+                    data-editable-row
+                  {% else %}
+                    data-heading-row
+                    data-heading-level="{{ row.heading_level }}"
+                    {% if row.is_total_row %}data-total-row{% endif %}
+                  {% endif %}
+                >
                   <td class="account-cell">{{ row.account }}</td>
                   <td class="amount-cell">{{ row.amount }}</td>
-                  <td class="input-cell">
+                  <td class="input-cell {% if not row.is_editable %}amount-cell{% endif %}" {% if not row.is_editable %}data-audit-total-cell{% endif %}>
                     {% if row.is_editable %}
                       <input
                         class="input numeric"
@@ -85,9 +95,11 @@
                         data-audit-input
                         data-row-index="{{ loop.index0 }}"
                       >
+                    {% else %}
+                      {{ row.audit_total }}
                     {% endif %}
                   </td>
-                  <td class="input-cell">
+                  <td class="input-cell {% if not row.is_editable %}amount-cell{% endif %}" {% if not row.is_editable %}data-liquidation-total-cell{% endif %}>
                     {% if row.is_editable %}
                       <input
                         class="input numeric"
@@ -98,6 +110,8 @@
                         data-liquidation-input
                         data-row-index="{{ loop.index0 }}"
                       >
+                    {% else %}
+                      {{ row.liquidation_total }}
                     {% endif %}
                   </td>
                 </tr>
@@ -137,11 +151,75 @@
       input.value = input.value.replace(/[^\d,-]/g, "");
     }
 
+    function financialRowNumber(row, selector) {
+      const input = row.querySelector(selector);
+      const value = parseNumber(input?.value);
+      return value === null ? 0 : value;
+    }
+
+    function financialChildRows(rows, index) {
+      const row = rows[index];
+      if (row.hasAttribute("data-total-row")) {
+        return rows.slice(0, index).filter((candidate) =>
+          candidate.hasAttribute("data-editable-row")
+        );
+      }
+
+      const level = Number(row.dataset.headingLevel);
+      const childRows = [];
+      for (let cursor = index + 1; cursor < rows.length; cursor += 1) {
+        const candidate = rows[cursor];
+        if (
+          candidate.hasAttribute("data-heading-row") &&
+          Number(candidate.dataset.headingLevel) <= level
+        ) {
+          break;
+        }
+        if (candidate.hasAttribute("data-editable-row")) {
+          childRows.push(candidate);
+        }
+      }
+      return childRows;
+    }
+
+    function recalculateFinancialTotals() {
+      const rows = Array.from(document.querySelectorAll("[data-financial-row]"));
+      rows.forEach((row, index) => {
+        if (!row.hasAttribute("data-heading-row")) return;
+
+        const auditCell = row.querySelector("[data-audit-total-cell]");
+        const liquidationCell = row.querySelector("[data-liquidation-total-cell]");
+        const childRows = financialChildRows(rows, index);
+
+        if (!childRows.length) {
+          if (auditCell) auditCell.textContent = "";
+          if (liquidationCell) liquidationCell.textContent = "";
+          return;
+        }
+
+        const auditTotal = childRows.reduce(
+          (sum, childRow) => sum + financialRowNumber(childRow, "[data-audit-input]"),
+          0
+        );
+        const liquidationTotal = childRows.reduce(
+          (sum, childRow) => sum + financialRowNumber(childRow, "[data-liquidation-input]"),
+          0
+        );
+
+        if (auditCell) auditCell.textContent = formatNumber(auditTotal);
+        if (liquidationCell) liquidationCell.textContent = formatNumber(liquidationTotal);
+      });
+    }
+
     document.querySelectorAll("[data-financial-form] input.numeric").forEach((input) => {
       input.addEventListener("focus", () => input.select());
-      input.addEventListener("input", () => normalizeNumericInput(input));
+      input.addEventListener("input", () => {
+        normalizeNumericInput(input);
+        recalculateFinancialTotals();
+      });
       input.addEventListener("blur", () => {
         input.value = formatNumber(input.value);
+        recalculateFinancialTotals();
       });
     });
 
@@ -153,9 +231,12 @@
         );
         if (liquidationInput) {
           liquidationInput.value = auditInput.value;
+          recalculateFinancialTotals();
         }
       });
     });
+
+    recalculateFinancialTotals();
 
     document.querySelector("[data-financial-form]")?.addEventListener("submit", (event) => {
       let hasError = false;
