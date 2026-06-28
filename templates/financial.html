@@ -153,7 +153,15 @@
 
     const financialValueErrorMessage = "청산가치는 실사가치보다 클 수 없습니다.";
 
-    function validateFinancialValuePair(rowIndex, { showAlert = false } = {}) {
+    function restoreInputValue(input) {
+      input.value = input.dataset.focusValue || input.dataset.previousValidValue || input.dataset.initialValue || "";
+    }
+
+    function rememberValidInputValue(input) {
+      input.dataset.previousValidValue = formatNumber(input.value);
+    }
+
+    function validateFinancialValuePair(rowIndex, { showAlert = false, restoreInvalid = false } = {}) {
       const auditInput = document.querySelector(
         `[data-audit-input][data-row-index="${rowIndex}"]`
       );
@@ -168,12 +176,20 @@
         liquidationValue !== null &&
         liquidationValue > auditValue
       ) {
+        if (restoreInvalid && liquidationInput) {
+          restoreInputValue(liquidationInput);
+          recalculateFinancialTotals();
+        }
         if (showAlert) {
           alert(financialValueErrorMessage);
         }
-        liquidationInput?.focus();
-        liquidationInput?.select();
         return false;
+      }
+      if (auditInput) {
+        rememberValidInputValue(auditInput);
+      }
+      if (liquidationInput) {
+        rememberValidInputValue(liquidationInput);
       }
       return true;
     }
@@ -239,7 +255,12 @@
     }
 
     document.querySelectorAll("[data-financial-form] input.numeric").forEach((input) => {
-      input.addEventListener("focus", () => input.select());
+      input.dataset.initialValue = formatNumber(input.value);
+      input.dataset.previousValidValue = input.dataset.initialValue;
+      input.addEventListener("focus", () => {
+        input.dataset.focusValue = formatNumber(input.value);
+        input.select();
+      });
       input.addEventListener("input", () => {
         normalizeNumericInput(input);
         recalculateFinancialTotals();
@@ -258,6 +279,8 @@
         );
         if (liquidationInput) {
           liquidationInput.value = auditInput.value;
+          rememberValidInputValue(auditInput);
+          rememberValidInputValue(liquidationInput);
           recalculateFinancialTotals();
         }
       });
@@ -265,7 +288,10 @@
 
     document.querySelectorAll("[data-liquidation-input]").forEach((liquidationInput) => {
       liquidationInput.addEventListener("blur", () => {
-        validateFinancialValuePair(liquidationInput.dataset.rowIndex, { showAlert: true });
+        validateFinancialValuePair(liquidationInput.dataset.rowIndex, {
+          showAlert: true,
+          restoreInvalid: true,
+        });
       });
     });
 
@@ -280,6 +306,7 @@
       if (invalidInput) {
         event.preventDefault();
         alert(financialValueErrorMessage);
+        invalidInput.focus();
       }
     });
   </script>
