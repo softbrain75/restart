@@ -2182,16 +2182,22 @@ form[data-collateral-form] {
 }
 
 @media (max-width: 760px) {
+  :root {
+    --mobile-bottom-space: calc(96px + env(safe-area-inset-bottom, 0px));
+  }
+
   .app-shell {
     height: calc(100vh - 72px);
   }
 
   .analysis-main {
-    padding: 26px 16px;
+    padding: 26px 16px var(--mobile-bottom-space);
   }
 
   .analysis-main--preview {
-    padding: 14px;
+    overflow: auto;
+    overflow-x: hidden;
+    padding: 14px 14px var(--mobile-bottom-space);
   }
 
   .upload-card {
@@ -2224,7 +2230,7 @@ form[data-collateral-form] {
   }
 
   .account-main {
-    padding: 24px 14px;
+    padding: 24px 14px var(--mobile-bottom-space);
   }
 
   .account-card,
@@ -2297,11 +2303,23 @@ form[data-collateral-form] {
   }
 
   .app-main {
-    padding: 14px 14px 84px;
+    padding: 14px 14px var(--mobile-bottom-space);
+  }
+
+  .app-main.analysis-main {
+    padding: 26px 16px var(--mobile-bottom-space);
+  }
+
+  .app-main.analysis-main--preview {
+    padding: 14px 14px var(--mobile-bottom-space);
+  }
+
+  .app-main.account-main {
+    padding: 24px 14px var(--mobile-bottom-space);
   }
 
   .result-main {
-    padding-bottom: 84px;
+    padding-bottom: var(--mobile-bottom-space);
   }
 
   .summary-grid {
@@ -2394,5 +2412,9 @@ form[data-collateral-form] {
   .sticky-action-bar__inner {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .sticky-action-bar {
+    padding-bottom: calc(18px + env(safe-area-inset-bottom, 0px));
   }
 }
