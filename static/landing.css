@@ -1618,9 +1618,14 @@ svg {
   .landing-free__copy,
   .landing-free h2,
   .landing-free p,
-  .landing-free__badges,
+  .landing-free__badges {
+    max-width: min(100%, 356px);
+    width: 100%;
+  }
+
   .free-meter {
-    max-width: 312px;
+    max-width: min(100%, 340px);
+    width: 100%;
   }
 
   .landing-free h2 {
