@@ -170,6 +170,34 @@
   }
 
   .site-nav__actions {
+    display: inline-flex;
+    gap: 10px;
+    margin-left: auto;
+  }
+
+  .site-nav__cta {
     display: none;
+  }
+
+  .site-nav__auth-link,
+  .site-nav__logout button {
+    font-size: 13px;
+    padding: 6px 0;
+    white-space: nowrap;
+  }
+}
+
+@media (max-width: 420px) {
+  .site-nav__inner {
+    gap: 10px;
+    padding: 0 12px;
+  }
+
+  .site-brand__name {
+    display: none;
+  }
+
+  .site-nav__actions {
+    gap: 8px;
   }
 }

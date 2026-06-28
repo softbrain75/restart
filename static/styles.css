@@ -1619,22 +1619,26 @@ button {
 }
 
 .result-comparison-table .col-account {
-  width: 24%;
+  width: 22%;
 }
 
 .result-comparison-table .col-amount {
-  width: 12%;
+  width: 12.6%;
 }
 
 .result-comparison-table .col-rate {
-  width: 7.2%;
+  width: 9.2%;
 }
 
 .result-comparison-table th,
 .result-comparison-table td {
-  font-size: 12.5px;
-  padding-left: 6px;
-  padding-right: 6px;
+  font-size: 12px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+.result-comparison-table thead th {
+  white-space: nowrap;
 }
 
 .debt-table .col-account {
