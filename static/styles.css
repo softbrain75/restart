@@ -2323,19 +2323,52 @@ form[data-collateral-form] {
     padding: 0 2px 4px;
   }
 
-  .result-table {
-    min-width: 720px;
+  .result-frame .data-table {
+    table-layout: auto;
+    min-width: 100%;
+    width: max-content;
   }
 
+  .result-table,
   .result-comparison-table {
-    min-width: 1040px;
+    min-width: 0;
   }
 
-  .result-table th,
-  .result-table td,
-  .result-comparison-table th,
-  .result-comparison-table td {
+  .result-frame .col-account,
+  .result-frame .col-amount,
+  .result-frame .col-rate {
+    width: auto;
+  }
+
+  .result-frame thead th,
+  .result-frame .amount-cell {
     white-space: nowrap;
+  }
+
+  .result-frame .account-cell {
+    max-width: 180px;
+    min-width: 88px;
+    overflow-wrap: anywhere;
+    white-space: normal;
+  }
+
+  .result-frame .col-amount,
+  .result-frame .amount-cell {
+    min-width: 108px;
+  }
+
+  .result-comparison-table .col-account,
+  .result-comparison-table .account-cell {
+    max-width: 160px;
+  }
+
+  .result-comparison-table .col-amount,
+  .result-comparison-table .amount-cell {
+    min-width: 92px;
+  }
+
+  .result-comparison-table .col-rate {
+    min-width: 82px;
   }
 
   .result-visual-header {
