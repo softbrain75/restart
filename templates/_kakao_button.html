@@ -1,0 +1,25 @@
+{% macro kakao_button(source, case_id=None, class_name="button button-kakao") -%}
+  {% if kakao_chat_configured %}
+    {% if case_id %}
+      <a
+        class="{{ class_name }}"
+        href="{{ url_for('kakao_consult', source=source, case_id=case_id) }}"
+        target="_blank"
+        rel="noopener noreferrer"
+      >카카오톡 상담하기</a>
+    {% else %}
+      <a
+        class="{{ class_name }}"
+        href="{{ url_for('kakao_consult', source=source) }}"
+        target="_blank"
+        rel="noopener noreferrer"
+      >카카오톡 상담하기</a>
+    {% endif %}
+  {% else %}
+    <span
+      class="{{ class_name }} is-disabled"
+      aria-disabled="true"
+      title="카카오톡 채널 URL 설정 후 연결됩니다."
+    >카카오톡 상담하기</span>
+  {% endif %}
+{%- endmacro %}

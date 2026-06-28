@@ -954,6 +954,23 @@ button {
   background: #e3ecea;
 }
 
+.button-kakao {
+  background: #fee500;
+  border-color: rgba(172, 144, 0, 0.32);
+  color: #231f20;
+}
+
+.button-kakao:hover {
+  background: #f5dc00;
+  border-color: rgba(143, 119, 0, 0.42);
+}
+
+.button.is-disabled {
+  cursor: not-allowed;
+  opacity: 0.56;
+  pointer-events: none;
+}
+
 .button-danger {
   background: #fff7f4;
   border-color: #e3b5a8;
@@ -1983,6 +2000,15 @@ form[data-collateral-form] {
   margin-top: 2px;
 }
 
+.consultation-form__actions,
+.result-pane__header-actions {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
 .consultation-submit {
   justify-self: end;
 }
@@ -2180,6 +2206,17 @@ form[data-collateral-form] {
 
   .consultation-form__grid {
     grid-template-columns: 1fr;
+  }
+
+  .consultation-form__actions,
+  .result-pane__header-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .consultation-form__actions .button,
+  .result-pane__header-actions .button {
+    width: 100%;
   }
 
   .account-main {

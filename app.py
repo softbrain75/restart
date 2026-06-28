@@ -29,6 +29,7 @@ USERS_PATH = DATA_DIR / "users.json"
 CASES_DIR = DATA_DIR / "cases"
 LEADS_DIR = BASE_DIR / "leads"
 CONSULTATION_LOG_PATH = LEADS_DIR / "consultations.jsonl"
+KAKAO_CONSULT_CLICK_LOG_PATH = LEADS_DIR / "kakao_consult_clicks.jsonl"
 ALLOWED_EXTENSIONS = {".xls", ".xlsx"}
 WHITESPACE_RE = re.compile(r"[\s\u00a0\u200b\u200c\u200d\ufeff]+")
 EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
@@ -323,6 +324,43 @@ def append_consultation_log(case: dict[str, Any], form: dict[str, Any], result: 
         file.write(json.dumps(payload, ensure_ascii=False) + "\n")
 
 
+def kakao_chat_url() -> str:
+    return os.environ.get("RESTART_KAKAO_CHAT_URL", "").strip()
+
+
+def append_kakao_consult_click(case: dict[str, Any] | None, source: str, raw_case_id: str) -> None:
+    LEADS_DIR.mkdir(parents=True, exist_ok=True)
+    user = current_user()
+    consultation = case.get("consultation") if case and isinstance(case.get("consultation"), dict) else {}
+    payload = {
+        "clicked_at": now_iso(),
+        "source": source,
+        "case_id": case.get("case_id", raw_case_id) if case else raw_case_id,
+        "case_accessible": bool(case),
+        "uploaded_company_name": case.get("company_name", "") if case else "",
+        "contact": {
+            "company": consultation.get("company", "") if consultation else "",
+            "contact_name": consultation.get("contact_name", "") if consultation else "",
+            "phone": consultation.get("phone", "") if consultation else "",
+            "email": consultation.get("email", "") if consultation else "",
+        },
+        "user": {
+            "user_id": user.get("user_id", "") if user else "",
+            "company": user.get("company", "") if user else "",
+            "contact_name": user.get("contact_name", "") if user else "",
+            "phone": user.get("phone", "") if user else "",
+            "email": user.get("email", "") if user else "",
+        },
+        "request": {
+            "remote_addr": request.headers.get("X-Forwarded-For", request.remote_addr),
+            "referer": request.headers.get("Referer", ""),
+            "user_agent": request.headers.get("User-Agent", ""),
+        },
+    }
+    with KAKAO_CONSULT_CLICK_LOG_PATH.open("a", encoding="utf-8") as file:
+        file.write(json.dumps(payload, ensure_ascii=False) + "\n")
+
+
 def normalize_email(email: str | None) -> str:
     return str(email or "").strip().lower()
 
@@ -510,6 +548,7 @@ def inject_auth_context():
         "current_admin": current_admin(),
         "format_kst_datetime": format_kst_datetime,
         "format_number": display_whole_number,
+        "kakao_chat_configured": bool(kakao_chat_url()),
     }
 
 
@@ -2569,6 +2608,21 @@ def mypage_message_from_request() -> str | None:
 @app.get("/")
 def index():
     return render_template("landing.html", active_page="home")
+
+
+@app.get("/kakao/consult")
+def kakao_consult():
+    raw_case_id = clean_contact_text(request.args.get("case_id"), 80)
+    source = clean_contact_text(request.args.get("source"), 80) or "unknown"
+    case = get_accessible_case(raw_case_id) if raw_case_id else None
+    append_kakao_consult_click(case, source, raw_case_id)
+
+    target_url = kakao_chat_url()
+    if not target_url:
+        return "카카오톡 상담 채널 URL이 아직 설정되지 않았습니다.", 503, {
+            "Content-Type": "text/plain; charset=utf-8"
+        }
+    return redirect(target_url)
 
 
 @app.route("/signup", methods=["GET", "POST"])

@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "_kakao_button.html" import kakao_button with context %}
 
 {% block title %}결과 확인 - 기업회생 분석{% endblock %}
 {% block main_class %}result-main{% endblock %}
@@ -142,9 +143,12 @@
                 </label>
               </div>
 
-              <button class="button button-primary consultation-submit" type="submit">
-                상담 신청하고 상세 결과 보기
-              </button>
+              <div class="consultation-form__actions">
+                {{ kakao_button("result_gate", case.case_id) }}
+                <button class="button button-primary consultation-submit" type="submit">
+                  상담 신청하고 상세 결과 보기
+                </button>
+              </div>
             </form>
           </section>
         {% endif %}
@@ -154,6 +158,9 @@
           <div>
             <h3>상세 결과</h3>
             <p>{{ "상담 신청이 접수되어 상세 분석 결과를 표시합니다." if consultation_submitted else "로그인 상태이므로 상세 분석 결과를 바로 표시합니다." }}</p>
+          </div>
+          <div class="result-pane__header-actions">
+            {{ kakao_button("result_detail", case.case_id) }}
           </div>
         </div>
 

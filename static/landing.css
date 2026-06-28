@@ -374,6 +374,8 @@ svg {
 
 .landing-hero__actions {
   display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
   margin-top: 44px;
 }
 
@@ -421,6 +423,29 @@ svg {
 
 .landing-button--soft svg {
   display: none;
+}
+
+.landing-button--kakao {
+  background: #fee500;
+  border: 1px solid rgba(172, 144, 0, 0.28);
+  box-shadow: 0 14px 28px rgba(115, 93, 0, 0.14);
+  color: #231f20;
+}
+
+.landing-button--kakao:hover {
+  background: #f5dc00;
+  color: #231f20;
+}
+
+.landing-button--kakao svg {
+  display: none;
+}
+
+.landing-button.is-disabled {
+  cursor: not-allowed;
+  opacity: 0.56;
+  pointer-events: none;
+  transform: none;
 }
 
 .analysis-stage {
@@ -1085,6 +1110,16 @@ svg {
   font-size: 20px;
   font-weight: 600;
   margin: 28px 0 44px;
+}
+
+.landing-cta .landing-container {
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+}
+
+.landing-cta .landing-button + .landing-button {
+  margin-top: 14px;
 }
 
 @keyframes ringBreath {
