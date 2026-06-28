@@ -3,9 +3,7 @@
   <div class="site-nav__inner">
     <a class="site-brand" href="{{ url_for('index') }}" aria-label="Re-Start 홈">
       <span class="site-brand__icon" aria-hidden="true">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 20V10m5 10V4m5 16v-7" />
-        </svg>
+        <img class="site-brand__logo" src="{{ url_for('static', filename='logo.png') }}" alt="">
       </span>
       <span class="site-brand__name">Re-Start</span>
     </a>

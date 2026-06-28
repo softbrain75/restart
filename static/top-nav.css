@@ -38,23 +38,24 @@
 
 .site-brand__icon {
   align-items: center;
-  background: var(--top-nav-ink);
-  border-radius: 999px;
-  color: var(--top-nav-white);
   display: inline-flex;
-  height: 44px;
+  flex: 0 0 auto;
+  height: 48px;
   justify-content: center;
   transition: transform 180ms ease;
-  width: 44px;
+  width: 58px;
 }
 
 .site-brand:hover .site-brand__icon {
-  transform: scale(1.05);
+  transform: scale(1.04);
 }
 
-.site-brand__icon svg {
-  height: 24px;
-  width: 24px;
+.site-brand__logo {
+  display: block;
+  height: 52px;
+  max-width: 68px;
+  object-fit: contain;
+  width: auto;
 }
 
 .site-brand__name {
@@ -161,8 +162,13 @@
   }
 
   .site-brand__icon {
-    height: 40px;
-    width: 40px;
+    height: 42px;
+    width: 50px;
+  }
+
+  .site-brand__logo {
+    height: 46px;
+    max-width: 60px;
   }
 
   .site-nav__links {
