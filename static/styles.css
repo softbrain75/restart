@@ -2318,6 +2318,100 @@ form[data-collateral-form] {
     padding: 24px 14px var(--mobile-bottom-space);
   }
 
+  .financial-table-section,
+  .debt-table-section,
+  .income-table-section,
+  .collateral-table-section {
+    margin: 0 -2px;
+    overflow-x: auto;
+    padding: 0 2px 4px;
+  }
+
+  .financial-table,
+  .debt-table,
+  .income-table,
+  .collateral-table,
+  .rent-table {
+    table-layout: auto;
+    min-width: 100%;
+    width: max-content;
+  }
+
+  .financial-table .col-account,
+  .debt-table .col-account,
+  .income-table .col-account,
+  .collateral-table .col-account,
+  .rent-table .col-account,
+  .financial-table .col-amount,
+  .debt-table .col-amount,
+  .income-table .col-amount,
+  .income-table .col-rate,
+  .collateral-table .col-amount,
+  .rent-table .col-amount {
+    width: auto;
+  }
+
+  .financial-table .account-cell,
+  .debt-table .account-cell,
+  .income-table .account-cell,
+  .collateral-table .account-cell,
+  .rent-table .account-cell {
+    max-width: 180px;
+    min-width: 88px;
+    overflow-wrap: anywhere;
+    white-space: normal;
+  }
+
+  .financial-table .input-cell,
+  .financial-table .amount-cell,
+  .collateral-table .input-cell,
+  .rent-table .input-cell {
+    min-width: 146px;
+  }
+
+  .debt-table .account-cell {
+    max-width: 220px;
+    min-width: 150px;
+  }
+
+  .debt-table .input-cell {
+    min-width: 170px;
+  }
+
+  .income-table .account-cell {
+    max-width: 170px;
+    min-width: 130px;
+  }
+
+  .income-table .input-cell,
+  .income-table .amount-cell {
+    min-width: 116px;
+  }
+
+  .income-table .col-rate,
+  .income-table td:nth-child(4) {
+    min-width: 96px;
+  }
+
+  .collateral-table .account-cell,
+  .rent-table .account-cell {
+    max-width: 200px;
+    min-width: 130px;
+  }
+
+  .financial-table thead th,
+  .debt-table thead th,
+  .income-table thead th,
+  .collateral-table thead th,
+  .rent-table thead th,
+  .financial-table .amount-cell,
+  .debt-table .amount-cell,
+  .income-table .amount-cell,
+  .collateral-table .amount-cell,
+  .rent-table .amount-cell {
+    white-space: nowrap;
+  }
+
   .result-main {
     padding-bottom: var(--mobile-bottom-space);
   }
