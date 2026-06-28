@@ -199,8 +199,19 @@
     padding: 0 12px;
   }
 
-  .site-brand__name {
-    display: none;
+  .site-brand {
+    font-size: 15px;
+    gap: 6px;
+  }
+
+  .site-brand__icon {
+    height: 38px;
+    width: 42px;
+  }
+
+  .site-brand__logo {
+    height: 40px;
+    max-width: 52px;
   }
 
   .site-nav__actions {
