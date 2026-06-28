@@ -2130,7 +2130,7 @@ def worksheet_review_formulas(
         )
     set_value(294, "D", 0)
     for row_number_value in range(287, 295):
-        set_formula(row_number_value, "E", f'IF({cell(row_number_value, "C")}=0,"",{cell(row_number_value, "D")}/{cell(row_number_value, "C")})', "0.00%")
+        set_formula(row_number_value, "E", safe_div(cell(row_number_value, "D"), cell(row_number_value, "C")), "0.00%")
     for column in ("C", "D"):
         set_formula(295, column, f"SUM({cell(287, column)}:{cell(294, column)})")
     set_formula(296, "D", f"{cell(286, 'D')}-{cell(295, 'D')}")
@@ -2155,15 +2155,15 @@ def worksheet_review_formulas(
         set_formula(row_number_value, "E", cell(liquidation_row, "I"), "0.00%")
         set_formula(row_number_value, "F", cell(going_row, "D"))
         set_formula(row_number_value, "G", cell(going_row, "E"), "0.00%")
-        set_formula(row_number_value, "H", f"{cell(row_number_value, 'F')}-{cell(row_number_value, 'D')}")
-        set_formula(row_number_value, "I", f"{cell(row_number_value, 'G')}-{cell(row_number_value, 'E')}", "0.00%")
+        set_formula(row_number_value, "H", f"IFERROR({cell(row_number_value, 'F')}-{cell(row_number_value, 'D')},0)")
+        set_formula(row_number_value, "I", f"IFERROR({cell(row_number_value, 'G')}-{cell(row_number_value, 'E')},0)", "0.00%")
     for column in ("C", "D", "F", "H"):
         set_formula(332, column, f"SUM({cell(326, column)}:{cell(331, column)})")
     set_formula(337, "C", f'IF({cell(320, "D")}>{cell(320, "C")},"Positive","Negative")', None)
     set_formula(
         342,
         "C",
-        f'IF(AND({cell(326, "I")}>=0,{cell(327, "I")}>=0,{cell(328, "I")}>=0,{cell(329, "I")}>=0,{cell(330, "I")}>=0),"Positive","Negative")',
+        f'IFERROR(IF(AND({cell(326, "I")}>=0,{cell(327, "I")}>=0,{cell(328, "I")}>=0,{cell(329, "I")}>=0,{cell(330, "I")}>=0),"Positive","Negative"),"Negative")',
         None,
     )
     set_formula(
