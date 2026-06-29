@@ -557,41 +557,49 @@ def build_diagnosis(
         ),
         0.0,
     )
-    consent_positive = repayment_positive and value_positive and unsecured_financial_rate >= 0.30
+    consent_applicable = value_positive and repayment_positive
+    consent_positive = consent_applicable and unsecured_financial_rate >= 0.30
     overall_positive = value_positive and repayment_positive and unsecured_financial_rate >= 0.30
 
     value_message = (
         f"회사의 청산가치는 {display_number(liquidation_value / 1_000_000)}백만원이나, "
-        f"계속기업 가정 시 가치는 {display_number(going_concern_value / 1_000_000)}백만원으로 "
-        "청산가치보다 크므로 회생절차 진행 가능성이 있는 것으로 판단됩니다."
+        "계속기업 가정 시 영업이익의 현재가치, 비영업용 자산의 가치 등을 합하면 "
+        f"{display_number(going_concern_value / 1_000_000)}백만원이고, "
+        "이는 청산가치보다 크므로 회생절차를 진행하는 것이 타당한 것으로 판단될 수 있습니다."
         if value_positive
-        else f"계속기업 가정 시 가치는 {display_number(going_concern_value / 1_000_000)}백만원이고, "
-        f"청산가치는 {display_number(liquidation_value / 1_000_000)}백만원으로 "
-        "회생절차 진행 적정성 검토가 추가로 필요합니다."
+        else "회사 영업이익의 현재가치 및 비영업용 자산의 가치 등은 "
+        f"{display_number(going_concern_value / 1_000_000)}백만원이고, "
+        f"청산가치는 {display_number(liquidation_value / 1_000_000)}백만원이므로, "
+        "회생절차를 진행하는 것이 적절하지 않은 것으로 판단될 수 있습니다."
     )
     repayment_message = (
-        "담보채무 및 무담보채무에 대하여 계속기업 가정 시 변제율이 청산 시 배당률보다 높거나 같아 회생절차 진행 가능성이 있는 것으로 판단됩니다."
+        "담보채무 및 무담보채무에 대하여 계속기업 가정 시 변제율이 청산시 배당액보다 크므로 회생절차를 진행하는 것이 타당한 것으로 판단될 수 있습니다."
         if repayment_positive
-        else "일부 채무에 대하여 계속기업 가정 시 변제율이 청산 시 배당률보다 낮아 회생절차 진행 적정성 검토가 필요합니다."
+        else "담보채무 또는 무담보채무에 대하여 계속기업 가정 시 변제율이 청산시 배당액보다 낮으므로 회생절차를 진행하는 것이 적절하지 않은 것으로 판단될 수 있습니다."
     )
     consent_message = (
-        f"계속기업 가정 시 회생채권의 명목변제율이 약 {display_percent(unsecured_financial_rate)}로 채권자 동의를 구할 가능성이 있는 것으로 판단됩니다."
+        f"계속기업 가정 시 회생채권의 명목변제율이 약 {display_number(unsecured_financial_rate * 100)}%에 해당하여 채권자의 동의를 구할 가능성이 있는 것으로 판단됩니다."
         if consent_positive
         else (
             ""
-            if not (value_positive and repayment_positive)
-            else f"계속기업 가정 시 회생채권의 명목변제율이 {display_percent(unsecured_financial_rate)}로 채권자 동의 가능성이 높지 않을 수 있습니다."
+            if not consent_applicable
+            else f"계속기업 가정 시 회생채권의 명목변제율이 {display_number(unsecured_financial_rate * 100)}%에 해당하여 채권자의 동의를 구할 가능성이 높지 않을 것으로 판단됩니다."
         )
     )
     overall_message = (
-        "위 사항을 종합적으로 고려할 때 회생절차 진행이 가능할 것으로 판단됩니다."
+        "위의 사항을 종합적으로 고려할 때, 회생절차를 진행하는 것이 가능할 것으로 판단됩니다. "
+        "일반적으로 임금채권, 조세채권과 담보채권은 개시 신청연도부터 3년 이내에 상환을 하여야 하며, "
+        "담보를 제공하지 않은 기타 금융기관 채권과 상거래채권은 채권액의 약 60%~70%는 출자전환이 되고 "
+        "나머지 30%~40%의 채권액을 5년 ~10년 동안 장기간 동안 분할 상환하여야 합니다."
         if overall_positive
-        else "입력된 조건 기준으로는 회생절차 진행이 쉽지 않을 수 있으나, 청산가치와 계속기업가치 및 채무 변제 가능성에 따라 추가 검토가 필요합니다."
+        else "위의 사항을 종합적으로 고려할 때, 입력하신 조건으로는 회생절차를 진행하는 것이 쉽지 않을 것으로 판단될 수 있으나, "
+        "청산가치와 계속기업가치 산정의 결과나 채무의 변제가능성 정도에 따라 회생절차를 진행하는 것이 가능할 수 있습니다."
     )
 
     return {
         "value_positive": value_positive,
         "repayment_positive": repayment_positive,
+        "consent_applicable": consent_applicable,
         "consent_positive": consent_positive,
         "overall_positive": overall_positive,
         "value_message": value_message,
@@ -1017,7 +1025,7 @@ def build_worksheet_review(
     rows.append(
         worksheet_row(
             342,
-            "청산 시 배당액과 계속기업 가정 시 채무변제액 비교",
+            "청산 시 배당액과 계속기업 가정 시 채무변제액의 비교",
             {"C": ("Positive" if diagnosis["repayment_positive"] else "Negative", "text")},
             row_type="note",
         )
@@ -1025,8 +1033,17 @@ def build_worksheet_review(
     rows.append(
         worksheet_row(
             347,
-            "회생채권 등의 변제율 고려 결과",
-            {"C": ("Positive" if diagnosis["consent_positive"] else "Negative", "text")},
+            "계속기업 가정 시 회생채권 등의 변제율을 고려한 회생신청 가능성 결과",
+            {
+                "C": (
+                    (
+                        ""
+                        if not diagnosis["consent_applicable"]
+                        else "Positive" if diagnosis["consent_positive"] else "Negative"
+                    ),
+                    "text",
+                )
+            },
             row_type="note",
         )
     )

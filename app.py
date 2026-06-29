@@ -2182,10 +2182,10 @@ def append_result_sheets(
             ["가치 비교", "계속기업가치", summary.get("going_concern_value", 0)],
             ["가치 비교", "청산가치", summary.get("liquidation_value", 0)],
             ["가치 비교", "차이", summary.get("value_difference", 0)],
-            ["진단 결과", "가치 비교", diagnosis.get("value_message", "")],
-            ["진단 결과", "변제율 비교", diagnosis.get("repayment_message", "")],
-            ["진단 결과", "채권자 동의 가능성", diagnosis.get("consent_message", "")],
-            ["진단 결과", "종합 결론", diagnosis.get("overall_message", "")],
+            ["회생신청 가능성 진단 결과 요약", "(1) 계속기업가치와 청산가치 비교", diagnosis.get("value_message", "")],
+            ["회생신청 가능성 진단 결과 요약", "(2) 청산 시 배당액과 계속기업 가정 시 채무변제액의 비교", diagnosis.get("repayment_message", "")],
+            ["회생신청 가능성 진단 결과 요약", "(3) 계속기업 가정 시 회생채권 등의 변제율을 고려한 회생신청 가능성 결과", diagnosis.get("consent_message", "")],
+            ["회생신청 가능성 진단 결과 요약", "(4) 종합결론", diagnosis.get("overall_message", "")],
         ]
     )
     append_table_sheet(workbook, "결과", ["구분", "항목", "값"], rows, used_titles)
@@ -2598,10 +2598,15 @@ def worksheet_review_formulas(
     set_formula(
         347,
         "C",
-        f'IF(AND({cell(337, "C")}="Positive",{cell(342, "C")}="Positive",{cell(329, "G")}>=30%),"Positive","Negative")',
+        f'IF(OR({cell(337, "C")}="Negative",{cell(342, "C")}="Negative"),"",IF({cell(329, "G")}>=30%,"Positive","Negative"))',
         None,
     )
-    set_formula(352, "C", cell(347, "C"), None)
+    set_formula(
+        352,
+        "C",
+        f'IF(AND({cell(320, "D")}>{cell(320, "C")},{cell(326, "I")}>=0,{cell(327, "I")}>=0,{cell(328, "I")}>=0,{cell(329, "I")}>=0,{cell(330, "I")}>=0,{cell(329, "G")}>=30%),"Positive","Negative")',
+        None,
+    )
 
     return formulas, formats
 
