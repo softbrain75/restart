@@ -836,9 +836,14 @@ def financial_display_rows(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
     for index, row in enumerate(rows):
         display_row = dict(row)
         level = financial_heading_level(row)
+        is_root_asset_row = normalize_account_text(row.get("account", "")) == "자산"
         display_row["heading_level"] = level if level is not None else ""
         display_row["is_total_row"] = normalize_account_text(row.get("account", "")) in ASSET_TOTAL_ACCOUNTS
-        if not row.get("is_editable"):
+        display_row["is_root_asset_row"] = is_root_asset_row
+        if is_root_asset_row:
+            display_row["audit_total"] = ""
+            display_row["liquidation_total"] = ""
+        elif not row.get("is_editable"):
             display_row["audit_total"] = financial_heading_total(rows, index, "audit_value")
             display_row["liquidation_total"] = financial_heading_total(rows, index, "liquidation_value")
         else:

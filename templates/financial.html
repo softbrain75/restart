@@ -80,6 +80,7 @@
                   {% else %}
                     data-heading-row
                     data-heading-level="{{ row.heading_level }}"
+                    {% if row.is_root_asset_row %}data-root-asset-row{% endif %}
                     {% if row.row_type == "custom_asset_heading" %}data-additional-assets-heading{% endif %}
                     {% if row.is_total_row %}data-total-row{% endif %}
                   {% endif %}
@@ -309,6 +310,12 @@
 
         const auditCell = row.querySelector("[data-audit-total-cell]");
         const liquidationCell = row.querySelector("[data-liquidation-total-cell]");
+        if (row.hasAttribute("data-root-asset-row")) {
+          if (auditCell) auditCell.textContent = "";
+          if (liquidationCell) liquidationCell.textContent = "";
+          return;
+        }
+
         const childRows = financialChildRows(rows, index);
 
         if (!childRows.length) {
