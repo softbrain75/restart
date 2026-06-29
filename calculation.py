@@ -138,7 +138,7 @@ def calculate_asset_totals(financial_rows: list[dict[str, Any]]) -> dict[str, An
         if section_for_row is None or not row.get("is_editable"):
             continue
 
-        statement = row_number(row, "amount")
+        statement = 0.0 if row.get("row_type") == "custom_asset" else row_number(row, "amount")
         audit = row_number(row, "audit_value")
         liquidation = row_number(row, "liquidation_value")
         sections[section_for_row]["statement"] += statement

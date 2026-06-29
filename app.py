@@ -1237,13 +1237,11 @@ def clean_submitted_number(value: str) -> tuple[str, float | None]:
 def submitted_custom_asset_rows() -> tuple[list[dict[str, Any]], list[str]]:
     row_ids = request.form.getlist("custom_asset_id[]")
     accounts = request.form.getlist("custom_asset_account[]")
-    amount_values = request.form.getlist("custom_asset_amount[]")
     audit_values = request.form.getlist("custom_asset_audit[]")
     liquidation_values = request.form.getlist("custom_asset_liquidation[]")
     row_count = max(
         len(row_ids),
         len(accounts),
-        len(amount_values),
         len(audit_values),
         len(liquidation_values),
     )
@@ -1253,22 +1251,17 @@ def submitted_custom_asset_rows() -> tuple[list[dict[str, Any]], list[str]]:
     for index in range(row_count):
         row_id = clean_contact_text(row_ids[index] if index < len(row_ids) else "", 40)
         account = clean_contact_text(accounts[index] if index < len(accounts) else "", 120)
-        amount_raw = amount_values[index] if index < len(amount_values) else ""
         audit_raw = audit_values[index] if index < len(audit_values) else ""
         liquidation_raw = liquidation_values[index] if index < len(liquidation_values) else ""
 
-        amount_display, amount_number = clean_submitted_number(amount_raw)
         audit_display, audit_number = clean_submitted_number(audit_raw)
         liquidation_display, liquidation_number = clean_submitted_number(liquidation_raw)
 
-        if audit_number is None and amount_number is not None:
-            audit_number = amount_number
-            audit_display = display_number(audit_number)
         if liquidation_number is None and audit_number is not None:
             liquidation_number = audit_number
             liquidation_display = display_number(liquidation_number)
 
-        if not any((account, amount_display, audit_display, liquidation_display)):
+        if not any((account, audit_display, liquidation_display)):
             continue
 
         if not account:
@@ -1280,8 +1273,8 @@ def submitted_custom_asset_rows() -> tuple[list[dict[str, Any]], list[str]]:
         custom_rows.append(
             make_custom_asset_row(
                 account=account,
-                amount_display=amount_display,
-                amount_number=amount_number,
+                amount_display="",
+                amount_number=None,
                 audit_display=audit_display,
                 liquidation_display=liquidation_display,
                 row_id=row_id or None,
@@ -2099,7 +2092,7 @@ def append_case_input_sheets(workbook: Workbook, case: dict[str, Any], used_titl
         [
             [
                 row.get("account", ""),
-                row.get("amount", ""),
+                "" if is_custom_asset_row(row) else row.get("amount", ""),
                 row.get("audit_value", ""),
                 row.get("liquidation_value", ""),
                 "Y" if row.get("is_editable") else "N",

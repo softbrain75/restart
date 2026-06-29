@@ -1700,6 +1700,15 @@ button {
   background: #fff9e8;
 }
 
+.custom-asset-statement-cell {
+  background: #f6fafa;
+}
+
+.muted-cell {
+  display: block;
+  min-height: 32px;
+}
+
 .amount-cell {
   font-variant-numeric: tabular-nums;
   text-align: right;

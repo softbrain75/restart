@@ -108,16 +108,9 @@
                       {{ row.account }}
                     {% endif %}
                   </td>
-                  <td class="{% if row.row_type == 'custom_asset' %}input-cell{% else %}amount-cell{% endif %}">
+                  <td class="{% if row.row_type == 'custom_asset' %}amount-cell custom-asset-statement-cell{% else %}amount-cell{% endif %}">
                     {% if row.row_type == "custom_asset" %}
-                      <input
-                        class="input numeric"
-                        name="custom_asset_amount[]"
-                        type="text"
-                        inputmode="numeric"
-                        value="{{ row.amount }}"
-                        data-statement-input
-                      >
+                      <span class="muted-cell" aria-label="기타자산 장부금액 미입력"></span>
                     {% else %}
                       {{ row.amount }}
                     {% endif %}
@@ -185,9 +178,7 @@
                   <button class="button button-danger button-compact" type="button" data-remove-custom-asset>삭제</button>
                 </div>
               </td>
-              <td class="input-cell">
-                <input class="input numeric" name="custom_asset_amount[]" type="text" inputmode="numeric" value="" data-statement-input>
-              </td>
+              <td class="amount-cell custom-asset-statement-cell"><span class="muted-cell" aria-label="기타자산 장부금액 미입력"></span></td>
               <td class="input-cell">
                 <input class="input numeric" name="custom_asset_audit[]" type="text" inputmode="numeric" value="" data-audit-input data-row-index="">
               </td>
