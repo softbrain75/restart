@@ -128,10 +128,6 @@
           <span class="summary-card__label">가치 차이</span>
           <strong>{{ format_number(result.summary.value_difference) }}</strong>
         </div>
-        <div class="summary-card">
-          <span class="summary-card__label">총 채무</span>
-          <strong>{{ format_number(result.summary.total_debt) }}</strong>
-        </div>
       </div>
     {% else %}
       <p class="account-note">아직 결과 산출 단계까지 입력되지 않았습니다. 현재 단계는 {{ progress.label }}입니다.</p>

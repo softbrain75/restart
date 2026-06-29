@@ -2171,7 +2171,6 @@ def append_result_sheets(
             ["핵심 결과", "청산가치", summary.get("liquidation_value", 0)],
             ["핵심 결과", "계속기업가치", summary.get("going_concern_value", 0)],
             ["핵심 결과", "가치 차이", summary.get("value_difference", 0)],
-            ["핵심 결과", "총 채무", summary.get("total_debt", 0)],
             ["자산평가 요약", "유동자산 재무제표상 금액", current.get("statement", 0)],
             ["자산평가 요약", "유동자산 실사가치", current.get("audit", 0)],
             ["자산평가 요약", "유동자산 청산가치", current.get("liquidation", 0)],

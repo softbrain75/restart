@@ -1125,7 +1125,7 @@ button {
   display: grid;
   flex: 0 0 auto;
   gap: 12px;
-  grid-template-columns: minmax(0, 1.25fr) minmax(320px, 0.75fr);
+  grid-template-columns: minmax(0, 1fr);
   margin: 0 0 14px;
 }
 

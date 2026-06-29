@@ -81,20 +81,11 @@ def visual_width(value: float, max_value: float) -> float:
     return min(width, 100.0)
 
 
-def progress_width(rate: float) -> float:
-    if not math.isfinite(rate):
-        return 0.0
-    return min(max(rate * 100, 0.0), 100.0)
-
-
 def build_result_visual(
     liquidation_value: float,
     going_concern_value: float,
-    total_debt: float,
 ) -> dict[str, Any]:
-    max_value = max(abs(liquidation_value), abs(going_concern_value), abs(total_debt), 1.0)
-    liquidation_debt_rate = safe_div(liquidation_value, total_debt)
-    going_debt_rate = safe_div(going_concern_value, total_debt)
+    max_value = max(abs(liquidation_value), abs(going_concern_value), 1.0)
     value_difference = going_concern_value - liquidation_value
 
     return {
@@ -112,27 +103,6 @@ def build_result_visual(
                 "width": visual_width(going_concern_value, max_value),
                 "tone": "going",
                 "is_negative": going_concern_value < 0,
-            },
-            {
-                "label": "총 채무",
-                "value": total_debt,
-                "width": visual_width(total_debt, max_value),
-                "tone": "debt",
-                "is_negative": total_debt < 0,
-            },
-        ],
-        "coverage_items": [
-            {
-                "label": "청산가치 / 총 채무",
-                "rate": liquidation_debt_rate,
-                "width": progress_width(liquidation_debt_rate),
-                "tone": "liquidation",
-            },
-            {
-                "label": "계속기업가치 / 총 채무",
-                "rate": going_debt_rate,
-                "width": progress_width(going_debt_rate),
-                "tone": "going",
             },
         ],
         "value_status": "회생가치 우위" if value_difference >= 0 else "청산가치 우위",
@@ -1182,7 +1152,7 @@ def calculate_case_result(case: dict[str, Any]) -> dict[str, Any]:
         "comparison_rows": comparison_rows,
         "diagnosis": diagnosis,
         "worksheet_review": worksheet_review,
-        "visual": build_result_visual(liquidation_value, going_concern_value, total_debt),
+        "visual": build_result_visual(liquidation_value, going_concern_value),
         "summary": {
             "liquidation_value": liquidation_value,
             "going_concern_value": going_concern_value,
