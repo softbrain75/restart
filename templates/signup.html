@@ -32,16 +32,16 @@
           <input class="input" name="phone" type="tel" value="{{ form.phone }}" autocomplete="tel" required>
         </label>
         <label class="field">
-          <span>이메일</span>
+          <span>이메일(아이디)</span>
           <input class="input" name="email" type="email" value="{{ form.email }}" autocomplete="email" required>
         </label>
         <label class="field">
           <span>비밀번호</span>
-          <input class="input" name="password" type="password" autocomplete="new-password" required>
+          <input class="input" name="password" type="password" autocomplete="new-password" minlength="8" required>
         </label>
         <label class="field">
           <span>비밀번호 확인</span>
-          <input class="input" name="password_confirm" type="password" autocomplete="new-password" required>
+          <input class="input" name="password_confirm" type="password" autocomplete="new-password" minlength="8" required>
         </label>
       </div>
 
