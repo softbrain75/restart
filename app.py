@@ -152,6 +152,9 @@ ASSET_TOTAL_ACCOUNTS = {"자산총계"}
 ADDITIONAL_ASSET_HEADING_ACCOUNT = "기타자산"
 CUSTOM_ASSET_HEADING_ROW_TYPE = "custom_asset_heading"
 CUSTOM_ASSET_ROW_TYPE = "custom_asset"
+ADDITIONAL_EXPENSE_HEADING_ACCOUNT = "기타비용"
+CUSTOM_EXPENSE_HEADING_ROW_TYPE = "custom_expense_heading"
+CUSTOM_EXPENSE_ROW_TYPE = "custom_expense"
 LIABILITY_SECTION_START_ACCOUNTS = {"부채", "부채및자본"}
 DEDUCTIBLE_ASSET_ACCOUNTS = ("감가상각누계", "국고보조", "대손충당금")
 INTANGIBLE_ASSET_ACCOUNT = "무형자산"
@@ -643,6 +646,131 @@ def insert_custom_asset_rows(
     ]
 
 
+def is_custom_expense_heading_row(row: dict[str, Any]) -> bool:
+    return row.get("row_type") == CUSTOM_EXPENSE_HEADING_ROW_TYPE
+
+
+def is_custom_expense_row(row: dict[str, Any]) -> bool:
+    return row.get("row_type") == CUSTOM_EXPENSE_ROW_TYPE
+
+
+def income_sales_average_number(rows: list[dict[str, Any]]) -> float:
+    for row in rows:
+        if "매출액" in str(row.get("account", "")):
+            return float(row.get("average_number") or 0)
+    return 0.0
+
+
+def make_custom_expense_heading_row(sales_average_number: float = 0.0) -> dict[str, Any]:
+    return {
+        "row": "",
+        "source_row": "",
+        "account_code": "",
+        "account": ADDITIONAL_EXPENSE_HEADING_ACCOUNT,
+        "category": ADDITIONAL_EXPENSE_HEADING_ACCOUNT,
+        "y_minus_1": "",
+        "y_minus_1_number": None,
+        "y": "",
+        "y_number": None,
+        "average": "",
+        "average_number": 0.0,
+        "section": "expense",
+        "metric_display": "",
+        "monthly_average_display": "",
+        "sales_average_number": sales_average_number,
+        "cost_type": "",
+        "final_value": "",
+        "value_kind": "amount",
+        "is_editable": False,
+        "row_type": CUSTOM_EXPENSE_HEADING_ROW_TYPE,
+    }
+
+
+def make_custom_expense_row(
+    account: str,
+    cost_type: str = "fixed",
+    monthly_average_display: str = "",
+    final_value: str = "",
+    value_kind: str = "amount",
+    sales_average_number: float = 0.0,
+    row_id: str | None = None,
+) -> dict[str, Any]:
+    return {
+        "row": "",
+        "source_row": "",
+        "account_code": "",
+        "account": account,
+        "category": ADDITIONAL_EXPENSE_HEADING_ACCOUNT,
+        "y_minus_1": "",
+        "y_minus_1_number": None,
+        "y": "",
+        "y_number": None,
+        "average": "",
+        "average_number": 0.0,
+        "section": "expense",
+        "metric_display": "",
+        "monthly_average_display": monthly_average_display,
+        "sales_average_number": sales_average_number,
+        "cost_type": cost_type if cost_type in {"fixed", "variable"} else "fixed",
+        "final_value": final_value,
+        "value_kind": value_kind if value_kind in {"amount", "percent"} else "amount",
+        "is_editable": True,
+        "row_type": CUSTOM_EXPENSE_ROW_TYPE,
+        "row_id": row_id or uuid.uuid4().hex[:10],
+    }
+
+
+def strip_custom_expense_rows(rows: list[dict[str, Any]]) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    base_rows: list[dict[str, Any]] = []
+    custom_rows: list[dict[str, Any]] = []
+    for row in rows:
+        if is_custom_expense_row(row):
+            custom_rows.append(row)
+            continue
+        if is_custom_expense_heading_row(row):
+            continue
+        base_rows.append(row)
+    return base_rows, custom_rows
+
+
+def resequence_income_rows(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    for index, row in enumerate(rows, start=1):
+        row["row"] = index
+    return rows
+
+
+def insert_custom_expense_rows(
+    rows: list[dict[str, Any]],
+    custom_rows: list[dict[str, Any]] | None = None,
+) -> list[dict[str, Any]]:
+    base_rows, existing_custom_rows = strip_custom_expense_rows(rows)
+    custom_rows = existing_custom_rows if custom_rows is None else custom_rows
+    sales_average_number = income_sales_average_number(base_rows)
+    for row in custom_rows:
+        row["section"] = "expense"
+        row["category"] = ADDITIONAL_EXPENSE_HEADING_ACCOUNT
+        row["sales_average_number"] = sales_average_number
+        row["is_editable"] = True
+        row["row_type"] = CUSTOM_EXPENSE_ROW_TYPE
+
+    insert_index = next(
+        (
+            index
+            for index, row in enumerate(base_rows)
+            if "영업손실" in str(row.get("account", "")) or "영업이익" in str(row.get("account", ""))
+        ),
+        len(base_rows),
+    )
+    return resequence_income_rows(
+        [
+            *base_rows[:insert_index],
+            make_custom_expense_heading_row(sales_average_number),
+            *custom_rows,
+            *base_rows[insert_index:],
+        ]
+    )
+
+
 def is_deductible_asset_account(account: str) -> bool:
     compacted = normalize_account_text(account)
     return any(keyword in compacted for keyword in DEDUCTIBLE_ASSET_ACCOUNTS)
@@ -1048,7 +1176,7 @@ def create_case(workbook: dict[str, Any]) -> dict[str, Any]:
         "financial_saved": False,
         "debt_rows": build_default_debt_rows(),
         "debt_saved": False,
-        "income_rows": extract_income_rows(income_sheet),
+        "income_rows": insert_custom_expense_rows(extract_income_rows(income_sheet)),
         "income_saved": False,
         "collateral_rows": build_default_collateral_rows(),
         "rent_rows": build_default_rent_rows(),
@@ -1163,6 +1291,57 @@ def clean_submitted_income_value(value: str, value_kind: str) -> tuple[str, floa
         number = parse_percent_text(value)
         return display_percent(number), number
     return clean_submitted_number(value)
+
+
+def submitted_custom_expense_rows(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    row_ids = request.form.getlist("custom_expense_id[]")
+    accounts = request.form.getlist("custom_expense_account[]")
+    cost_types = request.form.getlist("custom_expense_cost_type[]")
+    monthly_values = request.form.getlist("custom_expense_monthly_average_display[]")
+    final_values = request.form.getlist("custom_expense_final_value[]")
+    value_kinds = request.form.getlist("custom_expense_value_kind[]")
+    row_count = max(
+        len(row_ids),
+        len(accounts),
+        len(cost_types),
+        len(monthly_values),
+        len(final_values),
+        len(value_kinds),
+    )
+    sales_average_number = income_sales_average_number(rows)
+    custom_rows: list[dict[str, Any]] = []
+
+    for index in range(row_count):
+        row_id = clean_contact_text(row_ids[index] if index < len(row_ids) else "", 40)
+        account = clean_contact_text(accounts[index] if index < len(accounts) else "", 120)
+        cost_type = cost_types[index] if index < len(cost_types) else "fixed"
+        cost_type = cost_type if cost_type in {"fixed", "variable"} else "fixed"
+        value_kind = "percent" if cost_type == "variable" else "amount"
+        monthly_display = clean_contact_text(monthly_values[index] if index < len(monthly_values) else "", 40)
+        final_raw = final_values[index] if index < len(final_values) else ""
+
+        if not any((account, monthly_display, final_raw)):
+            continue
+        if not account:
+            account = ADDITIONAL_EXPENSE_HEADING_ACCOUNT
+
+        final_display, _ = clean_submitted_income_value(final_raw, value_kind)
+        if not monthly_display and final_display:
+            monthly_display = final_display
+
+        custom_rows.append(
+            make_custom_expense_row(
+                account=account,
+                cost_type=cost_type,
+                monthly_average_display=monthly_display,
+                final_value=final_display,
+                value_kind=value_kind,
+                sales_average_number=sales_average_number,
+                row_id=row_id or None,
+            )
+        )
+
+    return custom_rows
 
 
 def cell_end_col(cell: dict[str, Any]) -> int:
@@ -3409,7 +3588,10 @@ def income(case_id: str):
             message=None,
         ), 404
 
-    rows = case["income_rows"]
+    rows = insert_custom_expense_rows(case.get("income_rows", []))
+    if rows != case.get("income_rows", []):
+        case["income_rows"] = rows
+        save_case(case)
     return render_template(
         "income.html",
         case=case,
@@ -3426,9 +3608,10 @@ def save_income(case_id: str):
     if case is None:
         return redirect(url_for("analysis_index"))
 
-    rows = case["income_rows"]
+    rows = insert_custom_expense_rows(case.get("income_rows", []))
+    case["income_rows"] = rows
     for index, row in enumerate(rows):
-        if not row["is_editable"]:
+        if is_custom_expense_row(row) or not row["is_editable"]:
             continue
 
         row["cost_type"] = request.form.get(f"cost_type_{index}", row.get("cost_type", ""))
@@ -3444,6 +3627,9 @@ def save_income(case_id: str):
         row["value_kind"] = value_kind
         row["final_value"] = final_display
 
+    custom_rows = submitted_custom_expense_rows(rows)
+    rows = insert_custom_expense_rows(rows, custom_rows)
+    case["income_rows"] = rows
     case["income_saved"] = True
     save_case(case)
     if request.form.get("next") == "collateral":

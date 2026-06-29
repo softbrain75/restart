@@ -1674,23 +1674,29 @@ button {
 }
 
 .additional-asset-heading,
-.custom-asset-account-control {
+.additional-expense-heading,
+.custom-asset-account-control,
+.custom-expense-account-control {
   align-items: center;
   display: flex;
   gap: 8px;
   min-width: 0;
 }
 
-.additional-asset-heading {
+.additional-asset-heading,
+.additional-expense-heading {
   justify-content: space-between;
 }
 
-.custom-asset-account-control .input {
+.custom-asset-account-control .input,
+.custom-expense-account-control .input {
   min-width: 120px;
 }
 
 .custom-asset-row .account-cell,
-.custom-asset-row .input-cell {
+.custom-asset-row .input-cell,
+.custom-expense-row .account-cell,
+.custom-expense-row .input-cell {
   background: #fff9e8;
 }
 

@@ -133,20 +133,54 @@
                 </th>
               </tr>
             </thead>
-            <tbody>
+            <tbody data-income-expense-body>
               {% for row in expense_rows %}
                 {% set row_index = row.row - 1 %}
                 <tr
-                  class="{% if not row.is_editable %}row-heading-data{% endif %}"
+                  class="{% if row.row_type == 'custom_expense' %}custom-expense-row{% elif not row.is_editable %}row-heading-data{% endif %}"
                   data-income-row
                   data-average="{{ row.average_number }}"
                   data-sales-average="{{ row.sales_average_number or 0 }}"
+                  {% if row.row_type == "custom_expense" %}data-custom-expense-row{% endif %}
+                  {% if "영업손실" in row.account or "영업이익" in row.account %}data-income-operating-result-row{% endif %}
                 >
-                  <td class="account-cell">{{ row.account }}</td>
+                  <td class="account-cell">
+                    {% if row.row_type == "custom_expense_heading" %}
+                      <div class="additional-expense-heading">
+                        <span>{{ row.account }}</span>
+                        <button class="button button-secondary button-compact" type="button" data-add-custom-expense>항목 추가</button>
+                      </div>
+                    {% elif row.row_type == "custom_expense" %}
+                      <div class="custom-expense-account-control">
+                        <input type="hidden" name="custom_expense_id[]" value="{{ row.row_id }}">
+                        <input type="hidden" name="custom_expense_category[]" value="기타비용">
+                        <input
+                          class="input"
+                          name="custom_expense_account[]"
+                          type="text"
+                          value="{{ row.account }}"
+                          placeholder="과목명"
+                          data-custom-expense-account
+                        >
+                        <button class="button button-danger button-compact" type="button" data-remove-custom-expense>삭제</button>
+                      </div>
+                    {% else %}
+                      {{ row.account }}
+                    {% endif %}
+                  </td>
                   <td class="amount-cell">{{ row.y_minus_1 }}</td>
                   <td class="amount-cell">{{ row.y }}</td>
                   <td class="input-cell">
-                    {% if row.is_editable %}
+                    {% if row.row_type == "custom_expense" %}
+                      <select
+                        class="select"
+                        name="custom_expense_cost_type[]"
+                        data-cost-type
+                      >
+                        <option value="fixed"{% if row.cost_type == "fixed" %} selected{% endif %}>고정비</option>
+                        <option value="variable"{% if row.cost_type == "variable" %} selected{% endif %}>변동비</option>
+                      </select>
+                    {% elif row.is_editable %}
                       <select
                         class="select"
                         name="cost_type_{{ row_index }}"
@@ -159,7 +193,19 @@
                   </td>
                   <td class="amount-cell" data-monthly-cell>{{ row.monthly_average_display }}</td>
                   <td class="input-cell">
-                    {% if row.is_editable %}
+                    {% if row.row_type == "custom_expense" %}
+                      <input
+                        class="input numeric"
+                        name="custom_expense_final_value[]"
+                        type="text"
+                        inputmode="decimal"
+                        value="{{ row.final_value }}"
+                        data-final-input
+                        data-value-kind="{{ row.value_kind }}"
+                      >
+                      <input type="hidden" name="custom_expense_value_kind[]" value="{{ row.value_kind }}" data-value-kind-hidden>
+                      <input type="hidden" name="custom_expense_monthly_average_display[]" value="{{ row.monthly_average_display }}" data-monthly-hidden>
+                    {% elif row.is_editable %}
                       <input
                         class="input numeric"
                         name="final_value_{{ row_index }}"
@@ -177,6 +223,32 @@
               {% endfor %}
             </tbody>
           </table>
+          <template data-custom-expense-template>
+            <tr class="custom-expense-row" data-income-row data-custom-expense-row data-average="0" data-sales-average="0">
+              <td class="account-cell">
+                <div class="custom-expense-account-control">
+                  <input type="hidden" name="custom_expense_id[]" value="">
+                  <input type="hidden" name="custom_expense_category[]" value="기타비용">
+                  <input class="input" name="custom_expense_account[]" type="text" value="" placeholder="과목명" data-custom-expense-account>
+                  <button class="button button-danger button-compact" type="button" data-remove-custom-expense>삭제</button>
+                </div>
+              </td>
+              <td class="amount-cell"></td>
+              <td class="amount-cell"></td>
+              <td class="input-cell">
+                <select class="select" name="custom_expense_cost_type[]" data-cost-type>
+                  <option value="fixed" selected>고정비</option>
+                  <option value="variable">변동비</option>
+                </select>
+              </td>
+              <td class="amount-cell" data-monthly-cell></td>
+              <td class="input-cell">
+                <input class="input numeric" name="custom_expense_final_value[]" type="text" inputmode="decimal" value="" data-final-input data-value-kind="amount">
+                <input type="hidden" name="custom_expense_value_kind[]" value="amount" data-value-kind-hidden>
+                <input type="hidden" name="custom_expense_monthly_average_display[]" value="" data-monthly-hidden>
+              </td>
+            </tr>
+          </template>
         </section>
       </div>
 
@@ -260,16 +332,50 @@
       monthlyHidden.value = display;
     }
 
-    document.querySelectorAll("[data-income-form] [data-final-input]").forEach((input) => {
+    function bindIncomeFinalInput(input) {
       input.addEventListener("focus", () => input.select());
       input.addEventListener("input", () => normalizeFinalInput(input));
       input.addEventListener("blur", () => formatFinalInput(input));
+    }
+
+    function bindIncomeRowControls(row) {
+      const select = row.querySelector("[data-cost-type]");
+      if (select) {
+        select.addEventListener("change", () => updateExpenseRow(row));
+      }
+      row.querySelectorAll("[data-final-input]").forEach(bindIncomeFinalInput);
+    }
+
+    let customExpenseSequence = 0;
+
+    function addCustomExpenseRow() {
+      const template = document.querySelector("[data-custom-expense-template]");
+      const tbody = document.querySelector("[data-income-expense-body]");
+      const operatingResultRow = tbody?.querySelector("[data-income-operating-result-row]");
+      if (!template || !tbody) return;
+
+      customExpenseSequence += 1;
+      const row = template.content.firstElementChild.cloneNode(true);
+      row.dataset.salesAverage = document.querySelector("[data-income-expense-body] [data-income-row]")?.dataset.salesAverage || "0";
+      row.querySelector('input[name="custom_expense_id[]"]').value = `custom-expense-${Date.now()}-${customExpenseSequence}`;
+      tbody.insertBefore(row, operatingResultRow || null);
+      bindIncomeRowControls(row);
+      row.querySelector("[data-custom-expense-account]")?.focus();
+    }
+
+    document.addEventListener("click", (event) => {
+      const addButton = event.target.closest("[data-add-custom-expense]");
+      if (addButton) {
+        addCustomExpenseRow();
+        return;
+      }
+
+      const removeButton = event.target.closest("[data-remove-custom-expense]");
+      if (removeButton) {
+        removeButton.closest("[data-custom-expense-row]")?.remove();
+      }
     });
 
-    document.querySelectorAll("[data-income-row]").forEach((row) => {
-      const select = row.querySelector("[data-cost-type]");
-      if (!select) return;
-      select.addEventListener("change", () => updateExpenseRow(row));
-    });
+    document.querySelectorAll("[data-income-row]").forEach(bindIncomeRowControls);
   </script>
 {% endblock %}
