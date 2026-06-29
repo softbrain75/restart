@@ -164,15 +164,16 @@ def calculate_asset_totals(financial_rows: list[dict[str, Any]]) -> dict[str, An
         if "유동자산" in account:
             section = "current"
             continue
-        if section is None or not row.get("is_editable"):
+        section_for_row = "non_current" if row.get("row_type") == "custom_asset" else section
+        if section_for_row is None or not row.get("is_editable"):
             continue
 
         statement = row_number(row, "amount")
         audit = row_number(row, "audit_value")
         liquidation = row_number(row, "liquidation_value")
-        sections[section]["statement"] += statement
-        sections[section]["audit"] += audit
-        sections[section]["liquidation"] += liquidation
+        sections[section_for_row]["statement"] += statement
+        sections[section_for_row]["audit"] += audit
+        sections[section_for_row]["liquidation"] += liquidation
 
         if cash_audit_value == 0 and "현금" in account:
             cash_audit_value = audit

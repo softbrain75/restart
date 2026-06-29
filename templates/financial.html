@@ -67,23 +67,72 @@
                 </th>
               </tr>
             </thead>
-            <tbody>
+            <tbody data-financial-body>
               {% for row in rows %}
                 <tr
-                  class="{% if not row.is_editable %}row-heading-data{% endif %}"
+                  class="{% if row.row_type == 'custom_asset' %}custom-asset-row{% elif not row.is_editable %}row-heading-data{% endif %}"
                   data-financial-row
-                  {% if row.is_editable %}
+                  {% if row.row_type == "custom_asset" %}
+                    data-editable-row
+                    data-custom-asset-row
+                  {% elif row.is_editable %}
                     data-editable-row
                   {% else %}
                     data-heading-row
                     data-heading-level="{{ row.heading_level }}"
+                    {% if row.row_type == "custom_asset_heading" %}data-additional-assets-heading{% endif %}
                     {% if row.is_total_row %}data-total-row{% endif %}
                   {% endif %}
                 >
-                  <td class="account-cell">{{ row.account }}</td>
-                  <td class="amount-cell">{{ row.amount }}</td>
+                  <td class="account-cell">
+                    {% if row.row_type == "custom_asset_heading" %}
+                      <div class="additional-asset-heading">
+                        <span>{{ row.account }}</span>
+                        <button class="button button-secondary button-compact" type="button" data-add-custom-asset>항목 추가</button>
+                      </div>
+                    {% elif row.row_type == "custom_asset" %}
+                      <div class="custom-asset-account-control">
+                        <input type="hidden" name="custom_asset_id[]" value="{{ row.row_id }}">
+                        <input
+                          class="input"
+                          name="custom_asset_account[]"
+                          type="text"
+                          value="{{ row.account }}"
+                          placeholder="과목명"
+                          data-custom-asset-account
+                        >
+                        <button class="button button-danger button-compact" type="button" data-remove-custom-asset>삭제</button>
+                      </div>
+                    {% else %}
+                      {{ row.account }}
+                    {% endif %}
+                  </td>
+                  <td class="{% if row.row_type == 'custom_asset' %}input-cell{% else %}amount-cell{% endif %}">
+                    {% if row.row_type == "custom_asset" %}
+                      <input
+                        class="input numeric"
+                        name="custom_asset_amount[]"
+                        type="text"
+                        inputmode="numeric"
+                        value="{{ row.amount }}"
+                        data-statement-input
+                      >
+                    {% else %}
+                      {{ row.amount }}
+                    {% endif %}
+                  </td>
                   <td class="input-cell {% if not row.is_editable %}amount-cell{% endif %}" {% if not row.is_editable %}data-audit-total-cell{% endif %}>
-                    {% if row.is_editable %}
+                    {% if row.row_type == "custom_asset" %}
+                      <input
+                        class="input numeric"
+                        name="custom_asset_audit[]"
+                        type="text"
+                        inputmode="numeric"
+                        value="{{ row.audit_value }}"
+                        data-audit-input
+                        data-row-index="{{ row.row_id }}"
+                      >
+                    {% elif row.is_editable %}
                       <input
                         class="input numeric"
                         name="audit_value_{{ loop.index0 }}"
@@ -98,7 +147,17 @@
                     {% endif %}
                   </td>
                   <td class="input-cell {% if not row.is_editable %}amount-cell{% endif %}" {% if not row.is_editable %}data-liquidation-total-cell{% endif %}>
-                    {% if row.is_editable %}
+                    {% if row.row_type == "custom_asset" %}
+                      <input
+                        class="input numeric"
+                        name="custom_asset_liquidation[]"
+                        type="text"
+                        inputmode="numeric"
+                        value="{{ row.liquidation_value }}"
+                        data-liquidation-input
+                        data-row-index="{{ row.row_id }}"
+                      >
+                    {% elif row.is_editable %}
                       <input
                         class="input numeric"
                         name="liquidation_value_{{ loop.index0 }}"
@@ -116,6 +175,26 @@
               {% endfor %}
             </tbody>
           </table>
+          <template data-custom-asset-template>
+            <tr class="custom-asset-row" data-financial-row data-editable-row data-custom-asset-row>
+              <td class="account-cell">
+                <div class="custom-asset-account-control">
+                  <input type="hidden" name="custom_asset_id[]" value="">
+                  <input class="input" name="custom_asset_account[]" type="text" value="" placeholder="과목명" data-custom-asset-account>
+                  <button class="button button-danger button-compact" type="button" data-remove-custom-asset>삭제</button>
+                </div>
+              </td>
+              <td class="input-cell">
+                <input class="input numeric" name="custom_asset_amount[]" type="text" inputmode="numeric" value="" data-statement-input>
+              </td>
+              <td class="input-cell">
+                <input class="input numeric" name="custom_asset_audit[]" type="text" inputmode="numeric" value="" data-audit-input data-row-index="">
+              </td>
+              <td class="input-cell">
+                <input class="input numeric" name="custom_asset_liquidation[]" type="text" inputmode="numeric" value="" data-liquidation-input data-row-index="">
+              </td>
+            </tr>
+          </template>
         </section>
       </div>
 
@@ -252,7 +331,9 @@
       });
     }
 
-    document.querySelectorAll("[data-financial-form] input.numeric").forEach((input) => {
+    function bindNumericInput(input) {
+      if (input.dataset.numericBound === "1") return;
+      input.dataset.numericBound = "1";
       input.dataset.initialValue = formatNumber(input.value);
       input.dataset.previousValidValue = input.dataset.initialValue;
       input.addEventListener("focus", () => {
@@ -267,9 +348,29 @@
         input.value = formatNumber(input.value);
         recalculateFinancialTotals();
       });
-    });
+    }
 
-    document.querySelectorAll("[data-audit-input]").forEach((auditInput) => {
+    function bindStatementInput(statementInput) {
+      if (statementInput.dataset.statementBound === "1") return;
+      statementInput.dataset.statementBound = "1";
+      statementInput.addEventListener("input", () => {
+        const row = statementInput.closest("[data-custom-asset-row]");
+        if (!row) return;
+        const auditInput = row.querySelector("[data-audit-input]");
+        const liquidationInput = row.querySelector("[data-liquidation-input]");
+        if (auditInput && !auditInput.value.trim()) {
+          auditInput.value = statementInput.value;
+        }
+        if (liquidationInput && !liquidationInput.value.trim()) {
+          liquidationInput.value = statementInput.value;
+        }
+        recalculateFinancialTotals();
+      });
+    }
+
+    function bindAuditInput(auditInput) {
+      if (auditInput.dataset.auditBound === "1") return;
+      auditInput.dataset.auditBound = "1";
       auditInput.addEventListener("input", () => {
         const rowIndex = auditInput.dataset.rowIndex;
         const liquidationInput = document.querySelector(
@@ -282,17 +383,61 @@
           recalculateFinancialTotals();
         }
       });
-    });
+    }
 
-    document.querySelectorAll("[data-liquidation-input]").forEach((liquidationInput) => {
+    function bindLiquidationInput(liquidationInput) {
+      if (liquidationInput.dataset.liquidationBound === "1") return;
+      liquidationInput.dataset.liquidationBound = "1";
       liquidationInput.addEventListener("blur", () => {
         validateFinancialValuePair(liquidationInput.dataset.rowIndex, {
           showAlert: true,
           restoreInvalid: true,
         });
       });
+    }
+
+    function bindFinancialRowControls(root = document) {
+      root.querySelectorAll("input.numeric").forEach(bindNumericInput);
+      root.querySelectorAll("[data-statement-input]").forEach(bindStatementInput);
+      root.querySelectorAll("[data-audit-input]").forEach(bindAuditInput);
+      root.querySelectorAll("[data-liquidation-input]").forEach(bindLiquidationInput);
+    }
+
+    let customAssetSequence = 0;
+
+    function addCustomAssetRow() {
+      const template = document.querySelector("[data-custom-asset-template]");
+      const tbody = document.querySelector("[data-financial-body]");
+      const totalRow = tbody?.querySelector("[data-total-row]");
+      if (!template || !tbody) return;
+
+      customAssetSequence += 1;
+      const rowIndex = `custom-${Date.now()}-${customAssetSequence}`;
+      const row = template.content.firstElementChild.cloneNode(true);
+      row.querySelector('input[name="custom_asset_id[]"]').value = rowIndex;
+      row.querySelector("[data-audit-input]").dataset.rowIndex = rowIndex;
+      row.querySelector("[data-liquidation-input]").dataset.rowIndex = rowIndex;
+      tbody.insertBefore(row, totalRow || null);
+      bindFinancialRowControls(row);
+      recalculateFinancialTotals();
+      row.querySelector("[data-custom-asset-account]")?.focus();
+    }
+
+    document.addEventListener("click", (event) => {
+      const addButton = event.target.closest("[data-add-custom-asset]");
+      if (addButton) {
+        addCustomAssetRow();
+        return;
+      }
+
+      const removeButton = event.target.closest("[data-remove-custom-asset]");
+      if (removeButton) {
+        removeButton.closest("[data-custom-asset-row]")?.remove();
+        recalculateFinancialTotals();
+      }
     });
 
+    bindFinancialRowControls(document);
     recalculateFinancialTotals();
 
     document.querySelector("[data-financial-form]")?.addEventListener("submit", (event) => {

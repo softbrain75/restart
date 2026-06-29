@@ -983,6 +983,14 @@ button {
   color: var(--color-danger-text);
 }
 
+.button-compact {
+  flex: 0 0 auto;
+  font-size: 12px;
+  height: 30px;
+  min-width: auto;
+  padding: 0 10px;
+}
+
 .notice {
   border-radius: var(--radius-md);
   flex: 0 0 auto;
@@ -1663,6 +1671,27 @@ button {
 .account-cell {
   color: var(--color-text);
   overflow-wrap: anywhere;
+}
+
+.additional-asset-heading,
+.custom-asset-account-control {
+  align-items: center;
+  display: flex;
+  gap: 8px;
+  min-width: 0;
+}
+
+.additional-asset-heading {
+  justify-content: space-between;
+}
+
+.custom-asset-account-control .input {
+  min-width: 120px;
+}
+
+.custom-asset-row .account-cell,
+.custom-asset-row .input-cell {
+  background: #fff9e8;
 }
 
 .amount-cell {

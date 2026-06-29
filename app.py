@@ -149,6 +149,9 @@ NON_EDITABLE_ACCOUNT_RE = re.compile(
 ACCOUNT_CODE_RE = re.compile(r"^\[(?P<code>\d{4,})\]")
 PREPAID_ACCOUNTS = {"선급금", "선급비용"}
 ASSET_TOTAL_ACCOUNTS = {"자산총계"}
+ADDITIONAL_ASSET_HEADING_ACCOUNT = "기타자산"
+CUSTOM_ASSET_HEADING_ROW_TYPE = "custom_asset_heading"
+CUSTOM_ASSET_ROW_TYPE = "custom_asset"
 LIABILITY_SECTION_START_ACCOUNTS = {"부채", "부채및자본"}
 DEDUCTIBLE_ASSET_ACCOUNTS = ("감가상각누계", "국고보조", "대손충당금")
 INTANGIBLE_ASSET_ACCOUNT = "무형자산"
@@ -559,6 +562,87 @@ def is_editable_financial_account(account: str) -> bool:
     return NON_EDITABLE_ACCOUNT_RE.match(compacted) is None
 
 
+def is_custom_asset_heading_row(row: dict[str, Any]) -> bool:
+    return row.get("row_type") == CUSTOM_ASSET_HEADING_ROW_TYPE
+
+
+def is_custom_asset_row(row: dict[str, Any]) -> bool:
+    return row.get("row_type") == CUSTOM_ASSET_ROW_TYPE
+
+
+def make_custom_asset_heading_row() -> dict[str, Any]:
+    return {
+        "row": "",
+        "source_row": "",
+        "account_code": "",
+        "account": ADDITIONAL_ASSET_HEADING_ACCOUNT,
+        "amount": "",
+        "amount_number": None,
+        "audit_value": "",
+        "liquidation_value": "",
+        "is_editable": False,
+        "row_type": CUSTOM_ASSET_HEADING_ROW_TYPE,
+    }
+
+
+def make_custom_asset_row(
+    account: str,
+    amount_display: str = "",
+    amount_number: float | None = None,
+    audit_display: str = "",
+    liquidation_display: str = "",
+    row_id: str | None = None,
+) -> dict[str, Any]:
+    return {
+        "row": "",
+        "source_row": "",
+        "account_code": "",
+        "account": account,
+        "amount": amount_display,
+        "amount_number": amount_number,
+        "audit_value": audit_display,
+        "liquidation_value": liquidation_display,
+        "is_editable": True,
+        "row_type": CUSTOM_ASSET_ROW_TYPE,
+        "row_id": row_id or uuid.uuid4().hex[:10],
+    }
+
+
+def strip_custom_asset_rows(rows: list[dict[str, Any]]) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    base_rows: list[dict[str, Any]] = []
+    custom_rows: list[dict[str, Any]] = []
+    for row in rows:
+        if is_custom_asset_row(row):
+            custom_rows.append(row)
+            continue
+        if is_custom_asset_heading_row(row):
+            continue
+        base_rows.append(row)
+    return base_rows, custom_rows
+
+
+def insert_custom_asset_rows(
+    rows: list[dict[str, Any]],
+    custom_rows: list[dict[str, Any]] | None = None,
+) -> list[dict[str, Any]]:
+    base_rows, existing_custom_rows = strip_custom_asset_rows(rows)
+    custom_rows = existing_custom_rows if custom_rows is None else custom_rows
+    insert_index = next(
+        (
+            index
+            for index, row in enumerate(base_rows)
+            if normalize_account_text(row.get("account", "")) in ASSET_TOTAL_ACCOUNTS
+        ),
+        len(base_rows),
+    )
+    return [
+        *base_rows[:insert_index],
+        make_custom_asset_heading_row(),
+        *custom_rows,
+        *base_rows[insert_index:],
+    ]
+
+
 def is_deductible_asset_account(account: str) -> bool:
     compacted = normalize_account_text(account)
     return any(keyword in compacted for keyword in DEDUCTIBLE_ASSET_ACCOUNTS)
@@ -960,7 +1044,7 @@ def create_case(workbook: dict[str, Any]) -> dict[str, Any]:
         "created_at": created_at,
         "updated_at": created_at,
         "workbook": workbook,
-        "financial_rows": extract_financial_rows(balance_sheet),
+        "financial_rows": insert_custom_asset_rows(extract_financial_rows(balance_sheet)),
         "financial_saved": False,
         "debt_rows": build_default_debt_rows(),
         "debt_saved": False,
@@ -1015,6 +1099,63 @@ def build_default_rent_rows() -> list[dict[str, Any]]:
 def clean_submitted_number(value: str) -> tuple[str, float | None]:
     number = parse_number_text(value)
     return display_number(number), number
+
+
+def submitted_custom_asset_rows() -> tuple[list[dict[str, Any]], list[str]]:
+    row_ids = request.form.getlist("custom_asset_id[]")
+    accounts = request.form.getlist("custom_asset_account[]")
+    amount_values = request.form.getlist("custom_asset_amount[]")
+    audit_values = request.form.getlist("custom_asset_audit[]")
+    liquidation_values = request.form.getlist("custom_asset_liquidation[]")
+    row_count = max(
+        len(row_ids),
+        len(accounts),
+        len(amount_values),
+        len(audit_values),
+        len(liquidation_values),
+    )
+    custom_rows: list[dict[str, Any]] = []
+    errors: list[str] = []
+
+    for index in range(row_count):
+        row_id = clean_contact_text(row_ids[index] if index < len(row_ids) else "", 40)
+        account = clean_contact_text(accounts[index] if index < len(accounts) else "", 120)
+        amount_raw = amount_values[index] if index < len(amount_values) else ""
+        audit_raw = audit_values[index] if index < len(audit_values) else ""
+        liquidation_raw = liquidation_values[index] if index < len(liquidation_values) else ""
+
+        amount_display, amount_number = clean_submitted_number(amount_raw)
+        audit_display, audit_number = clean_submitted_number(audit_raw)
+        liquidation_display, liquidation_number = clean_submitted_number(liquidation_raw)
+
+        if audit_number is None and amount_number is not None:
+            audit_number = amount_number
+            audit_display = display_number(audit_number)
+        if liquidation_number is None and audit_number is not None:
+            liquidation_number = audit_number
+            liquidation_display = display_number(liquidation_number)
+
+        if not any((account, amount_display, audit_display, liquidation_display)):
+            continue
+
+        if not account:
+            errors.append("기타자산 과목명을 입력해 주세요.")
+            account = "기타자산"
+        if audit_number is not None and liquidation_number is not None and liquidation_number > audit_number:
+            errors.append(f"{account}: 청산가치는 실사가치보다 클 수 없습니다.")
+
+        custom_rows.append(
+            make_custom_asset_row(
+                account=account,
+                amount_display=amount_display,
+                amount_number=amount_number,
+                audit_display=audit_display,
+                liquidation_display=liquidation_display,
+                row_id=row_id or None,
+            )
+        )
+
+    return custom_rows, errors
 
 
 def clean_submitted_income_value(value: str, value_kind: str) -> tuple[str, float | None]:
@@ -1940,9 +2081,12 @@ def worksheet_formula_sources(case: dict[str, Any], sheet_titles: dict[str, str]
         if "유동자산" in account:
             section = "current"
             continue
-        if section is None or not row.get("is_editable"):
+        if not row.get("is_editable"):
             continue
-        if section == "current":
+        section_for_row = "non_current" if is_custom_asset_row(row) else section
+        if section_for_row is None:
+            continue
+        if section_for_row == "current":
             current_rows.append(index)
         else:
             non_current_rows.append(index)
@@ -3125,10 +3269,15 @@ def financial(case_id: str):
             message=None,
         ), 404
 
+    financial_rows = insert_custom_asset_rows(case.get("financial_rows", []))
+    if financial_rows != case.get("financial_rows", []):
+        case["financial_rows"] = financial_rows
+        save_case(case)
+
     return render_template(
         "financial.html",
         case=case,
-        rows=financial_display_rows(case["financial_rows"]),
+        rows=financial_display_rows(financial_rows),
         error=None,
         message=(
             "파일이 업로드되었습니다. 자산가치산정을 확인해 주세요."
@@ -3148,11 +3297,12 @@ def save_financial(case_id: str):
     if case is None:
         return redirect(url_for("analysis_index"))
 
-    rows = case["financial_rows"]
+    rows = insert_custom_asset_rows(case.get("financial_rows", []))
+    case["financial_rows"] = rows
     errors: list[str] = []
 
     for index, row in enumerate(rows):
-        if not row["is_editable"]:
+        if is_custom_asset_row(row) or not row["is_editable"]:
             continue
 
         audit_key = f"audit_value_{index}"
@@ -3169,15 +3319,20 @@ def save_financial(case_id: str):
         row["audit_value"] = audit_display
         row["liquidation_value"] = liquidation_display
 
+    custom_rows, custom_errors = submitted_custom_asset_rows()
+    errors.extend(custom_errors)
+    display_rows = insert_custom_asset_rows(rows, custom_rows)
+
     if errors:
         return render_template(
             "financial.html",
             case=case,
-            rows=financial_display_rows(rows),
+            rows=financial_display_rows(display_rows),
             error=" ".join(errors),
             message=None,
         ), 400
 
+    case["financial_rows"] = display_rows
     case["financial_saved"] = True
     save_case(case)
     if request.form.get("next") == "debt":
@@ -3186,7 +3341,7 @@ def save_financial(case_id: str):
     return render_template(
         "financial.html",
         case=case,
-        rows=financial_display_rows(rows),
+        rows=financial_display_rows(case["financial_rows"]),
         error=None,
         message="재무 데이터가 저장되었습니다.",
     )
