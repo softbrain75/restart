@@ -1534,6 +1534,13 @@ button {
   text-align: center;
 }
 
+.financial-frame .financial-table thead th {
+  box-shadow: var(--shadow-sticky);
+  position: sticky;
+  top: 0;
+  z-index: 6;
+}
+
 .financial-table {
   min-width: 860px;
 }
