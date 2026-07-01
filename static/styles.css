@@ -4227,7 +4227,7 @@ form[data-collateral-form] {
   .income-table-section,
   .collateral-table-section {
     margin: 0 -2px;
-    overflow-x: auto;
+    overflow-x: visible;
     padding: 0 2px 4px;
   }
 
@@ -4236,24 +4236,61 @@ form[data-collateral-form] {
   .income-table,
   .collateral-table,
   .rent-table {
-    table-layout: auto;
-    min-width: 100%;
-    width: max-content;
+    font-size: clamp(7px, 2.15vw, 10px);
+    min-width: 0;
+    table-layout: fixed;
+    width: 100%;
   }
 
   .financial-table .col-account,
-  .debt-table .col-account,
-  .income-table .col-account,
-  .collateral-table .col-account,
-  .rent-table .col-account,
   .financial-table .col-amount,
-  .debt-table .col-amount,
+  .debt-table .col-account,
   .debt-table .col-count,
+  .debt-table .col-amount,
+  .income-table .col-account,
   .income-table .col-amount,
   .income-table .col-rate,
+  .collateral-table .col-account,
   .collateral-table .col-amount,
+  .rent-table .col-account,
   .rent-table .col-amount {
     width: auto;
+  }
+
+  .financial-table .col-account {
+    width: 37%;
+  }
+
+  .financial-table .col-amount {
+    width: 21%;
+  }
+
+  .debt-table .col-account,
+  .collateral-table .col-account {
+    width: 42%;
+  }
+
+  .debt-table .col-count {
+    width: 20%;
+  }
+
+  .debt-table .col-amount,
+  .collateral-table .col-amount {
+    width: 29%;
+  }
+
+  .income-table .col-account {
+    width: 25%;
+  }
+
+  .income-table .col-amount,
+  .income-table .col-rate {
+    width: 15%;
+  }
+
+  .rent-table .col-account,
+  .rent-table .col-amount {
+    width: 50%;
   }
 
   .financial-table .account-cell,
@@ -4261,47 +4298,23 @@ form[data-collateral-form] {
   .income-table .account-cell,
   .collateral-table .account-cell,
   .rent-table .account-cell {
-    max-width: 180px;
-    min-width: 88px;
+    max-width: none;
+    min-width: 0;
     overflow-wrap: anywhere;
     white-space: normal;
   }
 
   .financial-table .input-cell,
   .financial-table .amount-cell,
-  .collateral-table .input-cell,
-  .rent-table .input-cell {
-    min-width: 146px;
-  }
-
-  .debt-table .account-cell {
-    max-width: 220px;
-    min-width: 150px;
-  }
-
-  .debt-table .input-cell {
-    min-width: 170px;
-  }
-
-  .income-table .account-cell {
-    max-width: 170px;
-    min-width: 130px;
-  }
-
+  .debt-table .input-cell,
+  .debt-table .amount-cell,
   .income-table .input-cell,
-  .income-table .amount-cell {
-    min-width: 116px;
-  }
-
-  .income-table .col-rate,
-  .income-table td:nth-child(4) {
-    min-width: 96px;
-  }
-
-  .collateral-table .account-cell,
-  .rent-table .account-cell {
-    max-width: 200px;
-    min-width: 130px;
+  .income-table .amount-cell,
+  .collateral-table .input-cell,
+  .collateral-table .amount-cell,
+  .rent-table .account-cell,
+  .rent-table .input-cell {
+    min-width: 0;
   }
 
   .financial-table thead th,
@@ -4309,12 +4322,90 @@ form[data-collateral-form] {
   .income-table thead th,
   .collateral-table thead th,
   .rent-table thead th,
+  .financial-table td,
+  .debt-table td,
+  .income-table td,
+  .collateral-table td,
+  .rent-table td {
+    height: auto;
+    min-height: 24px;
+    padding: 4px 3px;
+  }
+
+  .financial-table thead th,
+  .debt-table thead th,
+  .income-table thead th,
+  .collateral-table thead th,
+  .rent-table thead th {
+    font-size: clamp(6px, 1.9vw, 9px);
+    line-height: 1.25;
+    white-space: normal;
+  }
+
   .financial-table .amount-cell,
   .debt-table .amount-cell,
   .income-table .amount-cell,
   .collateral-table .amount-cell,
   .rent-table .amount-cell {
-    white-space: nowrap;
+    font-size: clamp(6px, 1.9vw, 9px);
+    line-height: 1.25;
+    white-space: normal;
+  }
+
+  .data-table .input-cell .input,
+  .data-table .input-cell .select,
+  .custom-asset-account-control .input,
+  .custom-expense-account-control .input {
+    font-size: clamp(6px, 1.9vw, 9px);
+    height: clamp(24px, 7vw, 30px);
+    min-width: 0;
+    padding: 3px 4px;
+    width: 100%;
+  }
+
+  .data-table .input-cell .select,
+  .select,
+  select.input {
+    background-position: right 5px center;
+    background-size: 10px 10px;
+    padding-right: 18px;
+  }
+
+  .additional-asset-heading,
+  .additional-expense-heading,
+  .custom-asset-account-control,
+  .custom-expense-account-control {
+    gap: 4px;
+  }
+
+  .custom-asset-account-control,
+  .custom-expense-account-control {
+    align-items: stretch;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .additional-asset-heading,
+  .additional-expense-heading {
+    align-items: center;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .data-table .button-compact {
+    font-size: clamp(6px, 1.75vw, 8px);
+    height: clamp(22px, 6.4vw, 28px);
+    padding: 0 5px;
+  }
+
+  .table-heading-help,
+  .row-label-help {
+    gap: 3px;
+  }
+
+  .info-tooltip__trigger {
+    height: clamp(12px, 3.5vw, 16px);
+    width: clamp(12px, 3.5vw, 16px);
   }
 
   .result-main {
