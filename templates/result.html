@@ -198,48 +198,160 @@
             </div>
           </section>
 
-          <section class="result-section">
-            <h3>채무변제 추정액 비교</h3>
-            <table class="data-table result-comparison-table">
-              <thead>
-                <tr>
-                  <th class="col-account">구분</th>
-                  <th class="col-amount">채무금액</th>
-                  <th class="col-amount">청산 시 변제금액</th>
-                  <th class="col-rate">청산 시 변제율</th>
-                  <th class="col-amount">계속기업 변제금액</th>
-                  <th class="col-rate">계속기업 변제율</th>
-                  <th class="col-amount">변제금액 차이</th>
-                  <th class="col-rate">변제율 차이</th>
-                </tr>
-              </thead>
-              <tbody>
-                {% for row in result.comparison_rows %}
-                  <tr>
-                    <td class="account-cell">{{ row.label }}</td>
-                    <td class="amount-cell">{{ fmt.number(row.debt) }}</td>
-                    <td class="amount-cell">{{ fmt.number(row.liquidation_repayment) }}</td>
-                    <td class="amount-cell">{{ fmt.percent(row.liquidation_rate) }}</td>
-                    <td class="amount-cell">{{ fmt.number(row.going_repayment) }}</td>
-                    <td class="amount-cell">{{ fmt.percent(row.going_rate) }}</td>
-                    <td class="amount-cell">{{ fmt.number(row.repayment_difference) }}</td>
-                    <td class="amount-cell">{{ fmt.percent(row.rate_difference) }}</td>
-                  </tr>
-                {% endfor %}
-                {% if result.comparison_total %}
-                  <tr class="row-heading-data">
-                    <td class="account-cell">{{ result.comparison_total.label }}</td>
-                    <td class="amount-cell">{{ fmt.number(result.comparison_total.debt) }}</td>
-                    <td class="amount-cell">{{ fmt.number(result.comparison_total.liquidation_repayment) }}</td>
-                    <td class="amount-cell">{{ fmt.percent(result.comparison_total.liquidation_rate) }}</td>
-                    <td class="amount-cell">{{ fmt.number(result.comparison_total.going_repayment) }}</td>
-                    <td class="amount-cell">{{ fmt.percent(result.comparison_total.going_rate) }}</td>
-                    <td class="amount-cell">{{ fmt.number(result.comparison_total.repayment_difference) }}</td>
-                    <td class="amount-cell">{{ fmt.percent(result.comparison_total.rate_difference) }}</td>
-                  </tr>
-                {% endif %}
-              </tbody>
-            </table>
+          <section class="result-section debt-effect-card" aria-label="채무변제 효과 비교">
+            {% set debt_effect = result.debt_effect %}
+            {% set debt_total = debt_effect.total %}
+            <div class="debt-effect-header">
+              <div>
+                <h3>채무변제 효과 비교</h3>
+                <p>청산과 회생 시 실제 변제금액을 중심으로 비교합니다.</p>
+              </div>
+              <span class="debt-effect-header__unit">단위: 원</span>
+            </div>
+
+            <div class="debt-effect-overview">
+              <div class="debt-effect-total">
+                <div class="debt-effect-total__label">전체 비교<br><span>(총계)</span></div>
+                <div class="debt-effect-total__bars">
+                  <div class="debt-effect-total-row is-liquidation">
+                    <strong>청산</strong>
+                    <div class="debt-effect-total-row__body">
+                      <div class="debt-effect-row-meta">
+                        <span>변제금액 {{ debt_total.liquidation_paid_text }}원 <em>{{ debt_total.liquidation_rate_text }}</em></span>
+                        <span>미변제금액 {{ debt_total.liquidation_unpaid_text }}원</span>
+                      </div>
+                      <div class="debt-effect-bar" aria-hidden="true">
+                        <span class="debt-effect-bar__paid" style="width: {{ debt_total.liquidation_paid_width }}%;"></span>
+                        <span class="debt-effect-bar__unpaid" style="width: {{ debt_total.liquidation_unpaid_width }}%;"></span>
+                      </div>
+                    </div>
+                    <span class="debt-effect-total-row__debt">총 채무금액<br>{{ debt_total.debt_text }}원</span>
+                  </div>
+
+                  <div class="debt-effect-total-row is-going">
+                    <strong>회생<br><span>(계속기업)</span></strong>
+                    <div class="debt-effect-total-row__body">
+                      <div class="debt-effect-row-meta">
+                        <span>변제금액 {{ debt_total.going_paid_text }}원 <em>{{ debt_total.going_rate_text }}</em></span>
+                        <span>미변제금액 {{ debt_total.going_unpaid_text }}원</span>
+                      </div>
+                      <div class="debt-effect-bar" aria-hidden="true">
+                        <span class="debt-effect-bar__paid" style="width: {{ debt_total.going_paid_width }}%;"></span>
+                        <span class="debt-effect-bar__unpaid" style="width: {{ debt_total.going_unpaid_width }}%;"></span>
+                      </div>
+                    </div>
+                    <span class="debt-effect-total-row__debt">총 채무금액<br>{{ debt_total.debt_text }}원</span>
+                  </div>
+                </div>
+              </div>
+
+              <aside class="debt-effect-highlight is-{{ 'positive' if debt_total.additional_positive else 'negative' }}">
+                <span class="debt-effect-highlight__icon" aria-hidden="true">↗</span>
+                <strong>{{ "회생 시 추가 변제 가능금액" if debt_total.additional_positive else "회생 시 변제 부족금액" }}</strong>
+                <em>{{ debt_total.additional_payment_text }}원</em>
+                <p>{{ debt_effect.message }}</p>
+              </aside>
+            </div>
+
+            <div class="debt-effect-metrics" aria-label="채무변제 요약">
+              <div class="debt-effect-metric">
+                <span class="debt-effect-metric__icon is-debt" aria-hidden="true"></span>
+                <div>
+                  <span>총 채무금액</span>
+                  <strong>{{ debt_total.debt_text }}원</strong>
+                </div>
+              </div>
+              <div class="debt-effect-metric">
+                <span class="debt-effect-metric__icon is-liquidation" aria-hidden="true"></span>
+                <div>
+                  <span>청산 시 미변제금액</span>
+                  <strong>{{ debt_total.liquidation_unpaid_text }}원</strong>
+                </div>
+              </div>
+              <div class="debt-effect-metric">
+                <span class="debt-effect-metric__icon is-going" aria-hidden="true"></span>
+                <div>
+                  <span>회생 시 미변제금액</span>
+                  <strong>{{ debt_total.going_unpaid_text }}원</strong>
+                </div>
+              </div>
+            </div>
+
+            <div class="debt-effect-detail" aria-label="채무 그룹별 변제효과">
+              <div class="debt-effect-detail__header">
+                <span>채무 그룹</span>
+                <span>총 채무금액</span>
+                <span>청산 시</span>
+                <span>회생 시</span>
+                <span>변제율 차이</span>
+              </div>
+              {% for row in debt_effect.rows %}
+                <article class="debt-effect-detail__row">
+                  <div class="debt-effect-group">
+                    <span>{{ row.index }}</span>
+                    <strong>{{ row.label }}</strong>
+                  </div>
+                  <strong class="debt-effect-amount">{{ row.debt_text }}원</strong>
+                  <div class="debt-effect-mini">
+                    <div class="debt-effect-mini__bar" aria-hidden="true">
+                      <span class="debt-effect-mini__paid" style="width: {{ row.liquidation_paid_width }}%;"></span>
+                      <span class="debt-effect-mini__unpaid" style="width: {{ row.liquidation_unpaid_width }}%;"></span>
+                    </div>
+                    <div class="debt-effect-mini__numbers">
+                      <span>{{ row.liquidation_repayment_text }}원 <em>{{ row.liquidation_rate_text }}</em></span>
+                      <span>{{ row.liquidation_unpaid_text }}원</span>
+                    </div>
+                  </div>
+                  <div class="debt-effect-mini is-going">
+                    <div class="debt-effect-mini__bar" aria-hidden="true">
+                      <span class="debt-effect-mini__paid" style="width: {{ row.going_paid_width }}%;"></span>
+                      <span class="debt-effect-mini__unpaid" style="width: {{ row.going_unpaid_width }}%;"></span>
+                    </div>
+                    <div class="debt-effect-mini__numbers">
+                      <span>{{ row.going_repayment_text }}원 <em>{{ row.going_rate_text }}</em></span>
+                      <span>{{ row.going_unpaid_text }}원</span>
+                    </div>
+                  </div>
+                  <strong class="debt-effect-diff is-{{ row.rate_difference_tone }}">{{ row.rate_difference_text }}</strong>
+                </article>
+              {% endfor %}
+              <article class="debt-effect-detail__row is-total">
+                <div class="debt-effect-group">
+                  <span>Σ</span>
+                  <strong>총계</strong>
+                </div>
+                <strong class="debt-effect-amount">{{ debt_total.debt_text }}원</strong>
+                <div class="debt-effect-mini">
+                  <div class="debt-effect-mini__bar" aria-hidden="true">
+                    <span class="debt-effect-mini__paid" style="width: {{ debt_total.liquidation_paid_width }}%;"></span>
+                    <span class="debt-effect-mini__unpaid" style="width: {{ debt_total.liquidation_unpaid_width }}%;"></span>
+                  </div>
+                  <div class="debt-effect-mini__numbers">
+                    <span>{{ debt_total.liquidation_paid_text }}원 <em>{{ debt_total.liquidation_rate_text }}</em></span>
+                    <span>{{ debt_total.liquidation_unpaid_text }}원</span>
+                  </div>
+                </div>
+                <div class="debt-effect-mini is-going">
+                  <div class="debt-effect-mini__bar" aria-hidden="true">
+                    <span class="debt-effect-mini__paid" style="width: {{ debt_total.going_paid_width }}%;"></span>
+                    <span class="debt-effect-mini__unpaid" style="width: {{ debt_total.going_unpaid_width }}%;"></span>
+                  </div>
+                  <div class="debt-effect-mini__numbers">
+                    <span>{{ debt_total.going_paid_text }}원 <em>{{ debt_total.going_rate_text }}</em></span>
+                    <span>{{ debt_total.going_unpaid_text }}원</span>
+                  </div>
+                </div>
+                <strong class="debt-effect-diff is-{{ 'positive' if debt_total.additional_payment > 0 else 'negative' if debt_total.additional_payment < 0 else 'neutral' }}">
+                  {{ debt_total.additional_rate_text }}
+                </strong>
+              </article>
+            </div>
+
+            <div class="debt-effect-legend" aria-label="범례">
+              <span><i class="is-paid"></i>변제금액</span>
+              <span><i class="is-unpaid"></i>미변제금액</span>
+              <span><i class="is-reference"></i>원금 기준</span>
+            </div>
           </section>
 
           <section class="result-section">

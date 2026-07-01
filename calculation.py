@@ -95,6 +95,13 @@ def display_eok(value: float) -> str:
     return f"{value / 100_000_000:,.1f}억"
 
 
+def display_percent_point(value: float) -> str:
+    if not math.isfinite(value):
+        return ""
+    sign = "+" if value > 0 else ""
+    return f"{sign}{value * 100:.1f}%p"
+
+
 def visual_width(value: float, max_value: float) -> float:
     if not math.isfinite(value) or max_value <= 0:
         return 0.0
@@ -182,6 +189,93 @@ def build_asset_summary_visual(
         layers.append(layer)
 
     return {"layers": layers}
+
+
+def repayment_segment_width(value: float, total: float) -> float:
+    if not math.isfinite(value) or total <= 0:
+        return 0.0
+    width = value / total * 100
+    if value > 0:
+        width = max(width, 3.0)
+    return min(max(width, 0.0), 100.0)
+
+
+def build_debt_effect_visual(
+    comparison_rows: list[dict[str, Any]],
+    comparison_total: dict[str, Any],
+) -> dict[str, Any]:
+    total_debt = comparison_total.get("debt", 0.0)
+    liquidation_paid = comparison_total.get("liquidation_repayment", 0.0)
+    going_paid = comparison_total.get("going_repayment", 0.0)
+    liquidation_unpaid = max(total_debt - liquidation_paid, 0.0)
+    going_unpaid = max(total_debt - going_paid, 0.0)
+    additional_payment = going_paid - liquidation_paid
+    additional_rate = comparison_total.get("rate_difference", 0.0)
+    additional_positive = additional_payment >= 0
+
+    rows = []
+    for index, row in enumerate(comparison_rows, start=1):
+        debt = row.get("debt", 0.0)
+        liquidation_repayment = row.get("liquidation_repayment", 0.0)
+        going_repayment = row.get("going_repayment", 0.0)
+        rows.append(
+            {
+                **row,
+                "index": index,
+                "debt_text": display_number(debt),
+                "liquidation_repayment_text": display_number(liquidation_repayment),
+                "liquidation_unpaid_text": display_number(max(debt - liquidation_repayment, 0.0)),
+                "liquidation_rate_text": display_percent(row.get("liquidation_rate", 0.0)),
+                "going_repayment_text": display_number(going_repayment),
+                "going_unpaid_text": display_number(max(debt - going_repayment, 0.0)),
+                "going_rate_text": display_percent(row.get("going_rate", 0.0)),
+                "rate_difference_text": display_percent_point(row.get("rate_difference", 0.0)),
+                "rate_difference_tone": (
+                    "positive"
+                    if row.get("rate_difference", 0.0) > 0
+                    else "negative"
+                    if row.get("rate_difference", 0.0) < 0
+                    else "neutral"
+                ),
+                "liquidation_paid_width": repayment_segment_width(liquidation_repayment, debt),
+                "liquidation_unpaid_width": repayment_segment_width(max(debt - liquidation_repayment, 0.0), debt),
+                "going_paid_width": repayment_segment_width(going_repayment, debt),
+                "going_unpaid_width": repayment_segment_width(max(debt - going_repayment, 0.0), debt),
+            }
+        )
+
+    return {
+        "total": {
+            "debt": total_debt,
+            "debt_text": display_number(total_debt),
+            "liquidation_paid": liquidation_paid,
+            "liquidation_paid_text": display_number(liquidation_paid),
+            "liquidation_unpaid": liquidation_unpaid,
+            "liquidation_unpaid_text": display_number(liquidation_unpaid),
+            "liquidation_rate": comparison_total.get("liquidation_rate", 0.0),
+            "liquidation_rate_text": display_percent(comparison_total.get("liquidation_rate", 0.0)),
+            "going_paid": going_paid,
+            "going_paid_text": display_number(going_paid),
+            "going_unpaid": going_unpaid,
+            "going_unpaid_text": display_number(going_unpaid),
+            "going_rate": comparison_total.get("going_rate", 0.0),
+            "going_rate_text": display_percent(comparison_total.get("going_rate", 0.0)),
+            "additional_payment": additional_payment,
+            "additional_payment_text": display_number(abs(additional_payment)),
+            "additional_rate_text": display_percent_point(additional_rate),
+            "additional_positive": additional_positive,
+            "liquidation_paid_width": repayment_segment_width(liquidation_paid, total_debt),
+            "liquidation_unpaid_width": repayment_segment_width(liquidation_unpaid, total_debt),
+            "going_paid_width": repayment_segment_width(going_paid, total_debt),
+            "going_unpaid_width": repayment_segment_width(going_unpaid, total_debt),
+        },
+        "rows": rows,
+        "message": (
+            "회생 가정에서 청산보다 더 많은 금액을 변제할 수 있습니다."
+            if additional_positive
+            else "회생 가정의 변제금액이 청산 가정보다 낮아 추가 검토가 필요합니다."
+        ),
+    }
 
 
 def build_asset_analysis_board(
@@ -1524,6 +1618,7 @@ def calculate_case_result(case: dict[str, Any]) -> dict[str, Any]:
         "going_repayment": going_repayment,
         "comparison_rows": comparison_rows,
         "comparison_total": comparison_total,
+        "debt_effect": build_debt_effect_visual(comparison_rows, comparison_total),
         "diagnosis": diagnosis,
         "worksheet_review": worksheet_review,
         "visual": build_result_visual(liquidation_value, going_concern_value),
