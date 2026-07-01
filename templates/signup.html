@@ -6,7 +6,8 @@
 {% block content %}
   {% set selected_case_type = case_type|default(active_case_type) %}
   {% set selected_case_type_meta = case_type_meta(selected_case_type) %}
-  {% set signup_title = "개인 회원가입" if selected_case_type == "personal" else selected_case_type_meta.label ~ " 회원가입" %}
+  {% set is_individual_signup = selected_case_type in ["general", "personal"] %}
+  {% set signup_title = "개인 회원가입" if is_individual_signup else selected_case_type_meta.label ~ " 회원가입" %}
   {% set case_type_switcher_page = "signup" %}
   {% include "_case_type_switcher.html" %}
 
@@ -26,14 +27,14 @@
       {% endif %}
       <input type="hidden" name="case_type" value="{{ selected_case_type }}">
       <div class="account-form__grid">
-        {% if selected_case_type != "personal" %}
+        {% if not is_individual_signup %}
           <label class="field">
             <span>회사명</span>
             <input class="input" name="company" type="text" value="{{ form.company }}" autocomplete="organization" required>
           </label>
         {% endif %}
         <label class="field">
-          <span>{{ "성명" if selected_case_type == "personal" else "담당자명" }}</span>
+          <span>{{ "성명" if is_individual_signup else "담당자명" }}</span>
           <input class="input" name="contact_name" type="text" value="{{ form.contact_name }}" autocomplete="name" required>
         </label>
         <label class="field">

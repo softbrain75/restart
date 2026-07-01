@@ -3476,7 +3476,7 @@ def signup():
         or session.get("selected_case_type")
     )
     session["selected_case_type"] = selected_case_type
-    is_personal_signup = selected_case_type == "personal"
+    is_individual_signup = selected_case_type in {"general", "personal"}
     form = {
         "company": request.form.get("company", prefill_consultation.get("company", (prefill_case or {}).get("company_name", ""))).strip(),
         "contact_name": request.form.get("contact_name", prefill_consultation.get("contact_name", "")).strip(),
@@ -3489,10 +3489,10 @@ def signup():
         password = request.form.get("password", "")
         password_confirm = request.form.get("password_confirm", "")
 
-        if not is_personal_signup and not form["company"]:
+        if not is_individual_signup and not form["company"]:
             error = "회사명을 입력해 주세요."
         elif not form["contact_name"]:
-            error = "성명을 입력해 주세요." if is_personal_signup else "담당자명을 입력해 주세요."
+            error = "성명을 입력해 주세요." if is_individual_signup else "담당자명을 입력해 주세요."
         elif not form["phone"]:
             error = "연락처를 입력해 주세요."
         elif not form["email"]:
@@ -3512,7 +3512,7 @@ def signup():
             user = {
                 "user_id": user_id,
                 "account_role": ACCOUNT_ROLE_ANALYSIS,
-                "company": "" if is_personal_signup else form["company"],
+                "company": "" if is_individual_signup else form["company"],
                 "contact_name": form["contact_name"],
                 "phone": form["phone"],
                 "email": form["email"],
