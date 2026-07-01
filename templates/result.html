@@ -246,7 +246,9 @@
               </div>
 
               <aside class="debt-effect-highlight is-{{ 'positive' if debt_total.additional_positive else 'negative' }}">
-                <span class="debt-effect-highlight__icon" aria-hidden="true">↗</span>
+                <span class="debt-effect-highlight__icon" aria-hidden="true">
+                  <img src="{{ url_for('static', filename='img/debt-effect-highlight.png') }}" alt="">
+                </span>
                 <strong>{{ "회생 시 추가 변제 가능금액" if debt_total.additional_positive else "회생 시 변제 부족금액" }}</strong>
                 <em>{{ debt_total.additional_payment_text }}원</em>
                 <p>{{ debt_effect.message }}</p>
@@ -255,21 +257,27 @@
 
             <div class="debt-effect-metrics" aria-label="채무변제 요약">
               <div class="debt-effect-metric">
-                <span class="debt-effect-metric__icon is-debt" aria-hidden="true"></span>
+                <span class="debt-effect-metric__icon is-debt" aria-hidden="true">
+                  <img src="{{ url_for('static', filename='img/debt-effect-total.png') }}" alt="">
+                </span>
                 <div>
                   <span>총 채무금액</span>
                   <strong>{{ debt_total.debt_text }}원</strong>
                 </div>
               </div>
               <div class="debt-effect-metric">
-                <span class="debt-effect-metric__icon is-liquidation" aria-hidden="true"></span>
+                <span class="debt-effect-metric__icon is-liquidation" aria-hidden="true">
+                  <img src="{{ url_for('static', filename='img/debt-effect-liquidation.png') }}" alt="">
+                </span>
                 <div>
                   <span>청산 시 미변제금액</span>
                   <strong>{{ debt_total.liquidation_unpaid_text }}원</strong>
                 </div>
               </div>
               <div class="debt-effect-metric">
-                <span class="debt-effect-metric__icon is-going" aria-hidden="true"></span>
+                <span class="debt-effect-metric__icon is-going" aria-hidden="true">
+                  <img src="{{ url_for('static', filename='img/debt-effect-going.png') }}" alt="">
+                </span>
                 <div>
                   <span>회생 시 미변제금액</span>
                   <strong>{{ debt_total.going_unpaid_text }}원</strong>
@@ -345,6 +353,16 @@
                   {{ debt_total.additional_rate_text }}
                 </strong>
               </article>
+            </div>
+
+            <div class="debt-effect-message" aria-label="핵심 메시지">
+              <span class="debt-effect-message__icon" aria-hidden="true">
+                <img src="{{ url_for('static', filename='img/debt-effect-message.png') }}" alt="">
+              </span>
+              <div>
+                <strong>핵심 메시지</strong>
+                <p>{{ debt_effect.core_message }}</p>
+              </div>
             </div>
 
             <div class="debt-effect-legend" aria-label="범례">

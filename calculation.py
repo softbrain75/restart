@@ -244,6 +244,17 @@ def build_debt_effect_visual(
             }
         )
 
+    if additional_positive:
+        core_message = (
+            f"회생 가정에서는 청산보다 {display_number(abs(additional_payment))}원을 더 변제할 수 있어 "
+            "채무 변제 측면에서 회생안 검토가 유리합니다."
+        )
+    else:
+        core_message = (
+            f"회생 가정의 변제금액이 청산보다 {display_number(abs(additional_payment))}원 낮아 "
+            "변제 가능성과 회생안 구조에 대한 추가 검토가 필요합니다."
+        )
+
     return {
         "total": {
             "debt": total_debt,
@@ -275,6 +286,7 @@ def build_debt_effect_visual(
             if additional_positive
             else "회생 가정의 변제금액이 청산 가정보다 낮아 추가 검토가 필요합니다."
         ),
+        "core_message": core_message,
     }
 
 
