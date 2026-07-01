@@ -4436,7 +4436,7 @@ form[data-collateral-form] {
   }
 
   .asset-analysis-board__comparison-line.is-favorable {
-    font-size: clamp(9px, 2.45vw, 13px);
+    font-size: clamp(8px, 2.1vw, 11px);
   }
 
   .asset-analysis-board__comparison-mark {
@@ -4556,78 +4556,183 @@ form[data-collateral-form] {
   }
 
   .debt-effect-card {
+    gap: 8px;
+    overflow: hidden;
     padding: 14px;
   }
 
   .debt-effect-card h3 {
-    font-size: 22px;
+    font-size: clamp(17px, 5.3vw, 22px);
   }
 
   .debt-effect-header,
   .debt-effect-overview,
   .debt-effect-metrics,
   .debt-effect-message {
-    min-width: 760px;
+    min-width: 0;
   }
 
   .debt-effect-overview {
-    grid-template-columns: minmax(0, 1fr) 230px;
+    gap: 8px;
+    grid-template-columns: minmax(0, 1fr) 30%;
   }
 
   .debt-effect-total {
-    grid-template-columns: 94px minmax(0, 1fr);
+    grid-template-columns: 22% minmax(0, 1fr);
   }
 
   .debt-effect-total__label {
-    font-size: 15px;
+    font-size: clamp(9px, 2.9vw, 12px);
   }
 
   .debt-effect-total-row {
-    grid-template-columns: 64px minmax(0, 1fr) 100px;
-    padding: 14px 10px;
+    gap: 6px;
+    grid-template-columns: 15% minmax(0, 1fr) 25%;
+    padding: 9px 6px;
   }
 
   .debt-effect-total-row > strong {
-    font-size: 17px;
+    font-size: clamp(10px, 3.1vw, 13px);
+  }
+
+  .debt-effect-total-row > strong span,
+  .debt-effect-total-row__debt {
+    font-size: clamp(6px, 1.9vw, 8px);
   }
 
   .debt-effect-row-meta span {
-    font-size: 12px;
+    font-size: clamp(6px, 1.9vw, 8px);
   }
 
   .debt-effect-bar {
-    height: 36px;
+    height: clamp(20px, 6vw, 28px);
   }
 
   .debt-effect-highlight {
-    padding: 14px;
+    padding: 8px 6px;
   }
 
   .debt-effect-highlight__icon {
-    font-size: 22px;
-    height: 54px;
-    width: 54px;
+    height: clamp(26px, 8vw, 36px);
+    margin-bottom: 5px;
+    width: clamp(26px, 8vw, 36px);
+  }
+
+  .debt-effect-highlight strong,
+  .debt-effect-highlight p,
+  .debt-effect-header__unit,
+  .debt-effect-card p {
+    font-size: clamp(6px, 1.9vw, 9px);
   }
 
   .debt-effect-highlight em {
-    font-size: 20px;
+    font-size: clamp(10px, 3.1vw, 14px);
+  }
+
+  .debt-effect-metrics {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
   .debt-effect-metric {
-    padding: 14px;
+    gap: 6px;
+    padding: 8px 6px;
+  }
+
+  .debt-effect-metric__icon {
+    border-radius: 10px;
+    height: clamp(26px, 8vw, 36px);
+    width: clamp(26px, 8vw, 36px);
+  }
+
+  .debt-effect-metric__icon img {
+    height: clamp(22px, 6.8vw, 30px);
+    width: clamp(22px, 6.8vw, 30px);
+  }
+
+  .debt-effect-metric span {
+    font-size: clamp(6px, 1.9vw, 8px);
+    margin-bottom: 3px;
   }
 
   .debt-effect-metric strong {
-    font-size: 17px;
+    font-size: clamp(7px, 2.2vw, 10px);
   }
 
   .debt-effect-detail {
-    min-width: 920px;
+    min-width: 0;
   }
 
   .debt-effect-detail__header,
   .debt-effect-detail__row {
-    grid-template-columns: 190px 140px minmax(210px, 1fr) minmax(210px, 1fr) 100px;
+    grid-template-columns: 22% 16% 24% 24% 14%;
+  }
+
+  .debt-effect-detail__header span,
+  .debt-effect-detail__row > * {
+    padding: 7px 4px;
+  }
+
+  .debt-effect-detail__header,
+  .debt-effect-group strong,
+  .debt-effect-amount {
+    font-size: clamp(6px, 1.9vw, 8px);
+  }
+
+  .debt-effect-group {
+    gap: 4px;
+  }
+
+  .debt-effect-group span {
+    font-size: clamp(5px, 1.55vw, 7px);
+    height: clamp(14px, 4.2vw, 18px);
+    width: clamp(14px, 4.2vw, 18px);
+  }
+
+  .debt-effect-mini {
+    gap: 3px;
+  }
+
+  .debt-effect-mini__bar {
+    height: clamp(13px, 4vw, 18px);
+  }
+
+  .debt-effect-mini__numbers {
+    font-size: clamp(4px, 1.45vw, 6px);
+    gap: 3px;
+  }
+
+  .debt-effect-diff {
+    font-size: clamp(6px, 1.9vw, 8px);
+  }
+
+  .debt-effect-message {
+    gap: 7px;
+    grid-template-columns: clamp(28px, 8vw, 36px) minmax(0, 1fr);
+    padding: 8px;
+  }
+
+  .debt-effect-message__icon {
+    height: clamp(28px, 8vw, 36px);
+    width: clamp(28px, 8vw, 36px);
+  }
+
+  .debt-effect-message__icon img {
+    height: clamp(22px, 6.8vw, 30px);
+    width: clamp(22px, 6.8vw, 30px);
+  }
+
+  .debt-effect-message strong {
+    font-size: clamp(8px, 2.5vw, 11px);
+  }
+
+  .debt-effect-message p,
+  .debt-effect-legend span {
+    font-size: clamp(6px, 1.9vw, 8px);
+  }
+
+  .debt-effect-legend {
+    gap: 8px;
+    padding: 7px 8px;
   }
 
   .result-frame .data-table {
