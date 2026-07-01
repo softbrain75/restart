@@ -101,13 +101,6 @@
         <p>{{ selected_case_type_meta.description }}</p>
       </div>
 
-      {% if current_user or current_admin %}
-        <div class="upload-type-summary" aria-label="적용 진단 유형">
-          <span>진단 유형</span>
-          <strong>{{ selected_case_type_meta.label }}</strong>
-        </div>
-      {% endif %}
-
       <form class="drop-upload-form" action="{{ url_for('upload') }}" method="post" enctype="multipart/form-data" data-upload-form>
         <input type="hidden" name="case_type" value="{{ selected_case_type }}">
         <div class="upload-error upload-error--client" role="alert" data-upload-error hidden></div>
