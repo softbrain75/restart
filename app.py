@@ -693,7 +693,7 @@ def user_account_role(user: dict[str, Any] | None = None) -> str:
 def user_account_label(user: dict[str, Any] | None = None) -> str:
     if user_account_role(user) == ACCOUNT_ROLE_SUPPORT:
         return ACCOUNT_ROLE_LABELS[ACCOUNT_ROLE_SUPPORT]
-    return case_type_meta((user or {}).get("case_type")).label
+    return case_type_meta((user or {}).get("case_type"))["label"]
 
 
 def email_serializer() -> URLSafeTimedSerializer:
