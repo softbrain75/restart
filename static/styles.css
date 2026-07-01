@@ -4553,6 +4553,14 @@ form[data-collateral-form] {
     width: 22%;
   }
 
+  .asset-analysis-board__metric.is-going strong {
+    font-size: clamp(9px, 2.8vw, 15px);
+  }
+
+  .asset-analysis-board__metric.is-going span {
+    font-size: clamp(6px, 1.65vw, 9px);
+  }
+
   .asset-analysis-board__table-amount strong {
     font-size: clamp(4px, 1.35vw, 7px);
   }
