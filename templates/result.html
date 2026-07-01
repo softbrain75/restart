@@ -30,20 +30,22 @@
           </div>
         </section>
 
-        <section class="summary-grid" aria-label="핵심 결과">
-          <div class="summary-card">
-            <span class="summary-card__label">청산가치</span>
-            <strong>{{ fmt.number(result.summary.liquidation_value) }}</strong>
-          </div>
-          <div class="summary-card">
-            <span class="summary-card__label">계속기업가치</span>
-            <strong>{{ fmt.number(result.summary.going_concern_value) }}</strong>
-          </div>
-          <div class="summary-card">
-            <span class="summary-card__label">가치 차이</span>
-            <strong>{{ fmt.number(result.summary.value_difference) }}</strong>
-          </div>
-        </section>
+        {% if not detailed_unlocked %}
+          <section class="summary-grid" aria-label="핵심 결과">
+            <div class="summary-card">
+              <span class="summary-card__label">청산가치</span>
+              <strong>{{ fmt.number(result.summary.liquidation_value) }}</strong>
+            </div>
+            <div class="summary-card">
+              <span class="summary-card__label">계속기업가치</span>
+              <strong>{{ fmt.number(result.summary.going_concern_value) }}</strong>
+            </div>
+            <div class="summary-card">
+              <span class="summary-card__label">가치 차이</span>
+              <strong>{{ fmt.number(result.summary.value_difference) }}</strong>
+            </div>
+          </section>
+        {% endif %}
 
         {% if not detailed_unlocked %}
           <section class="consultation-gate" aria-label="상담 신청">
@@ -153,112 +155,51 @@
         <div class="result-pane__header">
           <div>
             <h3>상세 결과</h3>
-            <p>{{ "상담 신청이 접수되어 상세 분석 결과를 표시합니다." if consultation_submitted else "로그인 상태이므로 상세 분석 결과를 바로 표시합니다." }}</p>
           </div>
           <div class="result-pane__header-actions">
             {{ kakao_button("result_detail", case.case_id) }}
           </div>
         </div>
 
-        <section class="result-infographic" aria-label="시각 요약">
-          <div class="result-visual-panel result-visual-panel--wide">
-            <div class="result-visual-header">
-              <div>
-                <h3>가치 비교</h3>
-                <p>청산가치와 계속기업가치를 같은 기준으로 비교합니다.</p>
-              </div>
-              <span class="result-status-pill{% if result.visual.value_difference >= 0 %} is-positive{% else %} is-negative{% endif %}">
-                {{ result.visual.value_status }}
-              </span>
-            </div>
-
-            <div class="value-bar-list">
-              {% for item in result.visual.value_bars %}
-                <div class="value-bar-row is-{{ item.tone }}{% if item.is_negative %} is-negative{% endif %}">
-                  <div class="value-bar-label">
-                    <span>{{ item.label }}</span>
-                    <strong>{{ fmt.number(item.value) }}</strong>
-                  </div>
-                  <div class="value-bar-track" aria-hidden="true">
-                    <span class="value-bar-fill" style="--bar-width: {{ item.width }}%;"></span>
-                  </div>
-                </div>
-              {% endfor %}
-            </div>
-          </div>
-        </section>
-
         <div class="table-frame result-frame">
-          <section class="result-section">
-            <h3>자산평가 요약</h3>
-            <table class="data-table result-table">
-              <thead>
-                <tr>
-                  <th class="col-account">구분</th>
-                  <th class="col-amount">재무제표상 금액</th>
-                  <th class="col-amount">실사가치</th>
-                  <th class="col-amount">청산가치</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td class="account-cell">유동자산</td>
-                  <td class="amount-cell">{{ fmt.number(result.assets.sections.current.statement) }}</td>
-                  <td class="amount-cell">{{ fmt.number(result.assets.sections.current.audit) }}</td>
-                  <td class="amount-cell">{{ fmt.number(result.assets.sections.current.liquidation) }}</td>
-                </tr>
-                <tr>
-                  <td class="account-cell">비유동자산</td>
-                  <td class="amount-cell">{{ fmt.number(result.assets.sections.non_current.statement) }}</td>
-                  <td class="amount-cell">{{ fmt.number(result.assets.sections.non_current.audit) }}</td>
-                  <td class="amount-cell">{{ fmt.number(result.assets.sections.non_current.liquidation) }}</td>
-                </tr>
-                <tr class="row-heading-data">
-                  <td class="account-cell">자산 총계</td>
-                  <td class="amount-cell">{{ fmt.number(result.summary.asset_statement_total) }}</td>
-                  <td class="amount-cell">{{ fmt.number(result.summary.asset_audit_total) }}</td>
-                  <td class="amount-cell">{{ fmt.number(result.summary.asset_liquidation_total) }}</td>
-                </tr>
-              </tbody>
-            </table>
+          <section class="asset-analysis-board asset-analysis-board--image" aria-label="자산가치 종합 분석 결과">
+            <img
+              class="asset-analysis-board__image"
+              src="{{ url_for('static', filename='result-analysis-bg.png') }}"
+              alt=""
+              aria-hidden="true"
+            >
+            <p class="asset-analysis-board__insight-text">
+              {{ result.asset_analysis.insight }}
+            </p>
+            {% for card in result.asset_analysis.cards %}
+              <div class="asset-analysis-board__metric is-{{ card.tone }}" aria-label="{{ card.label }}">
+                <strong>{{ card.amount }}</strong>
+              </div>
+            {% endfor %}
+            {% for card in result.asset_analysis.cards %}
+              <div class="asset-analysis-board__table-amount is-{{ card.tone }}" aria-label="{{ card.label }} 금액">
+                <strong>{{ card.exact }}원</strong>
+              </div>
+            {% endfor %}
+            <div class="asset-analysis-board__center-overlay" aria-label="최종 결론">
+              <div class="asset-analysis-board__comparison">
+                <span class="asset-analysis-board__comparison-line is-going {{ 'is-favorable' if result.asset_analysis.is_going_favorable else '' }}">
+                  계속기업가치 <strong>{{ result.asset_analysis.cards[3].amount }}</strong>
+                </span>
+                <span class="asset-analysis-board__comparison-mark" aria-hidden="true">
+                  {{ ">" if result.asset_analysis.comparison_sign == ">" else "<" }}
+                </span>
+                <span class="asset-analysis-board__comparison-line is-liquidation {{ 'is-favorable' if not result.asset_analysis.is_going_favorable else '' }}">
+                  청산가치 <strong>{{ result.asset_analysis.cards[2].amount }}</strong>
+                </span>
+              </div>
+              <small>{{ "회생절차 진행 유리" if result.asset_analysis.is_going_favorable else "추가 검토 필요" }}</small>
+            </div>
           </section>
 
           <section class="result-section">
-            <h3>청산가치와 계속기업가치 비교</h3>
-            <table class="data-table result-table">
-              <thead>
-                <tr>
-                  <th class="col-account">구분</th>
-                  <th class="col-amount">금액</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td class="account-cell">영업활동현금흐름 현재가치</td>
-                  <td class="amount-cell">{{ fmt.number(result.enterprise_value.pv_10_years + result.enterprise_value.terminal_value) }}</td>
-                </tr>
-                <tr>
-                  <td class="account-cell">비영업용자산 처분가치</td>
-                  <td class="amount-cell">{{ fmt.number(result.enterprise_value.non_business_asset_value) }}</td>
-                </tr>
-                <tr>
-                  <td class="account-cell">계속기업가치</td>
-                  <td class="amount-cell">{{ fmt.number(result.summary.going_concern_value) }}</td>
-                </tr>
-                <tr>
-                  <td class="account-cell">청산가치</td>
-                  <td class="amount-cell">{{ fmt.number(result.summary.liquidation_value) }}</td>
-                </tr>
-                <tr class="row-heading-data">
-                  <td class="account-cell">차이</td>
-                  <td class="amount-cell">{{ fmt.number(result.summary.value_difference) }}</td>
-                </tr>
-              </tbody>
-            </table>
-          </section>
-
-          <section class="result-section">
-            <h3>채무상환 예정액 비교</h3>
+            <h3>채무변제 추정액 비교</h3>
             <table class="data-table result-comparison-table">
               <thead>
                 <tr>
@@ -285,6 +226,18 @@
                     <td class="amount-cell">{{ fmt.percent(row.rate_difference) }}</td>
                   </tr>
                 {% endfor %}
+                {% if result.comparison_total %}
+                  <tr class="row-heading-data">
+                    <td class="account-cell">{{ result.comparison_total.label }}</td>
+                    <td class="amount-cell">{{ fmt.number(result.comparison_total.debt) }}</td>
+                    <td class="amount-cell">{{ fmt.number(result.comparison_total.liquidation_repayment) }}</td>
+                    <td class="amount-cell">{{ fmt.percent(result.comparison_total.liquidation_rate) }}</td>
+                    <td class="amount-cell">{{ fmt.number(result.comparison_total.going_repayment) }}</td>
+                    <td class="amount-cell">{{ fmt.percent(result.comparison_total.going_rate) }}</td>
+                    <td class="amount-cell">{{ fmt.number(result.comparison_total.repayment_difference) }}</td>
+                    <td class="amount-cell">{{ fmt.percent(result.comparison_total.rate_difference) }}</td>
+                  </tr>
+                {% endif %}
               </tbody>
             </table>
           </section>
@@ -315,6 +268,76 @@
         </div>
         {% endif %}
       </div>
+
+      <aside class="result-pane tab-panel" data-result-panel="fee">
+        <div class="result-pane__header">
+          <div>
+            <h3>수수료 산정</h3>
+            <p>채무현황에 입력한 채권자수를 기준으로 가안 수수료를 산정합니다.</p>
+          </div>
+        </div>
+
+        <div class="table-frame result-frame fee-frame">
+          <section class="fee-estimate-summary" aria-label="수수료 산정 요약">
+            <div class="summary-card">
+              <span class="summary-card__label">총 채권자수</span>
+              <strong>{{ fmt.number(result.fee_estimate.total_claim_count) }}명</strong>
+            </div>
+            <div class="summary-card">
+              <span class="summary-card__label">1명당 기준 수수료</span>
+              <strong>{{ fmt.number(result.fee_estimate.per_count_fee) }}원</strong>
+            </div>
+            <div class="summary-card">
+              <span class="summary-card__label">예상 수수료</span>
+              <strong>{{ fmt.number(result.fee_estimate.total_fee) }}원</strong>
+            </div>
+          </section>
+
+          <section class="result-section">
+            <h3>계산식</h3>
+            <div class="fee-formula">
+              <span>총 채권자수</span>
+              <strong>{{ fmt.number(result.fee_estimate.total_claim_count) }}명</strong>
+              <span>×</span>
+              <span>1명당 기준 수수료</span>
+              <strong>{{ fmt.number(result.fee_estimate.per_count_fee) }}원</strong>
+              <span>=</span>
+              <strong>{{ fmt.number(result.fee_estimate.total_fee) }}원</strong>
+            </div>
+            <p class="account-note">현재 수수료 기준은 관리자 설정의 가안 기준입니다. 실제 계약 또는 상담 과정에서 조정될 수 있습니다.</p>
+          </section>
+
+          <section class="result-section">
+            <h3>채무 구분별 채권자수</h3>
+            <table class="data-table result-table fee-table">
+              <thead>
+                <tr>
+                  <th class="col-account">구분</th>
+                  <th class="col-count">채권자수</th>
+                  <th class="col-amount">채무금액</th>
+                  <th class="col-amount">예상 수수료</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for row in result.fee_estimate.rows %}
+                  <tr>
+                    <td class="account-cell">{{ row.label }}</td>
+                    <td class="amount-cell">{{ fmt.number(row.claim_count) }}명</td>
+                    <td class="amount-cell">{{ fmt.number(row.debt) }}</td>
+                    <td class="amount-cell">{{ fmt.number(row.fee) }}</td>
+                  </tr>
+                {% endfor %}
+                <tr class="row-heading-data">
+                  <td class="account-cell">합계</td>
+                  <td class="amount-cell">{{ fmt.number(result.fee_estimate.total_claim_count) }}명</td>
+                  <td class="amount-cell">{{ fmt.number(result.fee_estimate.total_debt) }}</td>
+                  <td class="amount-cell">{{ fmt.number(result.fee_estimate.total_fee) }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </section>
+        </div>
+      </aside>
 
       {% if current_admin %}
       <aside class="result-pane result-pane--worksheet tab-panel" data-result-panel="worksheet">

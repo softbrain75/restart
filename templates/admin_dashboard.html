@@ -11,6 +11,7 @@
       <p>상담 신청, 분석 진행 상태, 예비 진단 결과를 한곳에서 확인합니다.</p>
     </div>
     <div class="admin-header__actions">
+      <a class="button button-secondary" href="{{ url_for('admin_settings') }}">계산 기준 설정</a>
       <a class="button button-secondary" href="{{ url_for('admin_users') }}">회원 관리</a>
       <form action="{{ url_for('admin_logout') }}" method="post">
         <button class="button button-secondary" type="submit">관리자 로그아웃</button>
@@ -59,6 +60,7 @@
             <div class="admin-case-card__main">
               <div class="admin-case-card__meta">
                 <span>{{ format_kst_datetime(case.updated_at or case.created_at) }}</span>
+                <span class="admin-status is-neutral">{{ item.case_type.label }}</span>
                 <span class="admin-status is-{{ item.admin_status_tone }}">{{ item.admin_status_label }}</span>
                 {% if item.consultation_submitted %}
                   <span class="admin-status is-positive">상담신청</span>

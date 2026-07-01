@@ -1,0 +1,23 @@
+{% set switcher_selected_type = case_type|default(active_case_type) %}
+{% set switcher_page = case_type_switcher_page|default(active_page|default("home")) %}
+{% if not current_user and not current_admin %}
+  <nav class="body-case-switcher" aria-label="회생 유형 선택">
+    <span class="body-case-switcher__label">회생유형</span>
+    <div class="body-case-switcher__options">
+      {% for option in case_type_choices(switcher_selected_type) %}
+        {% if switcher_page == "analysis" %}
+          {% set option_href = url_for("analysis_index", type=option.key) %}
+        {% elif switcher_page == "signup" %}
+          {% set option_href = url_for("signup", case_id=case_id, type=option.key) if case_id else url_for("signup", type=option.key) %}
+        {% else %}
+          {% set option_href = url_for("index", type=option.key) %}
+        {% endif %}
+        <a
+          class="body-case-switcher__option{% if option.selected %} is-active{% endif %}"
+          href="{{ option_href }}"
+          {% if option.selected %}aria-current="page"{% endif %}
+        >{{ option.label }}</a>
+      {% endfor %}
+    </div>
+  </nav>
+{% endif %}

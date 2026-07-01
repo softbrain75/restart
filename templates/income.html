@@ -190,7 +190,7 @@
                       </select>
                     {% endif %}
                   </td>
-                  <td class="amount-cell" data-monthly-cell>{{ row.monthly_average_display }}</td>
+                  <td class="amount-cell" data-monthly-cell>{% if row.is_editable or row.row_type == "custom_expense" %}{{ row.monthly_average_display }}{% endif %}</td>
                   <td class="input-cell">
                     {% if row.row_type == "custom_expense" %}
                       <input

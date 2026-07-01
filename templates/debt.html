@@ -35,6 +35,7 @@
             <thead>
               <tr>
                 <th class="col-account">구분</th>
+                <th class="col-count">채권자수</th>
                 <th class="col-amount">채무금액</th>
               </tr>
             </thead>
@@ -53,6 +54,16 @@
                         {% endcall %}
                       {% endif %}
                     </span>
+                  </td>
+                  <td class="input-cell">
+                    <input
+                      class="input numeric"
+                      name="claim_count_{{ loop.index0 }}"
+                      type="text"
+                      inputmode="numeric"
+                      value="{{ row.claim_count or '' }}"
+                      placeholder="채권자수 입력"
+                    >
                   </td>
                   <td class="input-cell">
                     <input

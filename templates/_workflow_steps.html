@@ -4,12 +4,12 @@
       class="step{% if current_step == 'financial' %} is-active{% elif case.get('financial_saved') %} is-complete{% endif %}"
       href="{{ url_for('financial', case_id=case.case_id) }}"
       {% if current_step == 'financial' %}aria-current="step"{% endif %}
-    >자산가치산정{% if current_step != 'financial' and case.get('financial_saved') %} <span class="step-check" aria-hidden="true">✓</span>{% endif %}</a>
+    >자산현황{% if current_step != 'financial' and case.get('financial_saved') %} <span class="step-check" aria-hidden="true">✓</span>{% endif %}</a>
     <a
       class="step{% if current_step == 'debt' %} is-active{% elif case.get('debt_saved') %} is-complete{% endif %}"
       href="{{ url_for('debt', case_id=case.case_id) }}"
       {% if current_step == 'debt' %}aria-current="step"{% endif %}
-    >채무입력{% if current_step != 'debt' and case.get('debt_saved') %} <span class="step-check" aria-hidden="true">✓</span>{% endif %}</a>
+    >채무현황{% if current_step != 'debt' and case.get('debt_saved') %} <span class="step-check" aria-hidden="true">✓</span>{% endif %}</a>
     <a
       class="step{% if current_step == 'income' %} is-active{% elif case.get('income_saved') %} is-complete{% endif %}"
       href="{{ url_for('income', case_id=case.case_id) }}"
@@ -19,19 +19,25 @@
       class="step{% if current_step == 'collateral' %} is-active{% elif case.get('collateral_saved') %} is-complete{% endif %}"
       href="{{ url_for('collateral', case_id=case.case_id) }}"
       {% if current_step == 'collateral' %}aria-current="step"{% endif %}
-    >담보{% if current_step != 'collateral' and case.get('collateral_saved') %} <span class="step-check" aria-hidden="true">✓</span>{% endif %}</a>
+    >담보현황{% if current_step != 'collateral' and case.get('collateral_saved') %} <span class="step-check" aria-hidden="true">✓</span>{% endif %}</a>
     {% if current_step == 'result' %}
       <button
         class="step step-button is-active"
         type="button"
         data-result-tab="summary"
         aria-selected="true"
-      >결과</button>
+      >결과제시</button>
+      <button
+        class="step step-button"
+        type="button"
+        data-result-tab="fee"
+        aria-selected="false"
+      >수수료 산정</button>
     {% else %}
       <a
         class="step{% if case.get('collateral_saved') %} is-complete{% endif %}"
         href="{{ url_for('result', case_id=case.case_id) }}"
-      >결과{% if case.get('collateral_saved') %} <span class="step-check" aria-hidden="true">✓</span>{% endif %}</a>
+      >결과제시{% if case.get('collateral_saved') %} <span class="step-check" aria-hidden="true">✓</span>{% endif %}</a>
     {% endif %}
     {% if show_worksheet_tab %}
       <button
@@ -46,6 +52,9 @@
     <div class="workflow-panel__meta">
       {% if current_admin and case %}
         <a class="button button-secondary workflow-panel__download" href="{{ url_for('admin_case_extracted_workbook', case_id=case.case_id) }}">엑셀 다운로드</a>
+      {% endif %}
+      {% if case %}
+        <span class="workflow-panel__type">{{ case_type_meta(case).label }}</span>
       {% endif %}
       <strong>{{ workflow_meta_label }}</strong>
     </div>

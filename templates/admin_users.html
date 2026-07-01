@@ -25,6 +25,7 @@
               <th>담당자</th>
               <th>연락처</th>
               <th>이메일</th>
+              <th>계정유형</th>
               <th>분석 건수</th>
               <th>최근 분석</th>
               <th>가입일</th>
@@ -45,6 +46,7 @@
                     <span class="status-badge is-unverified">미인증</span>
                   {% endif %}
                 </td>
+                <td>{{ user_account_label(user) }}</td>
                 <td>{{ item.case_count }}</td>
                 <td>{{ format_kst_datetime(item.last_case_at) or "-" }}</td>
                 <td>{{ format_kst_datetime(user.created_at) }}</td>

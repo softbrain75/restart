@@ -1,21 +1,23 @@
 {% set current_page = active_page|default("analysis") %}
 <nav class="site-nav" aria-label="주요 메뉴">
   <div class="site-nav__inner">
-    <a class="site-brand" href="{{ url_for('index') }}" aria-label="기업회생닥터 홈">
+    <a class="site-brand" href="{{ url_for('index') }}" aria-label="회생닥터 홈">
       <span class="site-brand__icon" aria-hidden="true">
         <img class="site-brand__logo" src="{{ url_for('static', filename='logo.png') }}?v=3" alt="">
       </span>
-      <span class="site-brand__name">기업회생닥터</span>
+      <span class="site-brand__name">회생닥터</span>
     </a>
 
     <div class="site-nav__links">
-      <a class="site-nav__link{% if current_page == 'home' %} is-active{% endif %}" href="{{ url_for('index') }}">사용안내</a>
-      <a class="site-nav__link{% if current_page == 'analysis' %} is-active{% endif %}" href="{{ url_for('analysis_index') }}">재무분석</a>
+      <a class="site-nav__link{% if current_page == 'home' %} is-active{% endif %}" href="{{ url_for('index', type=active_case_type) }}">사용안내</a>
+      {% if not current_user or user_account_role(current_user) != "support" %}
+        <a class="site-nav__link{% if current_page == 'analysis' %} is-active{% endif %}" href="{{ url_for('analysis_index', type=active_case_type) }}">진단하기</a>
+      {% endif %}
     </div>
 
     <div class="site-nav__actions">
       {% if current_page == "home" %}
-        <a class="site-nav__cta" href="{{ url_for('analysis_index') }}">진단 시작</a>
+        <a class="site-nav__cta" href="{{ url_for('analysis_index', type=active_case_type) }}">진단 시작</a>
       {% endif %}
 
       {% if current_admin %}
@@ -30,7 +32,7 @@
         </form>
       {% else %}
         <a class="site-nav__auth-link{% if current_page == 'login' %} is-active{% endif %}" href="{{ url_for('login') }}">로그인</a>
-        <a class="site-nav__auth-link{% if current_page == 'signup' %} is-active{% endif %}" href="{{ url_for('signup') }}">회원가입</a>
+        <a class="site-nav__auth-link{% if current_page == 'signup' %} is-active{% endif %}" href="{{ url_for('signup', type=active_case_type) }}">회원가입</a>
       {% endif %}
     </div>
   </div>

@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Excel 업로드 - 기업회생 분석{% endblock %}
+{% block title %}Excel 업로드 - 회생닥터{% endblock %}
 
 {% block main_class %}analysis-main{% if workbook %} analysis-main--preview{% endif %}{% endblock %}
 
@@ -80,18 +80,36 @@
       <div class="sticky-action-bar" aria-label="진행 작업">
         <div class="sticky-action-bar__inner">
           <a class="button button-primary" href="{{ url_for('financial', case_id=case.case_id) }}">
-            자산가치산정으로 이동
+            자산현황으로 이동
           </a>
         </div>
       </div>
     {% endif %}
   {% else %}
+    {% set selected_case_type = case_type|default('corporate') %}
+    {% set selected_case_type_meta = case_type_meta(selected_case_type) %}
+    {% set case_type_switcher_page = "analysis" %}
+    {% include "_case_type_switcher.html" %}
     <section class="upload-card" aria-label="파일 업로드">
       {% if error %}
         <div class="upload-error" role="alert">{{ error }}</div>
       {% endif %}
 
+      <div class="upload-card__intro">
+        <span class="upload-card__eyebrow">진단 유형</span>
+        <h1>{{ selected_case_type_meta.upload_title }}</h1>
+        <p>{{ selected_case_type_meta.description }}</p>
+      </div>
+
+      {% if current_user or current_admin %}
+        <div class="upload-type-summary" aria-label="적용 진단 유형">
+          <span>진단 유형</span>
+          <strong>{{ selected_case_type_meta.label }}</strong>
+        </div>
+      {% endif %}
+
       <form class="drop-upload-form" action="{{ url_for('upload') }}" method="post" enctype="multipart/form-data" data-upload-form>
+        <input type="hidden" name="case_type" value="{{ selected_case_type }}">
         <div class="upload-error upload-error--client" role="alert" data-upload-error hidden></div>
 
         <div class="upload-drop-grid">
@@ -151,7 +169,10 @@
           <span>파일을 업로드하고 분석 데이터를 정리하는 중입니다.</span>
         </div>
 
-        <p class="upload-help">두 파일 모두 첫 번째 시트만 분석합니다.</p>
+        <p class="upload-help">
+          두 파일 모두 첫 번째 시트만 분석합니다.<br>
+          손익계산서는 전년도 손익계산서(전전년도를 포함한 비교식으로)를 첨부해 주세요.
+        </p>
 
         <button class="button upload-submit" type="submit" data-upload-submit>
           분석 시작

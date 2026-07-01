@@ -66,6 +66,60 @@ svg {
   text-align: center;
 }
 
+.body-case-switcher {
+  align-items: center;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(15, 95, 85, 0.16);
+  border-radius: 999px;
+  box-shadow: 0 16px 38px rgba(15, 95, 85, 0.08);
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin: 0 auto 4px;
+  max-width: max-content;
+  padding: 8px 10px 8px 18px;
+  position: relative;
+  z-index: 3;
+}
+
+.body-case-switcher__label {
+  color: var(--landing-ink);
+  flex: 0 0 auto;
+  font-size: 17px;
+  font-weight: 900;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.body-case-switcher__options {
+  display: flex;
+  gap: 6px;
+}
+
+.body-case-switcher__option {
+  align-items: center;
+  background: rgba(15, 95, 85, 0.08);
+  border: 1px solid rgba(15, 95, 85, 0.14);
+  border-radius: 999px;
+  color: #0f5f55;
+  display: inline-flex;
+  font-size: 14px;
+  font-weight: 900;
+  min-height: 38px;
+  padding: 0 16px;
+  text-decoration: none;
+  transition: background 160ms ease, border-color 160ms ease, color 160ms ease, transform 160ms ease;
+  white-space: nowrap;
+}
+
+.body-case-switcher__option:hover,
+.body-case-switcher__option.is-active {
+  background: #123d31;
+  border-color: #123d31;
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+
 .landing-slogan {
   align-items: center;
   background:
@@ -254,6 +308,58 @@ svg {
   font-size: 15px;
   font-weight: 900;
   margin: 0 0 4px;
+}
+
+.landing-service-switcher {
+  align-items: center;
+  background: rgba(255, 255, 255, 0.74);
+  border: 1px solid rgba(25, 69, 58, 0.14);
+  border-radius: 999px;
+  box-shadow: 0 18px 50px rgba(18, 54, 43, 0.1);
+  display: inline-flex;
+  gap: 12px;
+  justify-content: center;
+  margin: 0 0 4px;
+  padding: 8px 10px 8px 18px;
+}
+
+.landing-service-switcher__brand {
+  color: var(--landing-ink);
+  display: inline-flex;
+  font-size: 18px;
+  font-weight: 900;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.landing-service-switcher__options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: center;
+}
+
+.landing-service-switcher__option {
+  align-items: center;
+  background: rgba(15, 95, 85, 0.08);
+  border: 1px solid rgba(15, 95, 85, 0.14);
+  border-radius: 999px;
+  color: #0f5f55;
+  display: inline-flex;
+  font-size: 14px;
+  font-weight: 900;
+  min-height: 38px;
+  padding: 0 15px;
+  transition: background 160ms ease, border-color 160ms ease, color 160ms ease, transform 160ms ease;
+  white-space: nowrap;
+}
+
+.landing-service-switcher__option:hover,
+.landing-service-switcher__option.is-active {
+  background: #123d31;
+  border-color: #123d31;
+  color: #ffffff;
+  transform: translateY(-1px);
 }
 
 .landing-slogan__title {
@@ -745,6 +851,102 @@ svg {
 
 .diagnosis-panel div:last-child {
   border-bottom: 0;
+}
+
+.diagnosis-types {
+  background: #ffffff;
+  border-top: 1px solid rgba(25, 69, 58, 0.08);
+  padding: 112px 0;
+}
+
+.diagnosis-types__header {
+  margin: 0 auto 34px;
+  max-width: 720px;
+  text-align: center;
+}
+
+.diagnosis-types__header h2 {
+  color: var(--landing-ink);
+  font-size: clamp(32px, 4vw, 48px);
+  line-height: 1.16;
+  margin: 10px 0 14px;
+}
+
+.diagnosis-types__header p {
+  color: var(--landing-text);
+  font-size: 16px;
+  margin: 0;
+}
+
+.diagnosis-type-grid {
+  display: grid;
+  gap: 20px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.diagnosis-type-card {
+  background:
+    radial-gradient(circle at right top, rgba(15, 95, 85, 0.08), transparent 36%),
+    #fbfcfa;
+  border: 1px solid var(--landing-border);
+  border-radius: 20px;
+  box-shadow: 0 12px 36px rgba(18, 54, 43, 0.08);
+  display: flex;
+  flex-direction: column;
+  min-height: 260px;
+  padding: 28px;
+  transition: border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
+}
+
+.diagnosis-type-card:hover {
+  border-color: rgba(15, 95, 85, 0.34);
+  box-shadow: 0 22px 56px rgba(18, 54, 43, 0.14);
+  transform: translateY(-4px);
+}
+
+.diagnosis-type-card__label {
+  align-items: center;
+  background: #123d31;
+  border-radius: 999px;
+  color: #ffffff;
+  display: inline-flex;
+  font-size: 13px;
+  font-weight: 900;
+  height: 34px;
+  justify-content: center;
+  margin-bottom: 26px;
+  width: 54px;
+}
+
+.diagnosis-type-card strong {
+  color: var(--landing-ink);
+  display: block;
+  font-size: 26px;
+  line-height: 1.2;
+  margin-bottom: 14px;
+}
+
+.diagnosis-type-card p {
+  color: var(--landing-text);
+  font-size: 15px;
+  margin: 0;
+  word-break: keep-all;
+}
+
+.diagnosis-type-card__action {
+  align-items: center;
+  color: #0f5f55;
+  display: inline-flex;
+  font-size: 15px;
+  font-weight: 900;
+  gap: 8px;
+  margin-top: auto;
+  padding-top: 30px;
+}
+
+.diagnosis-type-card__action svg {
+  height: 18px;
+  width: 18px;
 }
 
 .landing-section {
@@ -1419,6 +1621,14 @@ svg {
     grid-template-columns: 1fr;
   }
 
+  .diagnosis-type-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .diagnosis-type-card {
+    min-height: 0;
+  }
+
   .feature-card,
   .process-card {
     padding: 34px;
@@ -1442,6 +1652,7 @@ svg {
   }
 
   .landing-section,
+  .diagnosis-types,
   .landing-cta {
     padding: 92px 0;
   }
@@ -1457,6 +1668,31 @@ svg {
 @media (max-width: 640px) {
   .landing-container {
     padding: 0 18px;
+  }
+
+  .body-case-switcher {
+    border-radius: 20px;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin: 0 auto 2px;
+    padding: 12px;
+    width: min(calc(100% - 32px), 420px);
+  }
+
+  .body-case-switcher__label {
+    font-size: 15px;
+  }
+
+  .body-case-switcher__options {
+    flex: 1 1 100%;
+    justify-content: center;
+  }
+
+  .body-case-switcher__option {
+    flex: 1 1 0;
+    justify-content: center;
+    min-height: 36px;
+    padding: 0 10px;
   }
 
   .landing-slogan {
@@ -1507,6 +1743,30 @@ svg {
     font-size: 13px;
   }
 
+  .landing-service-switcher {
+    border-radius: 22px;
+    flex-direction: column;
+    gap: 10px;
+    max-width: min(100%, 340px);
+    padding: 14px;
+    width: 100%;
+  }
+
+  .landing-service-switcher__brand {
+    font-size: 17px;
+  }
+
+  .landing-service-switcher__options {
+    width: 100%;
+  }
+
+  .landing-service-switcher__option {
+    flex: 1 1 0;
+    justify-content: center;
+    min-height: 36px;
+    padding: 0 10px;
+  }
+
   .landing-slogan__title {
     font-size: 25px;
     line-height: 1.28;
@@ -1549,6 +1809,7 @@ svg {
   }
 
   .landing-hero__copy h1,
+  .diagnosis-types__header h2,
   .section-heading h2,
   .landing-cta h2 {
     font-size: 36px;
@@ -1674,6 +1935,7 @@ svg {
   }
 
   .landing-section,
+  .diagnosis-types,
   .landing-cta {
     padding: 72px 0;
   }

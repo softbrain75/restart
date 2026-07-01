@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}분석 관리 - 기업회생 분석{% endblock %}
+{% block title %}분석 관리 - 회생닥터{% endblock %}
 {% block main_class %}account-main account-main--wide{% endblock %}
 
 {% block content %}
@@ -27,6 +27,10 @@
         </div>
       </div>
       <dl class="admin-detail-list">
+        <div>
+          <dt>진단 유형</dt>
+          <dd>{{ case_type_meta(case).label }}</dd>
+        </div>
         <div>
           <dt>회사명</dt>
           <dd>{{ contact.company }}</dd>
@@ -132,6 +136,30 @@
     {% else %}
       <p class="account-note">아직 결과 산출 단계까지 입력되지 않았습니다. 현재 단계는 {{ progress.label }}입니다.</p>
     {% endif %}
+  </section>
+
+  <section class="admin-panel" aria-label="적용 계산 기준">
+    <div class="admin-panel__header">
+      <div>
+        <h2>적용 계산 기준</h2>
+        <p>이 분석이 생성될 때 저장된 계산 기준입니다. 관리자 설정 변경 후에도 이 값은 자동 변경되지 않습니다.</p>
+      </div>
+    </div>
+    <div class="admin-settings-snapshot">
+      {% for section in case_setting_sections %}
+        <div class="admin-settings-snapshot__group">
+          <strong>{{ section.title }}</strong>
+          <dl>
+            {% for field in section.fields %}
+              <div>
+                <dt>{{ field.label }}</dt>
+                <dd>{{ field.display_value }}{{ field.unit_label }}</dd>
+              </div>
+            {% endfor %}
+          </dl>
+        </div>
+      {% endfor %}
+    </div>
   </section>
 
   <section class="admin-panel" aria-label="업로드 파일">

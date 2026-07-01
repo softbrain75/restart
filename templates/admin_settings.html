@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% block title %}계산 기준 설정 - 기업회생 분석{% endblock %}
+{% block main_class %}account-main account-main--wide{% endblock %}
+
+{% block content %}
+  <section class="admin-header" aria-label="계산 기준 설정">
+    <div>
+      <span class="admin-eyebrow">관리자</span>
+      <h1>계산 기준 설정</h1>
+      <p>새 분석에 적용할 공통 계산 기준을 관리합니다. 이미 생성된 분석에는 당시 저장된 기준이 유지됩니다.</p>
+    </div>
+    <div class="admin-header__actions">
+      <a class="button button-secondary" href="{{ url_for('admin_dashboard') }}">분석 관리</a>
+      <a class="button button-secondary" href="{{ url_for('admin_users') }}">회원 관리</a>
+    </div>
+  </section>
+
+  {% if errors %}
+    <section class="notice notice-error" role="alert">
+      {% for error in errors %}
+        <div>{{ error }}</div>
+      {% endfor %}
+    </section>
+  {% endif %}
+
+  <form class="admin-settings-form" action="{{ url_for('admin_settings') }}" method="post">
+    {% for section in sections %}
+      <section class="admin-panel" aria-label="{{ section.title }}">
+        <div class="admin-panel__header">
+          <div>
+            <h2>{{ section.title }}</h2>
+            <p>{{ section.description }}</p>
+          </div>
+        </div>
+
+        <div class="admin-settings-grid">
+          {% for field in section.fields %}
+            <label class="admin-setting-field">
+              <span class="admin-setting-field__label">{{ field.label }}</span>
+              <span class="admin-setting-field__control">
+                <input
+                  class="input numeric"
+                  name="{{ field.name }}"
+                  type="text"
+                  inputmode="{{ 'numeric' if field.unit == 'currency' else 'decimal' }}"
+                  value="{{ field.display_value }}"
+                >
+                <span>{{ field.unit_label }}</span>
+              </span>
+              <span class="admin-setting-field__note">{{ field.note }}</span>
+            </label>
+          {% endfor %}
+        </div>
+      </section>
+    {% endfor %}
+
+    <section class="admin-panel admin-settings-footer" aria-label="저장">
+      <div>
+        <strong>적용 방식</strong>
+        <p>
+          저장 후 새로 업로드되는 분석부터 적용됩니다. 기존 분석은 생성 시점에 저장된 기준으로 계속 계산됩니다.
+          {% if updated_at %}
+            마지막 저장: {{ format_kst_datetime(updated_at) }}{% if updated_by %} / {{ updated_by }}{% endif %}
+          {% endif %}
+        </p>
+      </div>
+      <button class="button button-primary" type="submit">저장</button>
+    </section>
+  </form>
+{% endblock %}

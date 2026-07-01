@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import math
+import re
 from dataclasses import dataclass
 from datetime import date
 from typing import Any
@@ -15,6 +16,22 @@ class CalculationAssumptions:
     terminal_discount_spread: float = 0.065
     collateral_interest_spread: float = 0.005
     collateral_disposal_rate: float = 0.95
+    creditor_fee_per_count: float = 50000.0
+
+
+CASH_ACCOUNT_KEYWORDS = ("현금", "보통예금", "외화예금")
+ACCOUNT_CODE_RE = re.compile(r"^\[\d{4,}\]")
+WHITESPACE_RE = re.compile(r"\s+")
+
+
+def normalize_account_text(value: Any) -> str:
+    compacted = WHITESPACE_RE.sub("", str(value or ""))
+    return ACCOUNT_CODE_RE.sub("", compacted, count=1)
+
+
+def is_cash_account(account: Any) -> bool:
+    normalized = normalize_account_text(account)
+    return any(keyword in normalized for keyword in CASH_ACCOUNT_KEYWORDS)
 
 
 DEBT_FIELDS = {
@@ -72,6 +89,12 @@ def display_percent(value: float) -> str:
     return f"{value * 100:.1f}%"
 
 
+def display_eok(value: float) -> str:
+    if not math.isfinite(value):
+        return str(value)
+    return f"{value / 100_000_000:,.1f}억"
+
+
 def visual_width(value: float, max_value: float) -> float:
     if not math.isfinite(value) or max_value <= 0:
         return 0.0
@@ -110,6 +133,230 @@ def build_result_visual(
     }
 
 
+def build_asset_summary_visual(
+    statement_value: float,
+    audit_value: float,
+    liquidation_value: float,
+) -> dict[str, Any]:
+    max_value = max(abs(statement_value), abs(audit_value), abs(liquidation_value), 1.0)
+    items = [
+        {
+            "label": "재무제표상 금액",
+            "short_label": "재무제표",
+            "value": statement_value,
+            "short_amount": f"{display_number(statement_value / 100_000_000)}억",
+            "bar_width": visual_width(statement_value, max_value),
+            "tone": "statement",
+            "sort_order": 3,
+        },
+        {
+            "label": "실사가치",
+            "short_label": "실사가치",
+            "value": audit_value,
+            "short_amount": f"{display_number(audit_value / 100_000_000)}억",
+            "bar_width": visual_width(audit_value, max_value),
+            "tone": "audit",
+            "sort_order": 2,
+        },
+        {
+            "label": "청산가치",
+            "short_label": "청산가치",
+            "value": liquidation_value,
+            "short_amount": f"{display_number(liquidation_value / 100_000_000)}억",
+            "bar_width": visual_width(liquidation_value, max_value),
+            "tone": "liquidation",
+            "sort_order": 1,
+        },
+    ]
+    ranked_items = sorted(items, key=lambda item: (item["value"], item["sort_order"]), reverse=True)
+    layer_sizes = [
+        {"width": 88, "height": 190, "bottom": 18, "z_index": 1},
+        {"width": 72, "height": 150, "bottom": 18, "z_index": 2},
+        {"width": 54, "height": 110, "bottom": 18, "z_index": 3},
+    ]
+
+    layers = []
+    for index, item in enumerate(ranked_items):
+        layer = dict(item)
+        layer.update(layer_sizes[index])
+        layers.append(layer)
+
+    return {"layers": layers}
+
+
+def build_asset_analysis_board(
+    statement_value: float,
+    audit_value: float,
+    liquidation_value: float,
+    going_concern_value: float,
+) -> dict[str, Any]:
+    value_difference = going_concern_value - liquidation_value
+    ratio = safe_div(going_concern_value, liquidation_value)
+    ratio_available = liquidation_value > 0
+    ratio_text = f"{ratio:.1f}배" if ratio_available else "비율 계산 불가"
+    is_going_favorable = value_difference >= 0
+    favorable_label = "계속기업가치" if is_going_favorable else "청산가치"
+    base_label = "청산가치" if is_going_favorable else "계속기업가치"
+    if is_going_favorable and ratio_available:
+        conclusion = (
+            f"{favorable_label}({display_eok(max(going_concern_value, liquidation_value))})가 "
+            f"{base_label}({display_eok(min(going_concern_value, liquidation_value))})보다 "
+            f"{ratio_text} 높아 회생을 통한 기업가치 유지가 더 유리합니다."
+        )
+        insight = f"계속기업가치가 청산가치보다 {ratio_text} 높아, 회생을 통한 기업가치 유지가 더 유리합니다."
+    elif is_going_favorable:
+        conclusion = (
+            f"계속기업가치({display_eok(going_concern_value)})가 청산가치({display_eok(liquidation_value)})보다 커 "
+            "회생을 통한 기업가치 유지 가능성을 우선 검토할 수 있습니다."
+        )
+        insight = "청산가치가 0 이하로 산정되어 배율 비교는 제한적이나, 계속기업가치가 더 크게 산정되었습니다."
+    else:
+        conclusion = (
+            f"청산가치({display_eok(liquidation_value)})가 계속기업가치({display_eok(going_concern_value)})보다 높아 "
+            "회생절차 진행 적정성에 대한 추가 검토가 필요합니다."
+        )
+        insight = "청산가치가 계속기업가치보다 높아, 회생절차 진행 적정성에 대한 추가 검토가 필요합니다."
+
+    return {
+        "ratio": ratio,
+        "ratio_text": ratio_text,
+        "is_going_favorable": is_going_favorable,
+        "comparison_sign": ">" if is_going_favorable else "<",
+        "insight": insight,
+        "conclusion": conclusion,
+        "cards": [
+            {
+                "number": "01",
+                "label": "재무제표",
+                "short_label": "재무제표",
+                "value": statement_value,
+                "amount": display_eok(statement_value),
+                "exact": display_number(statement_value),
+                "note": "회계상 장부가치 기준 기업의 순자산 규모",
+                "tone": "statement",
+            },
+            {
+                "number": "02",
+                "label": "실사가치",
+                "short_label": "실사가치",
+                "value": audit_value,
+                "amount": display_eok(audit_value),
+                "exact": display_number(audit_value),
+                "note": "자산 실사 기반의 공정가치 평가",
+                "tone": "audit",
+            },
+            {
+                "number": "03",
+                "label": "청산가치",
+                "short_label": "청산가치",
+                "value": liquidation_value,
+                "amount": display_eok(liquidation_value),
+                "exact": display_number(liquidation_value),
+                "note": "자산 처분 시 회수 가능한 최대 예상 금액",
+                "tone": "liquidation",
+            },
+            {
+                "number": "04",
+                "label": "계속기업가치",
+                "short_label": "계속기업가치",
+                "value": going_concern_value,
+                "amount": display_eok(going_concern_value),
+                "exact": display_number(going_concern_value),
+                "note": "회생계획 이행을 통한 미래 수익 반영 가치",
+                "tone": "going",
+            },
+        ],
+        "table_rows": [
+            {
+                "label": "재무제표",
+                "value": statement_value,
+                "amount": display_eok(statement_value),
+                "exact": display_number(statement_value),
+                "meaning": "회계상 장부가치 기준의 순자산 규모",
+                "note": "기준 재무제표 기반",
+                "tone": "statement",
+            },
+            {
+                "label": "실사가치",
+                "value": audit_value,
+                "amount": display_eok(audit_value),
+                "exact": display_number(audit_value),
+                "meaning": "실사 기반 공정가치로 실제 가치에 근접",
+                "note": "자산 실사 결과 반영",
+                "tone": "audit",
+            },
+            {
+                "label": "청산가치",
+                "value": liquidation_value,
+                "amount": display_eok(liquidation_value),
+                "exact": display_number(liquidation_value),
+                "meaning": "자산 처분 시 회수 가능한 최대 예상 금액",
+                "note": "즉시 청산 가정",
+                "tone": "liquidation",
+            },
+            {
+                "label": "계속기업가치",
+                "value": going_concern_value,
+                "amount": display_eok(going_concern_value),
+                "exact": display_number(going_concern_value),
+                "meaning": "회생계획 이행을 통해 창출 가능한 미래 수익가치",
+                "note": "영업 지속 가정",
+                "tone": "going",
+            },
+        ],
+    }
+
+
+def settings_payload(case: dict[str, Any]) -> dict[str, Any]:
+    settings = case.get("calculation_settings")
+    if isinstance(settings, dict) and isinstance(settings.get("values"), dict):
+        return settings["values"]
+    return settings if isinstance(settings, dict) else {}
+
+
+def settings_float(settings: dict[str, Any], key: str, default: float) -> float:
+    value = settings.get(key)
+    if value is None or value == "":
+        return default
+    number = parse_number(value)
+    return number if math.isfinite(number) else default
+
+
+def assumptions_from_case(case: dict[str, Any]) -> CalculationAssumptions:
+    settings = settings_payload(case)
+    defaults = CalculationAssumptions()
+    return CalculationAssumptions(
+        cpi_rate=settings_float(settings, "cpi_rate", defaults.cpi_rate),
+        bond_yield_3y=settings_float(settings, "bond_yield_3y", defaults.bond_yield_3y),
+        repayment_present_value_rate=settings_float(
+            settings,
+            "repayment_present_value_rate",
+            defaults.repayment_present_value_rate,
+        ),
+        liquidation_cost_rate=settings_float(settings, "liquidation_cost_rate", defaults.liquidation_cost_rate),
+        terminal_discount_spread=settings_float(
+            settings,
+            "terminal_discount_spread",
+            defaults.terminal_discount_spread,
+        ),
+        collateral_interest_spread=settings_float(
+            settings,
+            "collateral_interest_spread",
+            defaults.collateral_interest_spread,
+        ),
+        collateral_disposal_rate=settings_float(
+            settings,
+            "collateral_disposal_rate",
+            defaults.collateral_disposal_rate,
+        ),
+        creditor_fee_per_count=settings_float(
+            settings,
+            "creditor_fee_per_count",
+            defaults.creditor_fee_per_count,
+        ),
+    )
+
+
 def row_number(row: dict[str, Any], key: str) -> float:
     return parse_number(row.get(key, ""))
 
@@ -127,7 +374,7 @@ def calculate_asset_totals(financial_rows: list[dict[str, Any]]) -> dict[str, An
     cash_audit_value = 0.0
 
     for row in financial_rows:
-        account = str(row.get("account", ""))
+        account = normalize_account_text(row.get("account", ""))
         if "비유동자산" in account:
             section = "non_current"
             continue
@@ -145,8 +392,8 @@ def calculate_asset_totals(financial_rows: list[dict[str, Any]]) -> dict[str, An
         sections[section_for_row]["audit"] += audit
         sections[section_for_row]["liquidation"] += liquidation
 
-        if cash_audit_value == 0 and "현금" in account:
-            cash_audit_value = audit
+        if section_for_row == "current" and is_cash_account(account):
+            cash_audit_value += audit
 
     totals = {
         "statement": sections["current"]["statement"] + sections["non_current"]["statement"],
@@ -158,6 +405,47 @@ def calculate_asset_totals(financial_rows: list[dict[str, Any]]) -> dict[str, An
 
 def debt_amounts(debt_rows: list[dict[str, Any]]) -> dict[str, float]:
     return {row["field"]: row_number(row, "debt_amount") for row in debt_rows}
+
+
+def debt_claim_counts(debt_rows: list[dict[str, Any]]) -> dict[str, int]:
+    counts: dict[str, int] = {}
+    for row in debt_rows:
+        count = row_number(row, "claim_count")
+        counts[row["field"]] = max(0, int(round(count)))
+    return counts
+
+
+def calculate_fee_estimate(
+    debt_rows: list[dict[str, Any]],
+    debts: dict[str, float],
+    assumptions: CalculationAssumptions,
+) -> dict[str, Any]:
+    counts = debt_claim_counts(debt_rows)
+    per_count_fee = max(0.0, assumptions.creditor_fee_per_count)
+    rows = []
+    for row in debt_rows:
+        field = row["field"]
+        claim_count = counts.get(field, 0)
+        fee = claim_count * per_count_fee
+        rows.append(
+            {
+                "field": field,
+                "label": DEBT_FIELDS.get(field, row.get("category", field)),
+                "claim_count": claim_count,
+                "debt": debts.get(field, 0.0),
+                "fee": fee,
+            }
+        )
+
+    total_claim_count = sum(row["claim_count"] for row in rows)
+    total_fee = total_claim_count * per_count_fee
+    return {
+        "rows": rows,
+        "total_claim_count": total_claim_count,
+        "total_debt": sum(debts.values()),
+        "per_count_fee": per_count_fee,
+        "total_fee": total_fee,
+    }
 
 
 def collateral_amounts(
@@ -268,10 +556,8 @@ def project_operating_profit(
         )
 
     rent_expense = [0.0] * periods
-    rent_expense[0] = monthly_rent * 12 * prep_ratio
-    rent_expense[1] = monthly_rent * 12 * (1 + assumptions.cpi_rate)
-    for index in range(2, periods):
-        rent_expense[index] = rent_expense[index - 1] * (1 + assumptions.cpi_rate)
+    for index in range(1, periods):
+        rent_expense[index] = monthly_rent * 12 * ((1 + assumptions.cpi_rate) ** index)
     for index, value in enumerate(rent_expense):
         sgna[index] += value
 
@@ -294,8 +580,8 @@ def calculate_liquidation_distribution(
     assumptions: CalculationAssumptions,
 ) -> dict[str, Any]:
     secured_collateral_value = (
-        collateral["collateral"].get("collateral_except_machinery", {}).get("audit", 0.0)
-        + collateral["collateral"].get("collateral_machinery", {}).get("audit", 0.0)
+        collateral["collateral"].get("collateral_except_machinery", {}).get("liquidation", 0.0)
+        + collateral["collateral"].get("collateral_machinery", {}).get("liquidation", 0.0)
     )
     other_liquidation_value = assets["totals"]["liquidation"] - secured_collateral_value
 
@@ -624,6 +910,15 @@ PERIOD_LABELS = [
     "회생9차년도",
     "회생10차년도",
 ]
+SGNA_DETAIL_START_ROW = 208
+SGNA_DETAIL_END_ROW = 247
+
+
+def sgna_detail_row_number(index: int) -> int | str:
+    row_number = SGNA_DETAIL_START_ROW + index
+    if row_number <= SGNA_DETAIL_END_ROW:
+        return row_number
+    return f"추가{index - (SGNA_DETAIL_END_ROW - SGNA_DETAIL_START_ROW)}"
 
 
 def worksheet_value(value: Any, kind: str = "number") -> str:
@@ -752,9 +1047,19 @@ def build_worksheet_review(
         (76, "retirement_benefit"),
         (77, "tax_arrears"),
     ]
+    claim_counts = debt_claim_counts(case.get("debt_rows", []))
     for row_number_value, key in debt_rows:
-        rows.append(worksheet_row(row_number_value, DEBT_FIELDS[key], {"C": debts.get(key, 0.0)}))
-    rows.append(worksheet_row(78, "합계", {"C": sum(debts.values())}))
+        rows.append(
+            worksheet_row(
+                row_number_value,
+                DEBT_FIELDS[key],
+                {
+                    "C": claim_counts.get(key, 0),
+                    "D": debts.get(key, 0.0),
+                },
+            )
+        )
+    rows.append(worksheet_row(78, "합계", {"C": sum(claim_counts.values()), "D": sum(debts.values())}))
 
     rows.append(section_row("3. 과거 손익현황 및 향후 손익추정 기초값 산정"))
     rows.append(
@@ -823,6 +1128,11 @@ def build_worksheet_review(
     rows.append(worksheet_row(168, "조사기준일자", {"C": (dates["today"], "date")}, row_type="header"))
     rows.append(worksheet_row(169, "준비연도 말일자", {"C": (dates["end"], "date"), "D": dates["prep_days"]}, row_type="header"))
     rows.append(worksheet_row(170, "준비연도 1/1일", {"C": (dates["start"], "date"), "D": dates["total_days"]}, row_type="header"))
+    settings = settings_payload(case)
+    rows.append(section_row("- 법원 경매 매각가율"))
+    rows.append(worksheet_row(174, "토지", {"C": (settings_float(settings, "land_auction_rate", 0.931), "percent")}))
+    rows.append(worksheet_row(175, "건물", {"C": (settings_float(settings, "building_auction_rate", 0.678), "percent")}))
+    rows.append(worksheet_row(176, "중기", {"C": (settings_float(settings, "machinery_auction_rate", 0.826), "percent")}))
 
     rows.append(section_row("6. 청산 가정 시 청산배당액 배분"))
     rows.append(
@@ -905,6 +1215,25 @@ def build_worksheet_review(
     rows.append(worksheet_row(205, "Ⅱ.매출원가", period_cells(operating_projection["cost_of_sales"])))
     rows.append(worksheet_row(206, "Ⅲ.매출총이익", period_cells(operating_projection["gross_profit"])))
     rows.append(worksheet_row(207, "Ⅳ.판매비와관리비", period_cells(operating_projection["sgna"])))
+    sgna_detail_index = 0
+    for detail in operating_projection.get("expense_details", []):
+        label = str(detail.get("account") or "기타비용")
+        rows.append(
+            worksheet_row(
+                sgna_detail_row_number(sgna_detail_index),
+                label,
+                period_cells(detail.get("values", [])),
+            )
+        )
+        sgna_detail_index += 1
+    if any(value != 0 for value in operating_projection.get("rent_expense", [])):
+        rows.append(
+            worksheet_row(
+                sgna_detail_row_number(sgna_detail_index),
+                "매각 후 재임차시 임차료",
+                period_cells(operating_projection["rent_expense"]),
+            )
+        )
     rows.append(worksheet_row(248, "Ⅴ.영업이익", period_cells(operating_projection["operating_profit"])))
     rows.append(worksheet_row(254, "영업활동 현금유입 합계", period_cells(operating_projection["operating_profit"], total=True)))
     rows.append(worksheet_row(255, "현가계수", {column: (value, "decimal") for column, value in zip(PERIOD_COLUMNS, enterprise_value["pv_factors"])}, row_type="header"))
@@ -1002,15 +1331,23 @@ def build_worksheet_review(
                 },
             )
         )
+    comparison_total_debt = sum(row["debt"] for row in comparison_rows)
+    comparison_total_liquidation = sum(row["liquidation_repayment"] for row in comparison_rows)
+    comparison_total_going = sum(row["going_repayment"] for row in comparison_rows)
+    comparison_total_liquidation_rate = safe_div(comparison_total_liquidation, comparison_total_debt)
+    comparison_total_going_rate = safe_div(comparison_total_going, comparison_total_debt)
     rows.append(
         worksheet_row(
             332,
             "합계",
             {
-                "C": sum(row["debt"] for row in comparison_rows),
-                "D": sum(row["liquidation_repayment"] for row in comparison_rows),
-                "F": sum(row["going_repayment"] for row in comparison_rows),
-                "H": sum(row["repayment_difference"] for row in comparison_rows),
+                "C": comparison_total_debt,
+                "D": comparison_total_liquidation,
+                "E": (comparison_total_liquidation_rate, "percent"),
+                "F": comparison_total_going,
+                "G": (comparison_total_going_rate, "percent"),
+                "H": comparison_total_going - comparison_total_liquidation,
+                "I": (comparison_total_going_rate - comparison_total_liquidation_rate, "percent"),
             },
         )
     )
@@ -1060,10 +1397,11 @@ def build_worksheet_review(
 
 
 def calculate_case_result(case: dict[str, Any]) -> dict[str, Any]:
-    assumptions = CalculationAssumptions()
+    assumptions = assumptions_from_case(case)
     dates = default_preparation_dates()
     assets = calculate_asset_totals(case.get("financial_rows", []))
     debts = debt_amounts(case.get("debt_rows", []))
+    fee_estimate = calculate_fee_estimate(case.get("debt_rows", []), debts, assumptions)
     collateral = collateral_amounts(
         case.get("collateral_rows", []),
         case.get("rent_rows", []),
@@ -1134,6 +1472,23 @@ def calculate_case_result(case: dict[str, Any]) -> dict[str, Any]:
             }
         )
 
+    comparison_total_debt = sum(row["debt"] for row in comparison_rows)
+    comparison_total_liquidation = sum(row["liquidation_repayment"] for row in comparison_rows)
+    comparison_total_going = sum(row["going_repayment"] for row in comparison_rows)
+    comparison_total_liquidation_rate = safe_div(comparison_total_liquidation, comparison_total_debt)
+    comparison_total_going_rate = safe_div(comparison_total_going, comparison_total_debt)
+    comparison_total = {
+        "field": "total",
+        "label": "합계",
+        "debt": comparison_total_debt,
+        "liquidation_repayment": comparison_total_liquidation,
+        "liquidation_rate": comparison_total_liquidation_rate,
+        "going_repayment": comparison_total_going,
+        "going_rate": comparison_total_going_rate,
+        "repayment_difference": comparison_total_going - comparison_total_liquidation,
+        "rate_difference": comparison_total_going_rate - comparison_total_liquidation_rate,
+    }
+
     diagnosis = build_diagnosis(
         liquidation_value,
         going_concern_value,
@@ -1160,6 +1515,7 @@ def calculate_case_result(case: dict[str, Any]) -> dict[str, Any]:
         "dates": dates,
         "assets": assets,
         "debts": debts,
+        "fee_estimate": fee_estimate,
         "collateral": collateral,
         "income": income,
         "operating_projection": operating_projection,
@@ -1167,9 +1523,21 @@ def calculate_case_result(case: dict[str, Any]) -> dict[str, Any]:
         "enterprise_value": enterprise_value,
         "going_repayment": going_repayment,
         "comparison_rows": comparison_rows,
+        "comparison_total": comparison_total,
         "diagnosis": diagnosis,
         "worksheet_review": worksheet_review,
         "visual": build_result_visual(liquidation_value, going_concern_value),
+        "asset_visual": build_asset_summary_visual(
+            assets["totals"]["statement"],
+            assets["totals"]["audit"],
+            assets["totals"]["liquidation"],
+        ),
+        "asset_analysis": build_asset_analysis_board(
+            assets["totals"]["statement"],
+            assets["totals"]["audit"],
+            liquidation_value,
+            going_concern_value,
+        ),
         "summary": {
             "liquidation_value": liquidation_value,
             "going_concern_value": going_concern_value,
@@ -1184,6 +1552,7 @@ def calculate_case_result(case: dict[str, Any]) -> dict[str, Any]:
         },
         "display": {
             "number": display_number,
+            "eok": display_eok,
             "percent": display_percent,
         },
     }

@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}마이페이지 - 기업회생 분석{% endblock %}
+{% block title %}마이페이지 - 회생닥터{% endblock %}
 {% block main_class %}account-main account-main--wide{% endblock %}
 
 {% block content %}
@@ -31,21 +31,51 @@
             {% endif %}
           </dd>
         </div>
+        <div>
+          <dt>계정유형</dt>
+          <dd>{{ user_account_label(current_user) }}</dd>
+        </div>
+        {% if user_account_role(current_user) == "support" %}
+          {% if current_user.department %}
+            <div>
+              <dt>부서/직책</dt>
+              <dd>{{ current_user.department }}</dd>
+            </div>
+          {% endif %}
+          {% if current_user.support_work_type %}
+            <div>
+              <dt>지원업무</dt>
+              <dd>{{ current_user.support_work_type }}</dd>
+            </div>
+          {% endif %}
+        {% endif %}
       </dl>
     </div>
     <div class="mypage-header__actions">
       <a class="button button-secondary" href="{{ url_for('profile') }}">내 정보 수정</a>
-      <a class="button button-primary" href="{{ url_for('analysis_index') }}">새 분석 시작</a>
+      {% if user_account_role(current_user) != "support" %}
+        <a class="button button-primary" href="{{ url_for('analysis_index') }}">새 분석 시작</a>
+      {% endif %}
     </div>
   </section>
 
   <section class="history-panel" aria-label="분석 이력">
     <div class="history-panel__header">
-      <h2>분석 이력</h2>
-      <p>저장된 분석을 확인하거나 복사해 조건을 바꿔 다시 분석할 수 있습니다.</p>
+      {% if user_account_role(current_user) == "support" %}
+        <h2>업무지원 화면 준비 중</h2>
+        <p>향후 고객사별 제출서류 준비 현황과 진행 업무를 이곳에서 관리할 수 있도록 확장할 예정입니다.</p>
+      {% else %}
+        <h2>분석 이력</h2>
+        <p>저장된 분석을 확인하거나 복사해 조건을 바꿔 다시 분석할 수 있습니다.</p>
+      {% endif %}
     </div>
 
-    {% if cases %}
+    {% if user_account_role(current_user) == "support" %}
+      <div class="empty-state">
+        <h3>업무지원 전용 기능은 준비 중입니다.</h3>
+        <p>현재는 계정 정보 확인과 이메일 인증을 먼저 사용할 수 있습니다.</p>
+      </div>
+    {% elif cases %}
       <div class="history-list">
         {% for item in cases %}
           {% set case = item.case %}
@@ -72,16 +102,20 @@
                   autocomplete="off"
                 >
               </form>
-              {% if item.summary %}
-                <div class="history-summary" aria-label="진단 요약">
+              <div class="history-summary" aria-label="진단 요약">
+                <span class="history-summary__chip is-neutral">
+                  <strong>유형</strong>
+                  {{ item.case_type.label }}
+                </span>
+                {% if item.summary %}
                   {% for summary in item.summary %}
                     <span class="history-summary__chip is-{{ summary.tone }}">
                       <strong>{{ summary.label }}</strong>
                       {{ summary.status }}
                     </span>
                   {% endfor %}
-                </div>
-              {% endif %}
+                {% endif %}
+              </div>
             </div>
             <div class="history-item__actions">
               <a class="button button-primary" href="{{ url_for(progress.endpoint, case_id=case.case_id) }}">

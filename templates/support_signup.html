@@ -1,37 +1,32 @@
 {% extends "base.html" %}
 
-{% block title %}회원가입 - 회생닥터{% endblock %}
+{% block title %}업무지원 회원가입 - 회생닥터{% endblock %}
 {% block main_class %}account-main{% endblock %}
 
 {% block content %}
-  {% set selected_case_type = case_type|default(active_case_type) %}
-  {% set selected_case_type_meta = case_type_meta(selected_case_type) %}
-  {% set case_type_switcher_page = "signup" %}
-  {% include "_case_type_switcher.html" %}
-
-  <section class="account-card" aria-label="회원가입">
+  <section class="account-card" aria-label="업무지원 회원가입">
     <div class="account-card__header">
-      <h1>회원가입</h1>
-      <p>분석 이력과 재분석 시나리오를 저장하려면 계정을 만들어 주세요.</p>
+      <h1>업무지원 회원가입</h1>
+      <p>회생신청기업의 법원 제출서류 준비, 자료 수집, 진행 관리를 지원하는 실무 담당자 계정입니다.</p>
     </div>
 
     {% if error %}
       <div class="notice notice-error" role="alert">{{ error }}</div>
     {% endif %}
 
-    <form class="account-form" action="{{ url_for('signup', case_id=case_id, type=selected_case_type) if case_id else url_for('signup', type=selected_case_type) }}" method="post">
-      {% if case_id %}
-        <input type="hidden" name="case_id" value="{{ case_id }}">
-      {% endif %}
-      <input type="hidden" name="case_type" value="{{ selected_case_type }}">
+    <form class="account-form" action="{{ url_for('support_signup') }}" method="post">
       <div class="account-form__grid">
         <label class="field">
-          <span>회사명</span>
+          <span>소속 또는 회사명</span>
           <input class="input" name="company" type="text" value="{{ form.company }}" autocomplete="organization" required>
         </label>
         <label class="field">
           <span>담당자명</span>
           <input class="input" name="contact_name" type="text" value="{{ form.contact_name }}" autocomplete="name" required>
+        </label>
+        <label class="field">
+          <span>부서/직책</span>
+          <input class="input" name="department" type="text" value="{{ form.department }}" autocomplete="organization-title" required>
         </label>
         <label class="field">
           <span>연락처</span>
@@ -40,6 +35,19 @@
         <label class="field">
           <span>이메일(아이디)</span>
           <input class="input" name="email" type="email" value="{{ form.email }}" autocomplete="email" required>
+        </label>
+        <label class="field">
+          <span>주요 지원업무</span>
+          <select class="input" name="support_work_type" required>
+            <option value="">선택해 주세요</option>
+            {% for option in support_work_type_options %}
+              <option value="{{ option }}" {% if form.support_work_type == option %}selected{% endif %}>{{ option }}</option>
+            {% endfor %}
+          </select>
+        </label>
+        <label class="field">
+          <span>담당 고객사명</span>
+          <input class="input" name="customer_company" type="text" value="{{ form.customer_company }}" placeholder="선택 입력">
         </label>
         <label class="field">
           <span>비밀번호</span>
@@ -56,20 +64,13 @@
         <span>개인정보 수집 및 이용에 동의합니다.</span>
       </label>
 
-      <p class="account-note">초기 버전은 이메일과 비밀번호로 가입합니다. 이메일 인증은 메일 발송 도메인 설정 이후 적용할 수 있습니다.</p>
+      <p class="account-note">업무지원 계정은 향후 고객사의 제출서류 준비 현황과 진행 업무를 관리하는 화면으로 연결됩니다. 현재는 마이페이지에서 계정 정보를 확인합니다.</p>
 
       <div class="account-actions">
-        <button class="button button-primary" type="submit">회원가입</button>
+        <a class="button button-secondary" href="{{ url_for('signup', type=active_case_type) }}">일반 회원가입</a>
         <a class="button button-secondary" href="{{ url_for('login') }}">로그인</a>
+        <button class="button button-primary" type="submit">업무지원 회원가입</button>
       </div>
     </form>
-
-    <section class="account-support-entry" aria-label="업무지원 회원가입">
-      <div>
-        <h2>회생업무를 지원하는 실무 담당자이신가요?</h2>
-        <p>회생신청기업의 법원 제출서류 준비와 자료 관리를 돕는 계정은 별도 가입을 사용하세요.</p>
-      </div>
-      <a class="button button-secondary" href="{{ url_for('support_signup') }}">업무지원 회원가입</a>
-    </section>
   </section>
 {% endblock %}

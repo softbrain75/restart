@@ -30,6 +30,12 @@
           <span>담당자명</span>
           <input class="input" name="contact_name" type="text" value="{{ form.contact_name }}" autocomplete="name" required>
         </label>
+        {% if user_account_role(current_user) == "support" %}
+          <label class="field">
+            <span>부서/직책</span>
+            <input class="input" name="department" type="text" value="{{ form.department }}" autocomplete="organization-title" required>
+          </label>
+        {% endif %}
         <label class="field">
           <span>연락처</span>
           <input class="input" name="phone" type="tel" value="{{ form.phone }}" autocomplete="tel" required>
@@ -38,6 +44,21 @@
           <span>이메일</span>
           <input class="input" name="email" type="email" value="{{ form.email }}" autocomplete="email" required>
         </label>
+        {% if user_account_role(current_user) == "support" %}
+          <label class="field">
+            <span>주요 지원업무</span>
+            <select class="input" name="support_work_type" required>
+              <option value="">선택해 주세요</option>
+              {% for option in support_work_type_options %}
+                <option value="{{ option }}" {% if form.support_work_type == option %}selected{% endif %}>{{ option }}</option>
+              {% endfor %}
+            </select>
+          </label>
+          <label class="field">
+            <span>담당 고객사명</span>
+            <input class="input" name="customer_company" type="text" value="{{ form.customer_company }}" placeholder="선택 입력">
+          </label>
+        {% endif %}
       </div>
 
       <p class="account-note">이메일은 로그인 아이디로 사용됩니다. 변경 후에는 변경된 이메일로 로그인해야 합니다.</p>

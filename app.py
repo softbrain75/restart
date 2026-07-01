@@ -14,7 +14,7 @@ from pathlib import Path
 from typing import Any
 
 import xlrd
-from calculation import calculate_case_result
+from calculation import CalculationAssumptions, calculate_case_result
 from flask import Flask, redirect, render_template, request, send_file, session, url_for
 from openpyxl import Workbook, load_workbook
 from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
@@ -26,6 +26,7 @@ from werkzeug.security import check_password_hash, generate_password_hash
 BASE_DIR = Path(__file__).resolve().parent
 DATA_DIR = BASE_DIR / "data"
 USERS_PATH = DATA_DIR / "users.json"
+ADMIN_SETTINGS_PATH = DATA_DIR / "admin_settings.json"
 CASES_DIR = DATA_DIR / "cases"
 LEADS_DIR = BASE_DIR / "leads"
 CONSULTATION_LOG_PATH = LEADS_DIR / "consultations.jsonl"
@@ -33,6 +34,56 @@ KAKAO_CONSULT_CLICK_LOG_PATH = LEADS_DIR / "kakao_consult_clicks.jsonl"
 ALLOWED_EXTENSIONS = {".xls", ".xlsx"}
 WHITESPACE_RE = re.compile(r"[\s\u00a0\u200b\u200c\u200d\ufeff]+")
 EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+DEFAULT_CASE_TYPE = "corporate"
+CASE_TYPE_OPTIONS = (
+    {
+        "key": "corporate",
+        "label": "기업회생",
+        "short_label": "기업",
+        "title": "기업회생 예비진단",
+        "upload_title": "기업회생 재무분석 파일 업로드",
+        "description": "법인 회사의 재무자료를 기준으로 회생 가능성을 예비 점검합니다.",
+        "hero_line": "기업회생을 고민하고 있다면",
+        "hero_copy": "재무상태표와 손익계산서 업로드 즉시 기업회생 가능 여부를 진단받을 수 있습니다.",
+        "guide_intro": "본 기업회생 가능성 진단기는 경영상의 어려움으로 법인회생 절차를 검토하는 회사를 대상으로, 신청 전 핵심 수치를 개략적으로 확인할 수 있도록 마련되었습니다.",
+    },
+    {
+        "key": "general",
+        "label": "일반회생",
+        "short_label": "일반",
+        "title": "일반회생 예비진단",
+        "upload_title": "일반회생 재무분석 파일 업로드",
+        "description": "개인사업자와 고소득 개인의 재무자료를 기준으로 회생 가능성을 예비 점검합니다.",
+        "hero_line": "일반회생을 고민하고 있다면",
+        "hero_copy": "재무자료 업로드 즉시 일반회생 가능 여부를 예비 진단받을 수 있습니다.",
+        "guide_intro": "본 일반회생 가능성 진단기는 개인사업자와 고소득 개인이 회생절차를 검토하기 전, 소득·자산·채무 기준의 핵심 수치를 개략적으로 확인할 수 있도록 마련되었습니다.",
+    },
+    {
+        "key": "personal",
+        "label": "개인회생",
+        "short_label": "개인",
+        "title": "개인회생 예비진단",
+        "upload_title": "개인회생 재무분석 파일 업로드",
+        "description": "개인 채무자의 소득과 채무 상황을 기준으로 회생 가능성을 예비 점검합니다.",
+        "hero_line": "개인회생을 고민하고 있다면",
+        "hero_copy": "소득과 채무 자료를 기준으로 개인회생 가능 여부를 예비 진단받을 수 있습니다.",
+        "guide_intro": "본 개인회생 가능성 진단기는 개인 채무자가 신청 전 소득, 채무, 변제 가능성을 개략적으로 확인할 수 있도록 마련되었습니다.",
+    },
+)
+CASE_TYPE_KEYS = {option["key"] for option in CASE_TYPE_OPTIONS}
+ACCOUNT_ROLE_ANALYSIS = "analysis"
+ACCOUNT_ROLE_SUPPORT = "support"
+ACCOUNT_ROLE_LABELS = {
+    ACCOUNT_ROLE_ANALYSIS: "진단회원",
+    ACCOUNT_ROLE_SUPPORT: "업무지원",
+}
+SUPPORT_WORK_TYPE_OPTIONS = (
+    "법원 제출서류 준비",
+    "고객 자료수집 및 검토",
+    "사건 일정 및 진행 관리",
+    "상담 및 고객 응대",
+    "기타 업무지원",
+)
 DOCUMENT_FIELDS = (
     ("balance_file", "재무제표"),
     ("income_file", "손익계산서"),
@@ -55,6 +106,105 @@ ADMIN_STATUS_TONES = {
     "scheduled": "positive",
     "hold": "negative",
     "closed": "neutral",
+}
+DEFAULT_ASSUMPTIONS = CalculationAssumptions()
+ADMIN_SETTING_SECTIONS = (
+    {
+        "title": "계산 기준",
+        "description": "계속기업가치, 변제액 현가, 현금흐름 추정에 사용하는 기본 비율입니다.",
+        "fields": (
+            {
+                "name": "cpi_rate",
+                "label": "회생1차년도 추정 소비자물가상승률",
+                "default": DEFAULT_ASSUMPTIONS.cpi_rate,
+                "min": -0.5,
+                "max": 1.0,
+                "note": "고정비와 지급임차료의 차년도 증가율에 사용합니다.",
+            },
+            {
+                "name": "bond_yield_3y",
+                "label": "3년만기 국고채수익률",
+                "default": DEFAULT_ASSUMPTIONS.bond_yield_3y,
+                "min": 0.0,
+                "max": 1.0,
+                "note": "계속기업가치 할인율의 기초값으로 사용합니다.",
+            },
+            {
+                "name": "repayment_present_value_rate",
+                "label": "변제액 현가 시 적용 이자율",
+                "default": DEFAULT_ASSUMPTIONS.repayment_present_value_rate,
+                "min": 0.0,
+                "max": 1.0,
+                "note": "변제 예정액의 현가 및 변제 가능성 계산에 사용합니다.",
+            },
+            {
+                "name": "liquidation_cost_rate",
+                "label": "청산관리비용률",
+                "default": DEFAULT_ASSUMPTIONS.liquidation_cost_rate,
+                "min": 0.0,
+                "max": 1.0,
+                "note": "청산가치 배분 시 청산관리비용 차감률로 사용합니다.",
+            },
+            {
+                "name": "collateral_disposal_rate",
+                "label": "담보자산 매각 반영률",
+                "default": DEFAULT_ASSUMPTIONS.collateral_disposal_rate,
+                "min": 0.0,
+                "max": 1.0,
+                "note": "계속기업가치 가정의 담보자산 처분 현금유입에 사용합니다.",
+            },
+        ),
+    },
+    {
+        "title": "법원 경매 매각가율",
+        "description": "자산현황 최초 생성 시 토지·건물·중기 계정의 청산가치 기본값에 사용합니다.",
+        "fields": (
+            {
+                "name": "land_auction_rate",
+                "label": "토지",
+                "default": 0.931,
+                "min": 0.0,
+                "max": 1.0,
+                "note": "계정과목에 토지가 포함된 자산에 적용합니다.",
+            },
+            {
+                "name": "building_auction_rate",
+                "label": "건물",
+                "default": 0.678,
+                "min": 0.0,
+                "max": 1.0,
+                "note": "계정과목에 건물 또는 구축물이 포함된 자산에 적용합니다.",
+            },
+            {
+                "name": "machinery_auction_rate",
+                "label": "중기",
+                "default": 0.826,
+                "min": 0.0,
+                "max": 1.0,
+                "note": "계정과목에 중기 또는 기계장치가 포함된 자산에 적용합니다.",
+            },
+        ),
+    },
+    {
+        "title": "수수료 산정",
+        "description": "채무현황의 채권자수를 기준으로 예상 수수료를 산정할 때 사용하는 가안 기준입니다.",
+        "fields": (
+            {
+                "name": "creditor_fee_per_count",
+                "label": "채권자 1명당 기준 수수료",
+                "default": DEFAULT_ASSUMPTIONS.creditor_fee_per_count,
+                "unit": "currency",
+                "min": 0.0,
+                "max": 1000000000.0,
+                "note": "수수료 산정 탭에서 총 채권자수에 곱하는 기준 금액입니다.",
+            },
+        ),
+    },
+)
+ADMIN_SETTING_FIELD_MAP = {
+    field["name"]: field
+    for section in ADMIN_SETTING_SECTIONS
+    for field in section["fields"]
 }
 
 app = Flask(__name__)
@@ -115,6 +265,148 @@ def save_users() -> None:
     write_json_file(USERS_PATH, USERS)
 
 
+def parse_setting_number(value: Any) -> float | None:
+    text = str(value or "").replace(",", "").replace("%", "").strip()
+    if not text:
+        return None
+    is_parenthesized_negative = text.startswith("(") and text.endswith(")")
+    text = text.strip("()")
+    try:
+        number = float(text)
+    except ValueError:
+        return None
+    return -number if is_parenthesized_negative else number
+
+
+def default_calculation_settings() -> dict[str, float]:
+    return {
+        key: float(field["default"])
+        for key, field in ADMIN_SETTING_FIELD_MAP.items()
+    }
+
+
+def normalize_calculation_settings(payload: Any) -> dict[str, float]:
+    settings = default_calculation_settings()
+    if not isinstance(payload, dict):
+        return settings
+
+    for key, field in ADMIN_SETTING_FIELD_MAP.items():
+        number = parse_setting_number(payload.get(key))
+        if number is None:
+            continue
+        minimum = field.get("min")
+        maximum = field.get("max")
+        if minimum is not None and number < minimum:
+            number = float(minimum)
+        if maximum is not None and number > maximum:
+            number = float(maximum)
+        settings[key] = number
+    return settings
+
+
+def load_admin_settings() -> dict[str, Any]:
+    payload = read_json_file(ADMIN_SETTINGS_PATH, {})
+    if not isinstance(payload, dict):
+        payload = {}
+    settings = normalize_calculation_settings(payload.get("calculation") or payload)
+    return {
+        "calculation": settings,
+        "updated_at": payload.get("updated_at", ""),
+        "updated_by": payload.get("updated_by", ""),
+    }
+
+
+def save_admin_settings(payload: dict[str, Any]) -> None:
+    write_json_file(ADMIN_SETTINGS_PATH, payload)
+
+
+def current_calculation_settings() -> dict[str, float]:
+    return dict(ADMIN_CALCULATION_SETTINGS["calculation"])
+
+
+def snapshot_current_calculation_settings() -> dict[str, Any]:
+    return {
+        "values": current_calculation_settings(),
+        "source": "admin",
+        "saved_at": now_iso(),
+    }
+
+
+def case_calculation_settings(case: dict[str, Any]) -> dict[str, float]:
+    snapshot = case.get("calculation_settings")
+    if isinstance(snapshot, dict) and isinstance(snapshot.get("values"), dict):
+        return normalize_calculation_settings(snapshot["values"])
+    if isinstance(snapshot, dict):
+        return normalize_calculation_settings(snapshot)
+    return default_calculation_settings()
+
+
+def display_rate_input(value: Any) -> str:
+    number = parse_setting_number(value)
+    if number is None:
+        number = 0.0
+    return f"{round(number * 100 + 1e-9, 2):.2f}"
+
+
+def display_currency_input(value: Any) -> str:
+    number = parse_setting_number(value)
+    if number is None:
+        number = 0.0
+    return f"{int(round(number)):,}"
+
+
+def display_setting_input(field: dict[str, Any], value: Any) -> str:
+    if field.get("unit", "percent") == "currency":
+        return display_currency_input(value)
+    return display_rate_input(value)
+
+
+def setting_unit_label(field: dict[str, Any]) -> str:
+    return "원" if field.get("unit", "percent") == "currency" else "%"
+
+
+def admin_settings_form_sections(settings: dict[str, float]) -> list[dict[str, Any]]:
+    sections: list[dict[str, Any]] = []
+    for section in ADMIN_SETTING_SECTIONS:
+        fields = []
+        for field in section["fields"]:
+            key = field["name"]
+            fields.append(
+                {
+                    **field,
+                    "value": settings.get(key, field["default"]),
+                    "display_value": display_setting_input(field, settings.get(key, field["default"])),
+                    "unit_label": setting_unit_label(field),
+                }
+            )
+        sections.append({**section, "fields": fields})
+    return sections
+
+
+def parse_admin_settings_form(form: Any) -> tuple[dict[str, float], list[str]]:
+    settings: dict[str, float] = {}
+    errors: list[str] = []
+
+    for key, field in ADMIN_SETTING_FIELD_MAP.items():
+        raw_value = form.get(key, "")
+        number = parse_setting_number(raw_value)
+        if number is None:
+            errors.append(f"{field['label']} 값을 입력해 주세요.")
+            settings[key] = float(field["default"])
+            continue
+
+        value = number if field.get("unit", "percent") == "currency" else number / 100
+        minimum = field.get("min")
+        maximum = field.get("max")
+        if minimum is not None and value < minimum:
+            errors.append(f"{field['label']}은(는) {display_setting_input(field, minimum)}{setting_unit_label(field)} 이상이어야 합니다.")
+        if maximum is not None and value > maximum:
+            errors.append(f"{field['label']}은(는) {display_setting_input(field, maximum)}{setting_unit_label(field)} 이하이어야 합니다.")
+        settings[key] = value
+
+    return settings, errors
+
+
 def load_cases() -> dict[str, dict[str, Any]]:
     cases: dict[str, dict[str, Any]] = {}
     if not CASES_DIR.exists():
@@ -141,6 +433,7 @@ def save_case(case: dict[str, Any]) -> None:
 
 
 USERS: dict[str, dict[str, Any]] = load_users()
+ADMIN_CALCULATION_SETTINGS: dict[str, Any] = load_admin_settings()
 CASE_STORE: dict[str, dict[str, Any]] = load_cases()
 NON_EDITABLE_ACCOUNT_RE = re.compile(
     r"^(?:[\dIVXLCDMivxlcdm\u2160-\u217F\u2460-\u24FF]|"
@@ -158,6 +451,7 @@ CUSTOM_EXPENSE_ROW_TYPE = "custom_expense"
 LIABILITY_SECTION_START_ACCOUNTS = {"부채", "부채및자본"}
 DEDUCTIBLE_ASSET_ACCOUNTS = ("감가상각누계", "국고보조", "대손충당금")
 INTANGIBLE_ASSET_ACCOUNT = "무형자산"
+CASH_ACCOUNT_KEYWORDS = ("현금", "보통예금", "외화예금")
 DEBT_DEFAULT_ROWS = (
     ("secured_debt", "담보채무"),
     ("unsecured_financial_debt", "무담보 금융기관채무"),
@@ -225,6 +519,11 @@ def split_account_text(value: str | None) -> tuple[str, str]:
 
 def normalize_account_text(value: str | None) -> str:
     return split_account_text(value)[1]
+
+
+def is_cash_account(account: str | None) -> bool:
+    normalized = normalize_account_text(account)
+    return any(keyword in normalized for keyword in CASH_ACCOUNT_KEYWORDS)
 
 
 def parse_number_text(value: str) -> float | None:
@@ -386,6 +685,17 @@ def find_user_by_email(email: str) -> dict[str, Any] | None:
     return next((user for user in USERS.values() if user.get("email") == normalized), None)
 
 
+def user_account_role(user: dict[str, Any] | None = None) -> str:
+    role = str((user or {}).get("account_role") or ACCOUNT_ROLE_ANALYSIS).strip()
+    return role if role in ACCOUNT_ROLE_LABELS else ACCOUNT_ROLE_ANALYSIS
+
+
+def user_account_label(user: dict[str, Any] | None = None) -> str:
+    if user_account_role(user) == ACCOUNT_ROLE_SUPPORT:
+        return ACCOUNT_ROLE_LABELS[ACCOUNT_ROLE_SUPPORT]
+    return case_type_meta((user or {}).get("case_type")).label
+
+
 def email_serializer() -> URLSafeTimedSerializer:
     return URLSafeTimedSerializer(app.secret_key)
 
@@ -470,9 +780,15 @@ def remember_session_case(case_id: str) -> None:
 
 
 def attach_session_cases_to_user(user_id: str) -> None:
+    user = USERS.get(user_id) or {}
+    if user_account_role(user) == ACCOUNT_ROLE_SUPPORT:
+        return
+    user_case_type_value = normalize_case_type(user.get("case_type"))
     for case_id in session.get("case_ids", []):
         case = CASE_STORE.get(case_id)
         if not case:
+            continue
+        if normalize_case_type(case.get("case_type")) != user_case_type_value:
             continue
         if not case.get("user_id"):
             case["user_id"] = user_id
@@ -490,7 +806,9 @@ def case_is_accessible(case: dict[str, Any]) -> bool:
     owner_id = case.get("user_id")
     if not owner_id:
         return case.get("case_id") in session.get("case_ids", [])
-    return owner_id == current_user_id()
+    if owner_id != current_user_id():
+        return False
+    return normalize_case_type(case.get("case_type")) == current_user_case_type()
 
 
 def get_accessible_case(case_id: str) -> dict[str, Any] | None:
@@ -547,13 +865,69 @@ def admin_login_required(view):
     return wrapped
 
 
+def normalize_case_type(value: Any) -> str:
+    key = str(value or "").strip()
+    return key if key in CASE_TYPE_KEYS else DEFAULT_CASE_TYPE
+
+
+def case_type_meta(value: Any = None) -> dict[str, str]:
+    key = normalize_case_type(value.get("case_type") if isinstance(value, dict) else value)
+    for option in CASE_TYPE_OPTIONS:
+        if option["key"] == key:
+            return option
+    return CASE_TYPE_OPTIONS[0]
+
+
+def case_type_choices(selected: Any = None) -> list[dict[str, Any]]:
+    selected_key = normalize_case_type(selected)
+    return [
+        {
+            **option,
+            "selected": option["key"] == selected_key,
+        }
+        for option in CASE_TYPE_OPTIONS
+    ]
+
+
+def current_user_case_type(user: dict[str, Any] | None = None) -> str:
+    selected_user = user or current_user()
+    return normalize_case_type((selected_user or {}).get("case_type"))
+
+
+def active_request_case_type() -> str:
+    case_id = (request.view_args or {}).get("case_id")
+    if case_id:
+        case = CASE_STORE.get(str(case_id))
+        if case:
+            return normalize_case_type(case.get("case_type"))
+
+    user = current_user()
+    if user and not current_admin():
+        return current_user_case_type(user)
+
+    requested_type = request.values.get("type")
+    if requested_type:
+        selected_type = normalize_case_type(requested_type)
+        session["selected_case_type"] = selected_type
+        return selected_type
+
+    return normalize_case_type(session.get("selected_case_type"))
+
+
 @app.context_processor
 def inject_auth_context():
+    active_case_type = active_request_case_type()
     return {
         "current_user": current_user(),
         "current_admin": current_admin(),
         "format_kst_datetime": format_kst_datetime,
         "format_number": display_whole_number,
+        "case_type_meta": case_type_meta,
+        "case_type_choices": case_type_choices,
+        "user_account_role": user_account_role,
+        "user_account_label": user_account_label,
+        "active_case_type": active_case_type,
+        "active_case_type_meta": case_type_meta(active_case_type),
         "kakao_chat_configured": bool(kakao_chat_url()),
     }
 
@@ -882,7 +1256,34 @@ def current_amount_from_balance_row(row: dict[str, Any]) -> str:
     return current_cells[0]["text"] if current_cells else ""
 
 
-def extract_financial_rows(sheet: dict[str, Any]) -> list[dict[str, Any]]:
+def auction_rate_for_account(account: str, settings: dict[str, float]) -> float | None:
+    compacted = normalize_account_text(account)
+    if "토지" in compacted or "용지" in compacted:
+        return settings.get("land_auction_rate")
+    if "건물" in compacted or "구축물" in compacted:
+        return settings.get("building_auction_rate")
+    if "중기" in compacted or "기계장치" in compacted or compacted == "기계":
+        return settings.get("machinery_auction_rate")
+    return None
+
+
+def default_liquidation_value(
+    account: str,
+    audit_value: float | None,
+    editable: bool,
+    settings: dict[str, float],
+) -> float | None:
+    if not editable or audit_value is None:
+        return None
+    rate = auction_rate_for_account(account, settings)
+    if rate is None:
+        return audit_value
+    liquidation_value = audit_value * rate
+    return min(audit_value, liquidation_value) if audit_value >= 0 else liquidation_value
+
+
+def extract_financial_rows(sheet: dict[str, Any], settings: dict[str, float] | None = None) -> list[dict[str, Any]]:
+    settings = normalize_calculation_settings(settings)
     rows: list[dict[str, Any]] = []
     last_editable_asset_row: dict[str, Any] | None = None
     in_intangible_asset_section = False
@@ -918,7 +1319,7 @@ def extract_financial_rows(sheet: dict[str, Any]) -> list[dict[str, Any]]:
         else:
             audit_value = None
 
-        liquidation_value = audit_value if editable else None
+        liquidation_value = default_liquidation_value(account, audit_value, editable, settings)
 
         rows.append(
             {
@@ -1125,7 +1526,7 @@ def extract_income_rows(sheet: dict[str, Any]) -> list[dict[str, Any]]:
             else:
                 monthly_average_display = display_whole_number(row["average_number"] / 12)
             final_value = monthly_average_display
-        else:
+        elif section == "expense" and not income_roman_stage(account):
             monthly_average_display = display_whole_number(row["average_number"] / 12)
 
         income_rows.append(
@@ -1157,9 +1558,12 @@ def company_name_from_workbook(workbook: dict[str, Any]) -> str:
     return "회사"
 
 
-def create_case(workbook: dict[str, Any]) -> dict[str, Any]:
+def create_case(workbook: dict[str, Any], case_type: Any = DEFAULT_CASE_TYPE) -> dict[str, Any]:
     case_id = uuid.uuid4().hex[:12]
     created_at = now_iso()
+    normalized_case_type = normalize_case_type(case_type)
+    calculation_settings = snapshot_current_calculation_settings()
+    settings_values = normalize_calculation_settings(calculation_settings["values"])
     balance_sheet = next(
         (sheet for sheet in workbook["sheets"] if sheet.get("document_label") == "재무제표"),
         workbook["sheets"][0],
@@ -1171,13 +1575,15 @@ def create_case(workbook: dict[str, Any]) -> dict[str, Any]:
     case = {
         "case_id": case_id,
         "company_name": company_name_from_workbook(workbook),
+        "case_type": normalized_case_type,
         "scenario_name": "",
         "source_case_id": None,
         "user_id": current_user_id(),
         "created_at": created_at,
         "updated_at": created_at,
+        "calculation_settings": calculation_settings,
         "workbook": workbook,
-        "financial_rows": insert_custom_asset_rows(extract_financial_rows(balance_sheet)),
+        "financial_rows": insert_custom_asset_rows(extract_financial_rows(balance_sheet, settings_values)),
         "financial_saved": False,
         "debt_rows": build_default_debt_rows(),
         "debt_saved": False,
@@ -1198,6 +1604,7 @@ def build_default_debt_rows() -> list[dict[str, Any]]:
         {
             "field": field,
             "category": category,
+            "claim_count": "",
             "debt_amount": "",
             "collateral_type": "",
             "audit_value": "",
@@ -1232,6 +1639,14 @@ def build_default_rent_rows() -> list[dict[str, Any]]:
 def clean_submitted_number(value: str) -> tuple[str, float | None]:
     number = parse_number_text(value)
     return display_number(number), number
+
+
+def clean_submitted_count(value: str) -> tuple[str, int | None]:
+    number = parse_number_text(value)
+    if number is None:
+        return "", None
+    count = max(0, int(round(number)))
+    return f"{count:,}", count
 
 
 def submitted_custom_asset_rows() -> tuple[list[dict[str, Any]], list[str]]:
@@ -2105,8 +2520,11 @@ def append_case_input_sheets(workbook: Workbook, case: dict[str, Any], used_titl
     debt_sheet = append_table_sheet(
         workbook,
         "채무입력",
-        ["구분", "채무금액"],
-        [[row.get("category", ""), row.get("debt_amount", "")] for row in case.get("debt_rows", [])],
+        ["구분", "채권자수", "채무금액"],
+        [
+            [row.get("category", ""), row.get("claim_count", ""), row.get("debt_amount", "")]
+            for row in case.get("debt_rows", [])
+        ],
         used_titles,
     )
 
@@ -2188,29 +2606,92 @@ def append_result_sheets(
     )
     append_table_sheet(workbook, "결과", ["구분", "항목", "값"], rows, used_titles)
 
+    repayment_comparison_rows = [
+        [
+            row.get("label", ""),
+            row.get("debt", 0),
+            row.get("liquidation_repayment", 0),
+            row.get("liquidation_rate", 0),
+            row.get("going_repayment", 0),
+            row.get("going_rate", 0),
+            row.get("repayment_difference", 0),
+            row.get("rate_difference", 0),
+        ]
+        for row in result.get("comparison_rows", [])
+    ]
+    comparison_total = result.get("comparison_total")
+    if comparison_total:
+        repayment_comparison_rows.append(
+            [
+                comparison_total.get("label", "합계"),
+                comparison_total.get("debt", 0),
+                comparison_total.get("liquidation_repayment", 0),
+                comparison_total.get("liquidation_rate", 0),
+                comparison_total.get("going_repayment", 0),
+                comparison_total.get("going_rate", 0),
+                comparison_total.get("repayment_difference", 0),
+                comparison_total.get("rate_difference", 0),
+            ]
+        )
+
     append_table_sheet(
         workbook,
         "변제율 비교",
         ["구분", "채무금액", "청산 시 변제금액", "청산 시 변제율", "계속기업 변제금액", "계속기업 변제율", "변제금액 차이", "변제율 차이"],
+        repayment_comparison_rows,
+        used_titles,
+    )
+
+    fee_estimate = result.get("fee_estimate", {})
+    fee_rows = [
         [
+            row.get("label", ""),
+            row.get("claim_count", 0),
+            row.get("debt", 0),
+            row.get("fee", 0),
+        ]
+        for row in fee_estimate.get("rows", [])
+    ]
+    fee_rows.append(
+        [
+            "합계",
+            fee_estimate.get("total_claim_count", 0),
+            fee_estimate.get("total_debt", 0),
+            fee_estimate.get("total_fee", 0),
+        ]
+    )
+    fee_rows.extend(
+        [
+            [],
+            ["계산 기준", "채권자 1명당 기준 수수료", fee_estimate.get("per_count_fee", 0), ""],
             [
-                row.get("label", ""),
-                row.get("debt", 0),
-                row.get("liquidation_repayment", 0),
-                row.get("liquidation_rate", 0),
-                row.get("going_repayment", 0),
-                row.get("going_rate", 0),
-                row.get("repayment_difference", 0),
-                row.get("rate_difference", 0),
-            ]
-            for row in result.get("comparison_rows", [])
-        ],
+                "계산식",
+                "총 채권자수 × 1명당 기준 수수료",
+                fee_estimate.get("total_fee", 0),
+                "",
+            ],
+        ]
+    )
+    append_table_sheet(
+        workbook,
+        "수수료 산정",
+        ["구분", "채권자수", "채무금액", "예상 수수료"],
+        fee_rows,
         used_titles,
     )
 
 
 REVIEW_COLUMNS = ("C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N")
 REVIEW_PERIOD_COLUMNS = REVIEW_COLUMNS[:11]
+SGNA_DETAIL_START_ROW = 208
+SGNA_DETAIL_END_ROW = 247
+
+
+def sgna_detail_row_number(index: int) -> int | str:
+    row_number = SGNA_DETAIL_START_ROW + index
+    if row_number <= SGNA_DETAIL_END_ROW:
+        return row_number
+    return f"추가{index - (SGNA_DETAIL_END_ROW - SGNA_DETAIL_START_ROW)}"
 
 
 def quote_excel_sheet_name(sheet_name: str) -> str:
@@ -2246,11 +2727,11 @@ def worksheet_formula_sources(case: dict[str, Any], sheet_titles: dict[str, str]
     financial_rows = case.get("financial_rows", [])
     current_rows: list[int] = []
     non_current_rows: list[int] = []
-    cash_row = None
+    cash_rows: list[int] = []
     section = None
 
     for index, row in enumerate(financial_rows, start=2):
-        account = str(row.get("account", ""))
+        account = normalize_account_text(row.get("account", ""))
         if "비유동자산" in account:
             section = "non_current"
             continue
@@ -2266,8 +2747,8 @@ def worksheet_formula_sources(case: dict[str, Any], sheet_titles: dict[str, str]
             current_rows.append(index)
         else:
             non_current_rows.append(index)
-        if cash_row is None and "현금" in account:
-            cash_row = index
+        if section_for_row == "current" and is_cash_account(account):
+            cash_rows.append(index)
 
     debt_rows = {
         row.get("field"): index
@@ -2300,7 +2781,7 @@ def worksheet_formula_sources(case: dict[str, Any], sheet_titles: dict[str, str]
         "sheet_titles": sheet_titles,
         "current_asset_rows": current_rows,
         "non_current_asset_rows": non_current_rows,
-        "cash_row": cash_row,
+        "cash_rows": cash_rows,
         "debt_rows": debt_rows,
         "income_by_text": income_by_text,
         "expense_rows": expense_rows,
@@ -2362,7 +2843,9 @@ def worksheet_review_formulas(
     ]
     for row_number_value, key in debt_rows:
         set_formula(row_number_value, "C", source("debts", "B", debt_row_map.get(key)))
+        set_formula(row_number_value, "D", source("debts", "C", debt_row_map.get(key)))
     set_formula(78, "C", f"SUM({cell(71, 'C')}:{cell(77, 'C')})")
+    set_formula(78, "D", f"SUM({cell(71, 'D')}:{cell(77, 'D')})")
 
     income_rows = sources["income_by_text"]
     sales_row = income_rows.get("매출액")
@@ -2408,12 +2891,13 @@ def worksheet_review_formulas(
     set_value(170, "C", dates.get("start", ""), "yyyy-mm-dd")
     set_formula(170, "D", cell(165, "C"))
 
-    set_formula(185, "D", f"SUM({cell(136, 'C')},{cell(137, 'C')})")
+    set_formula(185, "D", f"SUM({cell(136, 'D')},{cell(137, 'D')})")
     set_formula(185, "E", f"{cell(315, 'E')}-{cell(185, 'D')}")
     set_formula(185, "G", cell(315, "E"))
-    set_formula(186, "D", f"-{cell(185, 'D')}*0.05")
-    set_formula(186, "E", f"-{cell(185, 'E')}*0.05")
-    set_formula(186, "G", f"-{cell(185, 'G')}*0.05")
+    liquidation_cost_rate = getattr(assumptions, "liquidation_cost_rate", 0.05)
+    set_formula(186, "D", f"-{cell(185, 'D')}*{liquidation_cost_rate}")
+    set_formula(186, "E", f"-{cell(185, 'E')}*{liquidation_cost_rate}")
+    set_formula(186, "G", f"-{cell(185, 'G')}*{liquidation_cost_rate}")
     for column in ("D", "E", "G"):
         set_formula(187, column, f"{cell(185, column)}+{cell(186, column)}")
 
@@ -2427,7 +2911,7 @@ def worksheet_review_formulas(
         195: 74,
     }
     for row_number_value, source_row in liquidation_debt_sources.items():
-        set_formula(row_number_value, "C", cell(source_row, "C"))
+        set_formula(row_number_value, "C", cell(source_row, "D"))
 
     set_formula(192, "D", f"MIN({cell(192, 'C')},{cell(187, 'D')})")
     set_formula(189, "D", f"MIN({cell(189, 'C')},{cell(187, 'D')}-{cell(192, 'D')})")
@@ -2486,17 +2970,29 @@ def worksheet_review_formulas(
             return f"{final_value_ref}*12*{prep_ratio}"
         return f"{final_value_ref}*12*(1+{cell(161, 'C')})^{period_index}"
 
+    def rent_expense_term(period_index: int) -> str:
+        if period_index == 0:
+            return "0"
+        return f"{cell(147, 'C')}*12*(1+{cell(161, 'C')})^{period_index}"
+
+    for detail_index, (row_index, row) in enumerate(expense_rows):
+        row_number_value = sgna_detail_row_number(detail_index)
+        if not isinstance(row_number_value, int) or row_number_value not in row_index_by_number:
+            continue
+        for period_index, column in enumerate(REVIEW_PERIOD_COLUMNS):
+            set_formula(row_number_value, column, expense_term(row_index, row, period_index, column))
+
+    rent_detail_row_number = sgna_detail_row_number(len(expense_rows))
+    if isinstance(rent_detail_row_number, int) and rent_detail_row_number in row_index_by_number:
+        for period_index, column in enumerate(REVIEW_PERIOD_COLUMNS):
+            set_formula(rent_detail_row_number, column, rent_expense_term(period_index))
+
     for period_index, column in enumerate(REVIEW_PERIOD_COLUMNS):
         terms = [
             expense_term(row_index, row, period_index, column)
             for row_index, row in expense_rows
         ]
-        rent_term = (
-            f"{cell(147, 'C')}*12*{prep_ratio}"
-            if period_index == 0
-            else f"{cell(147, 'C')}*12*(1+{cell(161, 'C')})^{period_index}"
-        )
-        terms.append(rent_term)
+        terms.append(rent_expense_term(period_index))
         set_formula(207, column, excel_sum(terms))
         set_formula(248, column, f"{cell(206, column)}-{cell(207, column)}")
         set_formula(254, column, cell(248, column))
@@ -2522,8 +3018,8 @@ def worksheet_review_formulas(
     set_formula(275, "C", f"{cell(142, 'C')}-{cell(137, 'C')}")
     set_formula(276, "C", f"{cell(272, 'C')}+{cell(275, 'C')}")
 
-    cash_row = sources["cash_row"]
-    set_formula(281, "D", source("assets", "C", cash_row))
+    cash_rows = sources["cash_rows"]
+    set_formula(281, "D", source_sum("assets", "C", cash_rows))
     set_formula(282, "D", cell(254, "N"))
     set_formula(284, "D", f"({cell(142, 'C')}-{cell(137, 'C')})*0.95")
     set_formula(285, "D", f"-{cell(146, 'C')}")
@@ -2541,7 +3037,7 @@ def worksheet_review_formulas(
         294: 74,
     }
     for row_number_value, source_row in going_debt_sources.items():
-        set_formula(row_number_value, "C", cell(source_row, "C") if source_row else "0")
+        set_formula(row_number_value, "C", cell(source_row, "D") if source_row else "0")
     set_formula(287, "D", f"MAX(MIN({cell(287, 'C')},{cell(286, 'D')}),0)")
     set_value(288, "D", 0)
     set_formula(289, "D", f"MAX(MIN({cell(289, 'C')},{cell(286, 'D')}-{cell(287, 'D')}),0)")
@@ -2584,8 +3080,12 @@ def worksheet_review_formulas(
         set_formula(row_number_value, "G", cell(going_row, "E"), "0.00%")
         set_formula(row_number_value, "H", f"IFERROR({cell(row_number_value, 'F')}-{cell(row_number_value, 'D')},0)")
         set_formula(row_number_value, "I", f"IFERROR({cell(row_number_value, 'G')}-{cell(row_number_value, 'E')},0)", "0.00%")
-    for column in ("C", "D", "F", "H"):
+    for column in ("C", "D", "F"):
         set_formula(332, column, f"SUM({cell(326, column)}:{cell(331, column)})")
+    set_formula(332, "E", f"IFERROR({cell(332, 'D')}/{cell(332, 'C')},0)", "0.00%")
+    set_formula(332, "G", f"IFERROR({cell(332, 'F')}/{cell(332, 'C')},0)", "0.00%")
+    set_formula(332, "H", f"IFERROR({cell(332, 'F')}-{cell(332, 'D')},0)")
+    set_formula(332, "I", f"IFERROR({cell(332, 'G')}-{cell(332, 'E')},0)", "0.00%")
     set_formula(337, "C", f'IF({cell(320, "D")}>{cell(320, "C")},"Positive","Negative")', None)
     set_formula(
         342,
@@ -2697,14 +3197,14 @@ def build_extracted_workbook_download(case: dict[str, Any]) -> io.BytesIO:
 
 def case_progress(case: dict[str, Any]) -> dict[str, str]:
     if case.get("collateral_saved"):
-        return {"label": "결과 확인", "endpoint": "result"}
+        return {"label": "결과제시", "endpoint": "result"}
     if case.get("income_saved"):
-        return {"label": "담보 입력", "endpoint": "collateral"}
+        return {"label": "담보현황", "endpoint": "collateral"}
     if case.get("debt_saved"):
         return {"label": "손익추정", "endpoint": "income"}
     if case.get("financial_saved"):
-        return {"label": "채무입력", "endpoint": "debt"}
-    return {"label": "자산가치산정", "endpoint": "financial"}
+        return {"label": "채무현황", "endpoint": "debt"}
+    return {"label": "자산현황", "endpoint": "financial"}
 
 
 def case_diagnosis_label(case: dict[str, Any]) -> str:
@@ -2761,16 +3261,23 @@ def case_diagnosis_summary(case: dict[str, Any]) -> list[dict[str, str]]:
 
 
 def case_listing_for_user(user_id: str) -> list[dict[str, Any]]:
+    if user_account_role(USERS.get(user_id)) == ACCOUNT_ROLE_SUPPORT:
+        return []
+
     listings = []
+    user_case_type_value = current_user_case_type(USERS.get(user_id))
     for case in CASE_STORE.values():
         if case.get("user_id") != user_id:
             continue
         if case.get("deleted_at"):
             continue
+        if normalize_case_type(case.get("case_type")) != user_case_type_value:
+            continue
         progress = case_progress(case)
         listings.append(
             {
                 "case": case,
+                "case_type": case_type_meta(case),
                 "progress": progress,
                 "diagnosis": case_diagnosis_label(case),
                 "summary": case_diagnosis_summary(case),
@@ -2836,6 +3343,7 @@ def admin_case_listing() -> list[dict[str, Any]]:
         listings.append(
             {
                 "case": case,
+                "case_type": case_type_meta(case),
                 "user": user,
                 "contact": admin_case_contact(case, user),
                 "progress": case_progress(case),
@@ -2914,6 +3422,9 @@ def clean_url_values(values: dict[str, Any]) -> dict[str, Any]:
 
 
 def mypage_message_from_request() -> str | None:
+    if request.args.get("joined") == "1" and user_account_role(current_user()) == ACCOUNT_ROLE_SUPPORT:
+        return "업무지원 회원가입이 완료되었습니다. 현재는 마이페이지에서 계정 정보를 확인할 수 있습니다."
+
     messages = [
         ("joined", "회원가입이 완료되었습니다. 분석 이력을 이곳에서 확인할 수 있습니다."),
         ("deleted", "분석 이력을 삭제했습니다."),
@@ -2958,6 +3469,13 @@ def signup():
     case_id = request.values.get("case_id", "")
     prefill_case = get_accessible_case(case_id) if case_id else None
     prefill_consultation = (prefill_case or {}).get("consultation", {})
+    selected_case_type = normalize_case_type(
+        (prefill_case or {}).get("case_type")
+        or request.form.get("case_type")
+        or request.args.get("type")
+        or session.get("selected_case_type")
+    )
+    session["selected_case_type"] = selected_case_type
     form = {
         "company": request.form.get("company", prefill_consultation.get("company", (prefill_case or {}).get("company_name", ""))).strip(),
         "contact_name": request.form.get("contact_name", prefill_consultation.get("contact_name", "")).strip(),
@@ -2992,11 +3510,13 @@ def signup():
             user_id = uuid.uuid4().hex[:12]
             user = {
                 "user_id": user_id,
+                "account_role": ACCOUNT_ROLE_ANALYSIS,
                 "company": form["company"],
                 "contact_name": form["contact_name"],
                 "phone": form["phone"],
                 "email": form["email"],
                 "password_hash": generate_password_hash(password),
+                "case_type": selected_case_type,
                 "email_verified": False,
                 "created_at": now_iso(),
             }
@@ -3023,6 +3543,92 @@ def signup():
         active_page="signup",
         form=form,
         case_id=case_id,
+        case_type=selected_case_type,
+        error=error,
+    )
+
+
+@app.route("/support/signup", methods=["GET", "POST"])
+def support_signup():
+    if current_user():
+        return redirect(url_for("mypage"))
+
+    form = {
+        "company": request.form.get("company", "").strip(),
+        "contact_name": request.form.get("contact_name", "").strip(),
+        "department": request.form.get("department", "").strip(),
+        "phone": request.form.get("phone", "").strip(),
+        "email": normalize_email(request.form.get("email", "")),
+        "support_work_type": request.form.get("support_work_type", "").strip(),
+        "customer_company": request.form.get("customer_company", "").strip(),
+    }
+    error = None
+
+    if request.method == "POST":
+        password = request.form.get("password", "")
+        password_confirm = request.form.get("password_confirm", "")
+
+        if not form["company"]:
+            error = "소속 또는 회사명을 입력해 주세요."
+        elif not form["contact_name"]:
+            error = "담당자명을 입력해 주세요."
+        elif not form["department"]:
+            error = "부서 또는 직책을 입력해 주세요."
+        elif not form["phone"]:
+            error = "연락처를 입력해 주세요."
+        elif not form["email"]:
+            error = "이메일을 입력해 주세요."
+        elif not EMAIL_RE.match(form["email"]):
+            error = "이메일 형식을 확인해 주세요."
+        elif find_user_by_email(form["email"]):
+            error = "이미 가입된 이메일입니다."
+        elif form["support_work_type"] not in SUPPORT_WORK_TYPE_OPTIONS:
+            error = "주요 지원업무를 선택해 주세요."
+        elif len(password) < 8:
+            error = "비밀번호는 8자 이상 입력해 주세요."
+        elif password != password_confirm:
+            error = "비밀번호 확인이 일치하지 않습니다."
+        elif request.form.get("privacy_consent") != "on":
+            error = "개인정보 수집 및 이용에 동의해 주세요."
+        else:
+            user_id = uuid.uuid4().hex[:12]
+            user = {
+                "user_id": user_id,
+                "account_role": ACCOUNT_ROLE_SUPPORT,
+                "company": form["company"],
+                "contact_name": form["contact_name"],
+                "department": form["department"],
+                "phone": form["phone"],
+                "email": form["email"],
+                "support_work_type": form["support_work_type"],
+                "customer_company": form["customer_company"],
+                "password_hash": generate_password_hash(password),
+                "email_verified": False,
+                "created_at": now_iso(),
+            }
+            USERS[user_id] = user
+            save_users()
+            login_user(user)
+            sent, _ = send_email_verification(user)
+            save_users()
+            return redirect(
+                url_for(
+                    "mypage",
+                    **clean_url_values(
+                        {
+                            "joined": "1",
+                            "email_sent": "1" if sent else "",
+                            "email_not_sent": "" if sent else "1",
+                        }
+                    ),
+                )
+            )
+
+    return render_template(
+        "support_signup.html",
+        active_page="signup",
+        form=form,
+        support_work_type_options=SUPPORT_WORK_TYPE_OPTIONS,
         error=error,
     )
 
@@ -3065,10 +3671,14 @@ def profile():
     form = {
         "company": request.form.get("company", user.get("company", "")).strip(),
         "contact_name": request.form.get("contact_name", user.get("contact_name", "")).strip(),
+        "department": request.form.get("department", user.get("department", "")).strip(),
         "phone": request.form.get("phone", user.get("phone", "")).strip(),
         "email": normalize_email(request.form.get("email", user.get("email", ""))),
+        "support_work_type": request.form.get("support_work_type", user.get("support_work_type", "")).strip(),
+        "customer_company": request.form.get("customer_company", user.get("customer_company", "")).strip(),
     }
     error = None
+    is_support_account = user_account_role(user) == ACCOUNT_ROLE_SUPPORT
 
     if request.method == "POST":
         email_owner = find_user_by_email(form["email"]) if form["email"] else None
@@ -3085,11 +3695,19 @@ def profile():
             error = "이메일 형식을 확인해 주세요."
         elif email_owner and email_owner.get("user_id") != user.get("user_id"):
             error = "이미 가입된 이메일입니다."
+        elif is_support_account and not form["department"]:
+            error = "부서 또는 직책을 입력해 주세요."
+        elif is_support_account and form["support_work_type"] not in SUPPORT_WORK_TYPE_OPTIONS:
+            error = "주요 지원업무를 선택해 주세요."
         else:
             user["company"] = form["company"]
             user["contact_name"] = form["contact_name"]
             user["phone"] = form["phone"]
             user["email"] = form["email"]
+            if is_support_account:
+                user["department"] = form["department"]
+                user["support_work_type"] = form["support_work_type"]
+                user["customer_company"] = form["customer_company"]
             if email_changed:
                 user["email_verified"] = False
                 user.pop("email_verified_at", None)
@@ -3115,6 +3733,7 @@ def profile():
         "profile.html",
         active_page="mypage",
         form=form,
+        support_work_type_options=SUPPORT_WORK_TYPE_OPTIONS,
         error=error,
         message=(
             "인증 메일을 발송했습니다."
@@ -3277,6 +3896,38 @@ def admin_dashboard():
     )
 
 
+@app.route("/admin/settings", methods=["GET", "POST"])
+@admin_login_required
+def admin_settings():
+    global ADMIN_CALCULATION_SETTINGS
+
+    errors: list[str] = []
+    message = "계산 기준이 저장되었습니다." if request.args.get("saved") == "1" else None
+    settings = current_calculation_settings()
+
+    if request.method == "POST":
+        submitted_settings, errors = parse_admin_settings_form(request.form)
+        settings = submitted_settings
+        if not errors:
+            ADMIN_CALCULATION_SETTINGS = {
+                "calculation": submitted_settings,
+                "updated_at": now_iso(),
+                "updated_by": current_admin() or "",
+            }
+            save_admin_settings(ADMIN_CALCULATION_SETTINGS)
+            return redirect(url_for("admin_settings", saved="1"))
+
+    return render_template(
+        "admin_settings.html",
+        active_page="admin",
+        sections=admin_settings_form_sections(settings),
+        updated_at=ADMIN_CALCULATION_SETTINGS.get("updated_at", ""),
+        updated_by=ADMIN_CALCULATION_SETTINGS.get("updated_by", ""),
+        errors=errors,
+        message=message,
+    )
+
+
 @app.get("/admin/users")
 @admin_login_required
 def admin_users():
@@ -3338,6 +3989,7 @@ def admin_case_detail(case_id: str):
         admin_status=admin_status_value(case),
         admin_status_label=admin_status_label(case),
         admin_status_tone=admin_status_tone(case),
+        case_setting_sections=admin_settings_form_sections(case_calculation_settings(case)),
         message="관리자 메모가 저장되었습니다." if request.args.get("saved") == "1" else None,
     )
 
@@ -3395,7 +4047,17 @@ def delete_case(case_id: str):
 
 @app.get("/analysis")
 def analysis_index():
-    return render_template("index.html", workbook=None, case=None, error=None)
+    selected_case_type = current_user_case_type() if current_user() else normalize_case_type(
+        request.args.get("type") or session.get("selected_case_type")
+    )
+    session["selected_case_type"] = selected_case_type
+    return render_template(
+        "index.html",
+        workbook=None,
+        case=None,
+        error=None,
+        case_type=selected_case_type,
+    )
 
 
 @app.get("/upload")
@@ -3419,20 +4081,26 @@ def upload_preview(case_id: str):
         workbook=case["workbook"],
         case=case,
         error=None,
+        case_type=normalize_case_type(case.get("case_type")),
     )
 
 
 @app.post("/upload")
 def upload():
+    selected_case_type = current_user_case_type() if current_user() else normalize_case_type(
+        request.form.get("case_type") or session.get("selected_case_type")
+    )
+    session["selected_case_type"] = selected_case_type
     try:
         workbook = build_document_workbook(request.files)
-        case = create_case(workbook)
+        case = create_case(workbook, selected_case_type)
     except Exception as exc:
         return render_template(
             "index.html",
             workbook=None,
             case=None,
             error=f"엑셀을 읽는 중 오류가 발생했습니다: {exc}",
+            case_type=selected_case_type,
         ), 400
 
     return redirect(url_for("financial", case_id=case["case_id"], uploaded="1"))
@@ -3461,7 +4129,7 @@ def financial(case_id: str):
         rows=financial_display_rows(financial_rows),
         error=None,
         message=(
-            "파일이 업로드되었습니다. 자산가치산정을 확인해 주세요."
+            "파일이 업로드되었습니다. 자산현황을 확인해 주세요."
             if request.args.get("uploaded") == "1"
             else (
                 "기존 분석을 복사했습니다. 필요한 숫자를 수정해 다시 분석할 수 있습니다."
@@ -3557,8 +4225,11 @@ def save_debt(case_id: str):
 
     rows = case["debt_rows"]
     for index, row in enumerate(rows):
+        raw_claim_count = request.form.get(f"claim_count_{index}", row.get("claim_count", ""))
+        claim_count_display, _ = clean_submitted_count(raw_claim_count)
         raw_amount = request.form.get(f"debt_amount_{index}", row["debt_amount"])
         amount_display, _ = clean_submitted_number(raw_amount)
+        row["claim_count"] = claim_count_display
         row["debt_amount"] = amount_display
         row["collateral_type"] = request.form.get(f"collateral_type_{index}", row.get("collateral_type", ""))
         row["audit_value"] = request.form.get(f"audit_value_{index}", row.get("audit_value", ""))

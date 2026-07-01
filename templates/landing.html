@@ -4,17 +4,20 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Re-Start - 기업회생 재무분석 시스템</title>
-    <meta name="description" content="기업회생 재무분석을 위한 시스템">
-    <link rel="stylesheet" href="{{ url_for('static', filename='top-nav.css') }}?v=6">
-    <link rel="stylesheet" href="{{ url_for('static', filename='landing.css') }}?v=18">
+    <title>회생닥터 - 회생 가능성 예비진단</title>
+    <meta name="description" content="회생 가능성 예비진단을 위한 재무분석 시스템">
+    <link rel="stylesheet" href="{{ url_for('static', filename='top-nav.css') }}?v=9">
+    <link rel="stylesheet" href="{{ url_for('static', filename='landing.css') }}?v=23">
   </head>
   <body>
     {% set active_page = "home" %}
     {% include "_top_nav.html" %}
 
     <main class="landing-page">
-      <section class="landing-slogan" aria-label="Re-Start 기업회생 예비진단 소개">
+      {% set selected_case_type = active_case_type|default('corporate') %}
+      {% set selected_case_type_meta = case_type_meta(selected_case_type) %}
+      {% set case_type = selected_case_type %}
+      <section class="landing-slogan" aria-label="회생닥터 예비진단 소개">
         <div class="landing-slogan__motion" aria-hidden="true">
           <span class="slogan-ring slogan-ring--outer"></span>
           <span class="slogan-ring slogan-ring--middle"></span>
@@ -40,16 +43,18 @@
         </div>
 
         <div class="landing-container landing-slogan__inner">
-          <p class="landing-slogan__kicker">재무자료로 바로 확인하는 기업회생 예비진단</p>
+          {% set case_type_switcher_page = "home" %}
+          {% include "_case_type_switcher.html" %}
+          <p class="landing-slogan__kicker">재무자료로 바로 확인하는 {{ selected_case_type_meta.label }} 예비진단</p>
           <strong class="landing-slogan__title">
-            <span class="landing-slogan__line">기업회생을 고민하고 있다면</span>
+            <span class="landing-slogan__line">{{ selected_case_type_meta.hero_line }}</span>
             <span class="landing-slogan__line">먼저 가능성을 확인하세요</span>
           </strong>
           <p class="landing-slogan__copy">
-            재무상태표와 손익계산서 업로드 즉시 회생가능여부를 진단받을 수 있습니다.
+            {{ selected_case_type_meta.hero_copy }}
           </p>
           <div class="landing-slogan__actions">
-            <a class="landing-button landing-button--large" href="{{ url_for('analysis_index') }}">
+            <a class="landing-button landing-button--large" href="{{ url_for('analysis_index', type=selected_case_type) }}">
               <span>예비진단 시작</span>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m17 8 4 4m0 0-4 4m4-4H3" />
@@ -65,7 +70,7 @@
         </div>
       </section>
 
-      <section class="landing-hero" aria-label="기업회생 예비진단">
+      <section class="landing-hero" aria-label="회생 가능성 예비진단">
         <div class="analysis-stage" aria-hidden="true">
           <div class="analysis-grid"></div>
 
@@ -135,12 +140,12 @@
         <div class="landing-container landing-hero__content">
           <div class="landing-hero__copy">
             <span class="landing-eyebrow">Re-Start Financial Recovery Check</span>
-            <h1>기업회생 예비진단</h1>
+            <h1>{{ selected_case_type_meta.title }}</h1>
             <p>재무자료를 기반으로 회생절차 검토에 필요한 핵심 수치를 빠르게 확인합니다.</p>
           </div>
 
           <div class="landing-hero__actions">
-            <a class="landing-button landing-button--large" href="{{ url_for('analysis_index') }}">
+            <a class="landing-button landing-button--large" href="{{ url_for('analysis_index', type=selected_case_type) }}">
               <span>진단 시작하기</span>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m17 8 4 4m0 0-4 4m4-4H3" />
@@ -193,7 +198,7 @@
             <span class="landing-free__eyebrow">무료 예비진단</span>
             <h2>횟수 제한 없이<br>무료로 확인하세요</h2>
             <p>
-              기업회생 가능성은 조건을 바꿔가며 여러 번 검토해야 합니다. 파일을 다시 올리거나 입력값을 조정해도 비용이 발생하지 않습니다.
+              회생 가능성은 조건을 바꿔가며 여러 번 검토해야 합니다. 파일을 다시 올리거나 입력값을 조정해도 비용이 발생하지 않습니다.
             </p>
             <div class="landing-free__badges" aria-label="무료 진단 특징">
               <span>진단 횟수 제한 없음</span>
@@ -230,14 +235,13 @@
       <section class="landing-section">
         <div class="landing-container landing-container--narrow">
           <header class="section-heading">
-            <h2>진단 시 유의사항</h2>
+            <h2>{{ selected_case_type_meta.label }} 진단 시 유의사항</h2>
             <span aria-hidden="true"></span>
           </header>
 
           <div class="notice-copy">
             <p>
-              본 법인회생 가능성 진단기는 경영상의 어려움에 처하여 법인회생 절차에 관심이 많은 회사를 대상으로,
-              회생신청 시 개시결정 및 회생계획인가의 가능성을 개략적으로 확인할 수 있도록 마련되었습니다.
+              {{ selected_case_type_meta.guide_intro }}
               정성적인 요소를 배제하고 정량적인 지표만을 바탕으로 구성되었습니다.
             </p>
 
@@ -251,7 +255,7 @@
       <section class="landing-section landing-section--muted" id="diagnosis-process">
         <div class="landing-container">
           <header class="section-heading section-heading--center">
-            <h2>진단 프로세스</h2>
+            <h2>{{ selected_case_type_meta.label }} 진단 프로세스</h2>
             <span aria-hidden="true"></span>
           </header>
 
@@ -268,7 +272,7 @@
             <article class="process-card">
               <span class="process-card__number">2</span>
               <div>
-                <h3>자산가치산정</h3>
+                <h3>자산현황</h3>
                 <p>재무상태표에서 추출한 자산 항목의 실사가치와 청산가치를 확인합니다.</p>
                 <p>회수 가능성이 낮은 자산, 무형자산, 감가상각누계액 등은 기준에 따라 조정해 자산가치를 산정합니다.</p>
               </div>
@@ -277,7 +281,7 @@
             <article class="process-card">
               <span class="process-card__number">3</span>
               <div>
-                <h3>채무입력</h3>
+                <h3>채무현황</h3>
                 <p>담보채무, 금융기관채무, 상거래채무, 임금·퇴직금, 조세 등 채무 구분별 금액을 입력합니다.</p>
                 <p>재무상태표 금액과 별개로 회생 가능성 판단에 필요한 실제 채무 현황을 정리합니다.</p>
               </div>
@@ -295,7 +299,7 @@
             <article class="process-card">
               <span class="process-card__number">5</span>
               <div>
-                <h3>담보</h3>
+                <h3>담보현황</h3>
                 <p>담보 제공 자산, 비영업용 자산, 매각 후 재임차가 필요한 자산을 입력합니다.</p>
                 <p>담보자산의 실사가치와 청산가치를 기준으로 채무 변제 가능성을 함께 검토합니다.</p>
               </div>
@@ -304,7 +308,7 @@
             <article class="process-card">
               <span class="process-card__number">6</span>
               <div>
-                <h3>결과</h3>
+                <h3>결과제시</h3>
                 <p>입력 자료를 기준으로 회생가능여부를 예비 진단하고, 가치 비교·변제율 비교·채권자 동의 가능성을 확인합니다.</p>
               </div>
             </article>
@@ -316,7 +320,7 @@
         <div class="landing-container landing-container--compact">
           <h2>지금 바로 시작하세요</h2>
           <p>3분이면 회생 가능성을 예비 진단할 수 있습니다</p>
-          <a class="landing-button landing-button--large" href="{{ url_for('analysis_index') }}">
+          <a class="landing-button landing-button--large" href="{{ url_for('analysis_index', type=selected_case_type) }}">
             <span>진단 시작하기</span>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m17 8 4 4m0 0-4 4m4-4H3" />
