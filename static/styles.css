@@ -4631,13 +4631,82 @@ form[data-collateral-form] {
     padding: 10px;
   }
 
+  .fee-frame {
+    gap: 10px;
+  }
+
   .fee-estimate-summary {
-    grid-template-columns: 1fr;
+    gap: 6px;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .fee-estimate-summary .summary-card {
+    min-width: 0;
+    padding: 9px 7px;
+  }
+
+  .fee-estimate-summary .summary-card__label {
+    font-size: clamp(6px, 1.9vw, 9px);
+    line-height: 1.25;
+  }
+
+  .fee-estimate-summary .summary-card strong {
+    font-size: clamp(9px, 2.8vw, 13px);
+    line-height: 1.2;
+    overflow-wrap: anywhere;
   }
 
   .fee-formula {
-    align-items: flex-start;
-    flex-direction: column;
+    align-items: center;
+    gap: 4px 5px;
+    padding: 8px;
+  }
+
+  .fee-formula span,
+  .fee-formula strong,
+  .fee-frame .account-note {
+    font-size: clamp(6px, 1.9vw, 9px);
+    line-height: 1.35;
+  }
+
+  .fee-frame .result-section {
+    overflow-x: visible;
+  }
+
+  .fee-table {
+    font-size: clamp(6px, 1.9vw, 9px);
+    min-width: 0;
+    table-layout: fixed;
+    width: 100%;
+  }
+
+  .fee-table .col-account {
+    width: 34%;
+  }
+
+  .fee-table .col-count {
+    width: 15%;
+  }
+
+  .fee-table .col-amount {
+    width: 25.5%;
+  }
+
+  .fee-table thead th,
+  .fee-table td {
+    height: auto;
+    min-height: 24px;
+    padding: 4px 3px;
+  }
+
+  .fee-table thead th,
+  .fee-table .account-cell,
+  .fee-table .amount-cell {
+    font-size: clamp(6px, 1.9vw, 9px);
+    line-height: 1.25;
+    min-width: 0;
+    overflow-wrap: anywhere;
+    white-space: normal;
   }
 
   .result-section {
@@ -4859,6 +4928,31 @@ form[data-collateral-form] {
   .result-frame .col-count,
   .result-frame .amount-cell {
     min-width: 108px;
+  }
+
+  .fee-frame .fee-table {
+    min-width: 0;
+    table-layout: fixed;
+    width: 100%;
+  }
+
+  .fee-frame .fee-table .col-account {
+    width: 34%;
+  }
+
+  .fee-frame .fee-table .col-count {
+    width: 15%;
+  }
+
+  .fee-frame .fee-table .col-amount {
+    width: 25.5%;
+  }
+
+  .fee-frame .fee-table .account-cell,
+  .fee-frame .fee-table .amount-cell {
+    max-width: none;
+    min-width: 0;
+    white-space: normal;
   }
 
   .result-visual-header {
