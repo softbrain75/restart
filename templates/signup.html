@@ -6,12 +6,13 @@
 {% block content %}
   {% set selected_case_type = case_type|default(active_case_type) %}
   {% set selected_case_type_meta = case_type_meta(selected_case_type) %}
+  {% set signup_title = "개인 회원가입" if selected_case_type == "personal" else selected_case_type_meta.label ~ " 회원가입" %}
   {% set case_type_switcher_page = "signup" %}
   {% include "_case_type_switcher.html" %}
 
   <section class="account-card" aria-label="회원가입">
     <div class="account-card__header">
-      <h1>회원가입</h1>
+      <h1>{{ signup_title }}</h1>
       <p>분석 이력과 재분석 시나리오를 저장하려면 계정을 만들어 주세요.</p>
     </div>
 
@@ -25,12 +26,14 @@
       {% endif %}
       <input type="hidden" name="case_type" value="{{ selected_case_type }}">
       <div class="account-form__grid">
+        {% if selected_case_type != "personal" %}
+          <label class="field">
+            <span>회사명</span>
+            <input class="input" name="company" type="text" value="{{ form.company }}" autocomplete="organization" required>
+          </label>
+        {% endif %}
         <label class="field">
-          <span>회사명</span>
-          <input class="input" name="company" type="text" value="{{ form.company }}" autocomplete="organization" required>
-        </label>
-        <label class="field">
-          <span>담당자명</span>
+          <span>{{ "성명" if selected_case_type == "personal" else "담당자명" }}</span>
           <input class="input" name="contact_name" type="text" value="{{ form.contact_name }}" autocomplete="name" required>
         </label>
         <label class="field">
@@ -63,13 +66,13 @@
         <a class="button button-secondary" href="{{ url_for('login') }}">로그인</a>
       </div>
     </form>
+  </section>
 
-    <section class="account-support-entry" aria-label="업무지원 회원가입">
-      <div>
-        <h2>회생업무를 지원하는 실무 담당자이신가요?</h2>
-        <p>회생신청기업의 법원 제출서류 준비와 자료 관리를 돕는 계정은 별도 가입을 사용하세요.</p>
-      </div>
-      <a class="button button-secondary" href="{{ url_for('support_signup') }}">업무지원 회원가입</a>
-    </section>
+  <section class="account-support-entry" aria-label="업무지원 회원가입">
+    <div>
+      <h2>회생업무를 지원하는 실무 담당자이신가요?</h2>
+      <p>회생신청기업의 법원 제출서류 준비와 자료 관리를 돕는 계정은 별도 가입을 사용하세요.</p>
+    </div>
+    <a class="button button-secondary" href="{{ url_for('support_signup') }}">업무지원 회원가입</a>
   </section>
 {% endblock %}

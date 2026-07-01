@@ -492,7 +492,11 @@ button {
 
 .account-support-entry {
   background: #f8fbfa;
+  margin-left: auto;
+  margin-right: auto;
   margin-top: 24px;
+  max-width: 880px;
+  width: 100%;
 }
 
 .account-subsection h2,
