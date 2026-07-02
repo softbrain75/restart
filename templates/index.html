@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Excel 업로드 - 회생닥터{% endblock %}
+{% block title %}진단하기 - 회생닥터{% endblock %}
 
 {% block main_class %}analysis-main{% if workbook %} analysis-main--preview{% endif %}{% endblock %}
 
@@ -90,6 +90,400 @@
     {% set selected_case_type_meta = case_type_meta(selected_case_type) %}
     {% set case_type_switcher_page = "analysis" %}
     {% include "_case_type_switcher.html" %}
+    {% if selected_case_type == "personal" %}
+      <section class="personal-diagnosis" aria-label="개인회생 문답 진단" data-personal-diagnosis>
+        {% if error %}
+          <div class="upload-error" role="alert">{{ error }}</div>
+        {% endif %}
+
+        <div class="personal-diagnosis__stage is-active" data-personal-step="0">
+          <button class="personal-diagnosis__back" type="button" aria-label="이전 단계" data-personal-back disabled>
+            <span aria-hidden="true">←</span>
+          </button>
+          <div class="personal-diagnosis__body">
+            <p class="personal-diagnosis__eyebrow">개인회생 기본 요건</p>
+            <h1>양육하고 있는<br>미성년자 자녀가 있나요?</h1>
+            <div class="personal-choice-grid" data-answer-group="minorChildren">
+              <button type="button" class="personal-choice" data-answer-value="yes">있어요</button>
+              <button type="button" class="personal-choice" data-answer-value="no">없어요</button>
+            </div>
+            <div class="personal-followup" data-followup="minorChildren" hidden>
+              <h2>몇명인지 알려 주세요</h2>
+              <div class="personal-range" data-range-field="minorChildrenCount">
+                <output>0명</output>
+                <input type="range" min="0" max="10" value="0" step="1">
+                <div class="personal-range__ticks">
+                  <span>0명</span>
+                  <span>5명</span>
+                  <span>10명</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <button class="personal-next" type="button" data-personal-next>다음 단계로</button>
+        </div>
+
+        <div class="personal-diagnosis__stage" data-personal-step="1" hidden>
+          <button class="personal-diagnosis__back" type="button" aria-label="이전 단계" data-personal-back>
+            <span aria-hidden="true">←</span>
+          </button>
+          <div class="personal-diagnosis__body">
+            <h1>결혼여부를 알려주세요</h1>
+            <div class="personal-choice-grid personal-choice-grid--four" data-answer-group="maritalStatus">
+              <button type="button" class="personal-choice" data-answer-value="married">결혼</button>
+              <button type="button" class="personal-choice" data-answer-value="commonLaw">사실혼</button>
+              <button type="button" class="personal-choice" data-answer-value="divorced">이혼</button>
+              <button type="button" class="personal-choice" data-answer-value="single">미혼</button>
+            </div>
+            <div class="personal-followup" data-followup="spouseSupport" hidden>
+              <h2>배우자가 장애·질병이 있어 수입이 없으신가요?</h2>
+              <div class="personal-choice-grid" data-answer-group="spouseNoIncome">
+                <button type="button" class="personal-choice" data-answer-value="yes">맞아요</button>
+                <button type="button" class="personal-choice" data-answer-value="no">아니에요</button>
+              </div>
+            </div>
+          </div>
+          <button class="personal-next" type="button" data-personal-next>다음 단계로</button>
+        </div>
+
+        <div class="personal-diagnosis__stage" data-personal-step="2" hidden>
+          <button class="personal-diagnosis__back" type="button" aria-label="이전 단계" data-personal-back>
+            <span aria-hidden="true">←</span>
+          </button>
+          <div class="personal-diagnosis__body">
+            <h1>아래 조건에 <strong>모두</strong> 부합하는<br>부모님이 계신가요?</h1>
+            <div class="personal-info-box">
+              <ul>
+                <li>친부모</li>
+                <li>만 65세 이상</li>
+                <li>소득이 없거나 기초수급 혹은 장애</li>
+                <li>20만원 이상 생활비를 매달 드리는 중</li>
+              </ul>
+            </div>
+            <div class="personal-choice-grid" data-answer-group="qualifiedParents">
+              <button type="button" class="personal-choice" data-answer-value="yes">있어요</button>
+              <button type="button" class="personal-choice" data-answer-value="no">없어요</button>
+            </div>
+            <div class="personal-followup" data-followup="qualifiedParents" hidden>
+              <h2>몇분 계신가요?</h2>
+              <div class="personal-choice-grid personal-choice-grid--compact" data-answer-group="qualifiedParentCount">
+                <button type="button" class="personal-choice" data-answer-value="1">1명</button>
+                <button type="button" class="personal-choice" data-answer-value="2">2명</button>
+              </div>
+            </div>
+          </div>
+          <button class="personal-next" type="button" data-personal-next>다음 단계로</button>
+        </div>
+
+        <div class="personal-diagnosis__stage" data-personal-step="3" hidden>
+          <button class="personal-diagnosis__back" type="button" aria-label="이전 단계" data-personal-back>
+            <span aria-hidden="true">←</span>
+          </button>
+          <div class="personal-diagnosis__body">
+            <h1>형제, 자매분이 계신가요?</h1>
+            <div class="personal-choice-grid" data-answer-group="siblings">
+              <button type="button" class="personal-choice" data-answer-value="yes">있어요</button>
+              <button type="button" class="personal-choice" data-answer-value="no">없어요</button>
+            </div>
+            <div class="personal-followup" data-followup="siblings" hidden>
+              <h2>몇명인지 알려 주세요</h2>
+              <p>본인은 제외하고 알려주세요</p>
+              <div class="personal-range" data-range-field="siblingCount">
+                <output>0명</output>
+                <input type="range" min="0" max="10" value="0" step="1">
+                <div class="personal-range__ticks">
+                  <span>0명</span>
+                  <span>5명</span>
+                  <span>10명</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <button class="personal-next" type="button" data-personal-next>다음 단계로</button>
+        </div>
+
+        <div class="personal-diagnosis__stage" data-personal-step="4" hidden>
+          <button class="personal-diagnosis__back" type="button" aria-label="이전 단계" data-personal-back>
+            <span aria-hidden="true">←</span>
+          </button>
+          <div class="personal-diagnosis__body">
+            <h1>최근 5년 내 법원으로부터<br>면책결정을 받은 적이 있으세요?</h1>
+            <p class="personal-diagnosis__lead">개인파산이나 개인회생을 모두 완료하신 경우에 해당돼요</p>
+            <div class="personal-choice-grid" data-answer-group="recentDischarge">
+              <button type="button" class="personal-choice" data-answer-value="yes">있어요</button>
+              <button type="button" class="personal-choice" data-answer-value="no">없어요</button>
+            </div>
+            <div class="personal-info-box">
+              <strong>기존 개인회생이 진행 중이거나, 기각, 폐지되었나요?</strong>
+              <p>아직 면책되지 않은 상태세요. '없어요'에 체크해 주시면 돼요.</p>
+            </div>
+          </div>
+          <button class="personal-next" type="button" data-personal-next>다음 단계로</button>
+        </div>
+
+        <div class="personal-diagnosis__stage" data-personal-step="5" hidden>
+          <button class="personal-diagnosis__back" type="button" aria-label="이전 단계" data-personal-back>
+            <span aria-hidden="true">←</span>
+          </button>
+          <div class="personal-diagnosis__body">
+            <h1>현재 사는 집의<br>보증금을 알려주세요</h1>
+            <label class="personal-money-field">
+              <span>없으면 0을 입력해 주세요</span>
+              <input type="text" inputmode="numeric" data-money-field="housingDeposit" placeholder="금액을 입력하세요">
+              <small data-money-preview="housingDeposit">0원</small>
+            </label>
+            <h2>월세에 살고 계신가요?</h2>
+            <div class="personal-choice-grid" data-answer-group="monthlyRent">
+              <button type="button" class="personal-choice" data-answer-value="yes">맞아요</button>
+              <button type="button" class="personal-choice" data-answer-value="no">아니에요</button>
+            </div>
+          </div>
+          <button class="personal-next" type="button" data-personal-next>다음 단계로</button>
+        </div>
+
+        <div class="personal-diagnosis__stage" data-personal-step="6" hidden>
+          <button class="personal-diagnosis__back" type="button" aria-label="이전 단계" data-personal-back>
+            <span aria-hidden="true">←</span>
+          </button>
+          <div class="personal-diagnosis__body">
+            <h1>살고 계신<br>지역을 선택해 주세요</h1>
+            <p class="personal-diagnosis__lead">변제금을 더 줄일 수 있는지 확인하기 위해 받는 정보예요</p>
+            <button class="personal-region-card" type="button" data-answer-group="livingRegion" data-answer-value="경기도 파주시">
+              <span>거주지역</span>
+              <strong>경기도 파주시</strong>
+              <em>재선택</em>
+            </button>
+            <div class="personal-region-grid">
+              <div>
+                <span>우선변제액구분</span>
+                <strong>구분3</strong>
+              </div>
+              <div>
+                <span>과밀억제권역</span>
+                <strong>해당안됨</strong>
+              </div>
+            </div>
+          </div>
+          <button class="personal-next" type="button" data-personal-next>다음 단계로</button>
+        </div>
+
+        <div class="personal-diagnosis__stage" data-personal-step="7" hidden>
+          <button class="personal-diagnosis__back" type="button" aria-label="이전 단계" data-personal-back>
+            <span aria-hidden="true">←</span>
+          </button>
+          <div class="personal-diagnosis__body">
+            <h1>일하는 곳의<br>지역도 알고 계신가요?</h1>
+            <p class="personal-diagnosis__lead">직장 위치에 따라 더 나은 조건을 추천드릴 수 있어요</p>
+            <div class="personal-choice-grid personal-choice-grid--three" data-answer-group="workRegionKnown">
+              <button type="button" class="personal-choice" data-answer-value="yes">네 알아요</button>
+              <button type="button" class="personal-choice" data-answer-value="unknown">몰라요</button>
+              <button type="button" class="personal-choice" data-answer-value="none">직장이 없어요</button>
+            </div>
+          </div>
+          <button class="personal-next" type="button" data-personal-next>다음 단계로</button>
+        </div>
+
+        <div class="personal-diagnosis__stage" data-personal-step="8" hidden>
+          <button class="personal-diagnosis__back" type="button" aria-label="이전 단계" data-personal-back>
+            <span aria-hidden="true">←</span>
+          </button>
+          <div class="personal-diagnosis__body">
+            <h1>월 평균 수입을 알려주세요</h1>
+            <div class="personal-warning">
+              <strong>잠시만요!!</strong>
+              <p>매달 실제로 통장에 입금되는 금액을 적어주세요. 불규칙하다면 평균 금액을 적어주세요.</p>
+            </div>
+            <label class="personal-money-field">
+              <input type="text" inputmode="numeric" data-money-field="monthlyIncome" placeholder="금액을 입력하세요">
+              <small data-money-preview="monthlyIncome">0원</small>
+            </label>
+          </div>
+          <button class="personal-next" type="button" data-personal-next>다음 단계로</button>
+        </div>
+
+        <div class="personal-diagnosis__stage" data-personal-step="9" hidden>
+          <button class="personal-diagnosis__back" type="button" aria-label="이전 단계" data-personal-back>
+            <span aria-hidden="true">←</span>
+          </button>
+          <div class="personal-diagnosis__body">
+            <h1>소유하고 계신 재산의<br>현재 시점 가치를 알려주세요</h1>
+            <label class="personal-money-field">
+              <span>보증금은 제외하고 입력</span>
+              <input type="text" inputmode="numeric" data-money-field="assetValue" placeholder="금액을 입력하세요">
+              <small data-money-preview="assetValue">0원</small>
+            </label>
+            <div class="personal-warning">
+              <strong>잠시만요!!</strong>
+              <p>담보가 설정된 부동산이나 임차보증금은 이미 반영된 금액을 제외하고 입력해 주세요.</p>
+            </div>
+            <div class="personal-info-box">
+              <strong>재산은 아래와 같은 것들을 의미해요</strong>
+              <ul>
+                <li>예금 잔고, 보험 해약 환급금</li>
+                <li>차량, 부동산, 예상 퇴직금</li>
+                <li>빌려주고 못 받은 돈, 사업용 설비나 재고</li>
+              </ul>
+            </div>
+          </div>
+          <button class="personal-next" type="button" data-personal-next>다음 단계로</button>
+        </div>
+
+        <div class="personal-diagnosis__stage" data-personal-step="10" hidden>
+          <button class="personal-diagnosis__back" type="button" aria-label="이전 단계" data-personal-back>
+            <span aria-hidden="true">←</span>
+          </button>
+          <div class="personal-diagnosis__body">
+            <h1>채권자 수를 알려주세요</h1>
+            <div class="personal-range" data-range-field="creditorCount">
+              <output>10명</output>
+              <input type="range" min="0" max="30" value="10" step="1">
+              <div class="personal-range__ticks">
+                <span>0명</span>
+                <span>10명</span>
+                <span>20명</span>
+                <span>30명</span>
+              </div>
+            </div>
+            <h2>채권자가 무엇인가요?</h2>
+            <p class="personal-diagnosis__lead">돈을 갚아야 할 대상을 의미해요. 대출 횟수와 관계없이 빌린 곳의 수를 세주시면 돼요.</p>
+            <div class="personal-info-box">
+              <strong>예를 들어</strong>
+              <ul>
+                <li>XX은행 10건</li>
+                <li>YY카드 2건</li>
+                <li>ZZ텔레콤 1건</li>
+                <li>돌씨삼촌 1건</li>
+              </ul>
+              <p>위의 경우는 채권자가 4명이 돼요.</p>
+            </div>
+          </div>
+          <button class="personal-next" type="button" data-personal-next>다음 단계로</button>
+        </div>
+
+        <div class="personal-diagnosis__stage" data-personal-step="11" hidden>
+          <button class="personal-diagnosis__back" type="button" aria-label="이전 단계" data-personal-back>
+            <span aria-hidden="true">←</span>
+          </button>
+          <div class="personal-diagnosis__body">
+            <h1>빚을 낸 돈은 어디에<br>사용하셨나요?</h1>
+            <div class="personal-checkbox-grid" data-checkbox-group="debtUse">
+              <label><input type="checkbox" value="생활비" checked><span>생활비</span></label>
+              <label><input type="checkbox" value="사업자금"><span>사업자금</span></label>
+              <label><input type="checkbox" value="과소비"><span>과소비</span></label>
+              <label><input type="checkbox" value="주식/코인"><span>주식/코인</span></label>
+              <label><input type="checkbox" value="도박"><span>도박</span></label>
+              <label><input type="checkbox" value="게임"><span>게임</span></label>
+              <label><input type="checkbox" value="병원비"><span>병원비</span></label>
+              <label><input type="checkbox" value="사기피해"><span>사기피해</span></label>
+              <label><input type="checkbox" value="기타"><span>기타</span></label>
+            </div>
+          </div>
+          <button class="personal-next" type="button" data-personal-next>다음 단계로</button>
+        </div>
+
+        <div class="personal-diagnosis__stage" data-personal-step="12" hidden>
+          <button class="personal-diagnosis__back" type="button" aria-label="이전 단계" data-personal-back>
+            <span aria-hidden="true">←</span>
+          </button>
+          <div class="personal-diagnosis__body">
+            <h1>최근 1년 동안<br>빌린 돈이 있으신가요?</h1>
+            <div class="personal-choice-grid" data-answer-group="borrowedInYear">
+              <button type="button" class="personal-choice" data-answer-value="yes">있어요</button>
+              <button type="button" class="personal-choice" data-answer-value="no">없어요</button>
+            </div>
+          </div>
+          <button class="personal-next" type="button" data-personal-next>다음 단계로</button>
+        </div>
+
+        <div class="personal-diagnosis__stage" data-personal-step="13" hidden>
+          <button class="personal-diagnosis__back" type="button" aria-label="이전 단계" data-personal-back>
+            <span aria-hidden="true">←</span>
+          </button>
+          <div class="personal-diagnosis__body">
+            <h1>최근 3개월 동안<br>빌린 돈이 있으신가요?</h1>
+            <div class="personal-choice-grid" data-answer-group="borrowedInQuarter">
+              <button type="button" class="personal-choice" data-answer-value="yes">있어요</button>
+              <button type="button" class="personal-choice" data-answer-value="no">없어요</button>
+            </div>
+          </div>
+          <button class="personal-next" type="button" data-personal-next>다음 단계로</button>
+        </div>
+
+        <div class="personal-diagnosis__stage" data-personal-step="14" hidden>
+          <button class="personal-diagnosis__back" type="button" aria-label="이전 단계" data-personal-back>
+            <span aria-hidden="true">←</span>
+          </button>
+          <div class="personal-diagnosis__body">
+            <h1>담보부 채무가 있으신가요?</h1>
+            <div class="personal-choice-grid" data-answer-group="securedDebt">
+              <button type="button" class="personal-choice" data-answer-value="yes">있어요</button>
+              <button type="button" class="personal-choice" data-answer-value="no">없어요</button>
+            </div>
+            <div class="personal-info-box">
+              <strong>담보부 채무가 뭐죠?</strong>
+              <p>돈을 빌릴 때 채권자에게 부동산이나 자동차 등의 자산을 담보로 제공하는 것을 말해요.</p>
+            </div>
+          </div>
+          <button class="personal-next" type="button" data-personal-next>다음 단계로</button>
+        </div>
+
+        <div class="personal-diagnosis__stage" data-personal-step="15" hidden>
+          <button class="personal-diagnosis__back" type="button" aria-label="이전 단계" data-personal-back>
+            <span aria-hidden="true">←</span>
+          </button>
+          <div class="personal-diagnosis__body">
+            <h1>모든 채무의<br>원금 합계를 알려주세요</h1>
+            <p class="personal-diagnosis__lead">이자를 제외한 갚아야 할 원금을 써주세요</p>
+            <label class="personal-money-field">
+              <input type="text" inputmode="numeric" data-money-field="totalDebt" placeholder="금액을 입력하세요">
+              <small data-money-preview="totalDebt">0원</small>
+            </label>
+          </div>
+          <button class="personal-next" type="button" data-personal-next>결과 확인하기</button>
+        </div>
+
+        <div class="personal-diagnosis__stage personal-report" data-personal-step="16" hidden>
+          <button class="personal-diagnosis__back" type="button" aria-label="이전 단계" data-personal-back>
+            <span aria-hidden="true">←</span>
+          </button>
+          <div class="personal-diagnosis__body">
+            <p class="personal-diagnosis__eyebrow">개인회생 진단 리포트</p>
+            <h1 data-personal-result-title>개인회생 가능성을 확인했습니다</h1>
+            <div class="personal-report-card">
+              <span class="personal-report-card__emoji" aria-hidden="true">👍</span>
+              <strong data-personal-result-status>상담 검토 가능</strong>
+              <p data-personal-result-copy>입력하신 소득과 채무 정보를 기준으로 추가 검토가 필요합니다.</p>
+            </div>
+            <dl class="personal-summary-grid">
+              <div>
+                <dt>월 평균 수입</dt>
+                <dd data-summary-field="monthlyIncome">0원</dd>
+              </div>
+              <div>
+                <dt>채무 원금 합계</dt>
+                <dd data-summary-field="totalDebt">0원</dd>
+              </div>
+              <div>
+                <dt>채권자 수</dt>
+                <dd data-summary-field="creditorCount">0명</dd>
+              </div>
+              <div>
+                <dt>재산 현재가치</dt>
+                <dd data-summary-field="assetValue">0원</dd>
+              </div>
+            </dl>
+            <div class="personal-report-actions">
+              <button class="button button-secondary" type="button" data-personal-restart>처음부터 다시</button>
+              {% if kakao_chat_configured %}
+                <a class="button button-primary" href="{{ url_for('kakao_consult', source='personal-flow') }}" target="_blank" rel="noopener">카카오톡 상담하기</a>
+              {% else %}
+                <span class="button button-primary is-disabled" aria-disabled="true">카카오톡 상담하기</span>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </section>
+    {% else %}
     <section class="upload-card" aria-label="파일 업로드">
       {% if error %}
         <div class="upload-error" role="alert">{{ error }}</div>
@@ -172,6 +566,7 @@
         </button>
       </form>
     </section>
+    {% endif %}
   {% endif %}
 {% endblock %}
 
@@ -310,5 +705,150 @@
         });
       });
     });
+
+    const personalDiagnosis = document.querySelector("[data-personal-diagnosis]");
+
+    if (personalDiagnosis) {
+      const stages = Array.from(personalDiagnosis.querySelectorAll("[data-personal-step]"));
+      const answers = {
+        minorChildrenCount: 0,
+        siblingCount: 0,
+        creditorCount: 10,
+        debtUse: ["생활비"],
+      };
+      let currentStep = 0;
+
+      const moneyFormatter = new Intl.NumberFormat("ko-KR");
+
+      const parseMoney = (value) => Number(String(value || "").replace(/[^0-9]/g, "")) || 0;
+      const formatMoney = (value) => `${moneyFormatter.format(Number(value) || 0)}원`;
+
+      const showPersonalStep = (index) => {
+        currentStep = Math.max(0, Math.min(index, stages.length - 1));
+        stages.forEach((stage, stageIndex) => {
+          const active = stageIndex === currentStep;
+          stage.hidden = !active;
+          stage.classList.toggle("is-active", active);
+          const backButton = stage.querySelector("[data-personal-back]");
+          if (backButton) backButton.disabled = currentStep === 0;
+        });
+        personalDiagnosis.scrollIntoView({ block: "start" });
+      };
+
+      const updateFollowups = () => {
+        personalDiagnosis.querySelectorAll("[data-followup]").forEach((followup) => {
+          const key = followup.getAttribute("data-followup");
+          const visible = answers[key] === "yes" || (key === "spouseSupport" && ["married", "commonLaw"].includes(answers.maritalStatus));
+          followup.hidden = !visible;
+        });
+      };
+
+      const updateReport = () => {
+        const monthlyIncome = Number(answers.monthlyIncome || 0);
+        const totalDebt = Number(answers.totalDebt || 0);
+        const assetValue = Number(answers.assetValue || 0);
+        const creditorCount = Number(answers.creditorCount || 0);
+        const riskFlags = [
+          answers.recentDischarge === "yes",
+          monthlyIncome <= 0,
+          totalDebt <= 0,
+          answers.borrowedInQuarter === "yes",
+        ].filter(Boolean).length;
+
+        const title = personalDiagnosis.querySelector("[data-personal-result-title]");
+        const status = personalDiagnosis.querySelector("[data-personal-result-status]");
+        const copy = personalDiagnosis.querySelector("[data-personal-result-copy]");
+
+        if (riskFlags >= 2) {
+          if (title) title.textContent = "추가 확인이 필요한 상태입니다";
+          if (status) status.textContent = "상담 우선 검토";
+          if (copy) copy.textContent = "최근 차입, 소득, 채무 조건에 따라 개인회생 가능성이 달라질 수 있어 전문가 검토가 필요합니다.";
+        } else {
+          if (title) title.textContent = "개인회생 신청 가능성을 검토할 수 있습니다";
+          if (status) status.textContent = "예비 검토 가능";
+          if (copy) copy.textContent = "입력하신 소득, 채무, 재산 정보를 기준으로 개인회생 가능성을 상담 단계에서 확인할 수 있습니다.";
+        }
+
+        const summary = {
+          monthlyIncome: formatMoney(monthlyIncome),
+          totalDebt: formatMoney(totalDebt),
+          creditorCount: `${creditorCount}명`,
+          assetValue: formatMoney(assetValue),
+        };
+
+        Object.entries(summary).forEach(([key, value]) => {
+          const target = personalDiagnosis.querySelector(`[data-summary-field="${key}"]`);
+          if (target) target.textContent = value;
+        });
+      };
+
+      personalDiagnosis.querySelectorAll("[data-answer-group]").forEach((group) => {
+        const key = group.getAttribute("data-answer-group");
+
+        group.querySelectorAll("[data-answer-value]").forEach((button) => {
+          button.addEventListener("click", () => {
+            answers[key] = button.getAttribute("data-answer-value");
+            group.querySelectorAll("[data-answer-value]").forEach((item) => {
+              item.classList.toggle("is-selected", item === button);
+            });
+            updateFollowups();
+          });
+        });
+      });
+
+      personalDiagnosis.querySelectorAll("[data-range-field]").forEach((rangeGroup) => {
+        const key = rangeGroup.getAttribute("data-range-field");
+        const range = rangeGroup.querySelector("input[type='range']");
+        const output = rangeGroup.querySelector("output");
+
+        const updateRange = () => {
+          const value = Number(range.value || 0);
+          answers[key] = value;
+          if (output) output.textContent = `${value}명`;
+        };
+
+        if (range) {
+          range.addEventListener("input", updateRange);
+          updateRange();
+        }
+      });
+
+      personalDiagnosis.querySelectorAll("[data-money-field]").forEach((field) => {
+        const key = field.getAttribute("data-money-field");
+        const preview = personalDiagnosis.querySelector(`[data-money-preview="${key}"]`);
+
+        field.addEventListener("input", () => {
+          const numericValue = parseMoney(field.value);
+          answers[key] = numericValue;
+          field.value = numericValue ? moneyFormatter.format(numericValue) : "";
+          if (preview) preview.textContent = formatMoney(numericValue);
+        });
+      });
+
+      personalDiagnosis.querySelectorAll("[data-checkbox-group]").forEach((group) => {
+        const key = group.getAttribute("data-checkbox-group");
+        group.addEventListener("change", () => {
+          answers[key] = Array.from(group.querySelectorAll("input:checked")).map((input) => input.value);
+        });
+      });
+
+      personalDiagnosis.querySelectorAll("[data-personal-next]").forEach((button) => {
+        button.addEventListener("click", () => {
+          if (currentStep >= stages.length - 2) updateReport();
+          showPersonalStep(currentStep + 1);
+        });
+      });
+
+      personalDiagnosis.querySelectorAll("[data-personal-back]").forEach((button) => {
+        button.addEventListener("click", () => showPersonalStep(currentStep - 1));
+      });
+
+      const restart = personalDiagnosis.querySelector("[data-personal-restart]");
+      if (restart) {
+        restart.addEventListener("click", () => showPersonalStep(0));
+      }
+
+      showPersonalStep(0);
+    }
   </script>
 {% endblock %}
