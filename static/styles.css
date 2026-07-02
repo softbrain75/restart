@@ -4743,12 +4743,29 @@ form[data-collateral-form] {
     padding: 24px 14px var(--mobile-bottom-space);
   }
 
+  .table-frame,
+  .financial-table-section,
+  .debt-table-section,
+  .income-table-section,
+  .collateral-table-section,
+  .result-section,
+  .asset-summary-table-scroll,
+  .fee-frame .result-section {
+    overflow-x: hidden;
+    overflow-x: clip;
+    overscroll-behavior-x: none;
+    touch-action: pan-y;
+  }
+
+  .table-frame {
+    overflow-y: auto;
+  }
+
   .financial-table-section,
   .debt-table-section,
   .income-table-section,
   .collateral-table-section {
     margin: 0 -2px;
-    overflow-x: visible;
     padding: 0 2px 4px;
   }
 
@@ -5091,11 +5108,13 @@ form[data-collateral-form] {
   }
 
   .asset-summary-table-scroll {
-    overflow-x: auto;
+    overflow-x: hidden;
+    overflow-x: clip;
   }
 
   .asset-summary-table {
-    min-width: 620px;
+    min-width: 0;
+    width: 100%;
   }
 
   .asset-summary-bars {
@@ -5199,7 +5218,8 @@ form[data-collateral-form] {
   }
 
   .fee-frame .result-section {
-    overflow-x: visible;
+    overflow-x: hidden;
+    overflow-x: clip;
   }
 
   .fee-table {
@@ -5240,7 +5260,8 @@ form[data-collateral-form] {
 
   .result-section {
     margin: 0 -2px;
-    overflow-x: auto;
+    overflow-x: hidden;
+    overflow-x: clip;
     padding: 0 2px 4px;
   }
 
@@ -5425,9 +5446,9 @@ form[data-collateral-form] {
   }
 
   .result-frame .data-table {
-    table-layout: auto;
-    min-width: 100%;
-    width: max-content;
+    min-width: 0;
+    table-layout: fixed;
+    width: 100%;
   }
 
   .result-table {
@@ -5443,7 +5464,8 @@ form[data-collateral-form] {
 
   .result-frame thead th,
   .result-frame .amount-cell {
-    white-space: nowrap;
+    overflow-wrap: anywhere;
+    white-space: normal;
   }
 
   .result-frame .account-cell {
@@ -5456,7 +5478,7 @@ form[data-collateral-form] {
   .result-frame .col-amount,
   .result-frame .col-count,
   .result-frame .amount-cell {
-    min-width: 108px;
+    min-width: 0;
   }
 
   .fee-frame .fee-table {
