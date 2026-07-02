@@ -452,9 +452,21 @@
                 {% for row in result.fee_estimate.rows %}
                   <tr>
                     <td class="account-cell">{{ row.label }}</td>
-                    <td class="amount-cell">{{ fmt.number(row.claim_count) }}명</td>
+                    <td class="amount-cell">
+                      {% if debt_requires_claim_count(row.field) %}
+                        {{ fmt.number(row.claim_count) }}명
+                      {% else %}
+                        -
+                      {% endif %}
+                    </td>
                     <td class="amount-cell">{{ fmt.number(row.debt) }}</td>
-                    <td class="amount-cell">{{ fmt.number(row.fee) }}</td>
+                    <td class="amount-cell">
+                      {% if debt_requires_claim_count(row.field) %}
+                        {{ fmt.number(row.fee) }}
+                      {% else %}
+                        -
+                      {% endif %}
+                    </td>
                   </tr>
                 {% endfor %}
                 <tr class="row-heading-data">

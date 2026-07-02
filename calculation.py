@@ -43,6 +43,7 @@ DEBT_FIELDS = {
     "retirement_benefit": "퇴직급여추계액",
     "tax_arrears": "조세체납금액(4대보험체납금액 포함)",
 }
+DEBT_CLAIM_COUNT_EXEMPT_FIELDS = {"unpaid_wages", "retirement_benefit", "tax_arrears"}
 
 
 def parse_number(value: Any) -> float:
@@ -516,6 +517,9 @@ def debt_amounts(debt_rows: list[dict[str, Any]]) -> dict[str, float]:
 def debt_claim_counts(debt_rows: list[dict[str, Any]]) -> dict[str, int]:
     counts: dict[str, int] = {}
     for row in debt_rows:
+        if row["field"] in DEBT_CLAIM_COUNT_EXEMPT_FIELDS:
+            counts[row["field"]] = 0
+            continue
         count = row_number(row, "claim_count")
         counts[row["field"]] = max(0, int(round(count)))
     return counts

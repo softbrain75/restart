@@ -461,6 +461,7 @@ DEBT_DEFAULT_ROWS = (
     ("retirement_benefit", "퇴직급여추계액"),
     ("tax_arrears", "조세체납금액(4대보험체납금액 포함)"),
 )
+DEBT_CLAIM_COUNT_EXEMPT_FIELDS = {"unpaid_wages", "retirement_benefit", "tax_arrears"}
 COLLATERAL_DEFAULT_ROWS = (
     ("collateral_except_machinery", "담보제공자산(기계장치 제외)"),
     ("collateral_machinery", "담보제공 기계장치"),
@@ -929,7 +930,17 @@ def inject_auth_context():
         "active_case_type": active_case_type,
         "active_case_type_meta": case_type_meta(active_case_type),
         "kakao_chat_configured": bool(kakao_chat_url()),
+        "debt_requires_claim_count": debt_requires_claim_count,
     }
+
+
+def debt_requires_claim_count(row_or_field: Any) -> bool:
+    field = row_or_field.get("field") if isinstance(row_or_field, dict) else str(row_or_field or "")
+    return field not in DEBT_CLAIM_COUNT_EXEMPT_FIELDS
+
+
+def debt_claim_count_display(row: dict[str, Any]) -> str:
+    return row.get("claim_count", "") if debt_requires_claim_count(row) else ""
 
 
 def is_editable_financial_account(account: str) -> bool:
@@ -2522,7 +2533,7 @@ def append_case_input_sheets(workbook: Workbook, case: dict[str, Any], used_titl
         "채무입력",
         ["구분", "채권자수", "채무금액"],
         [
-            [row.get("category", ""), row.get("claim_count", ""), row.get("debt_amount", "")]
+            [row.get("category", ""), debt_claim_count_display(row), row.get("debt_amount", "")]
             for row in case.get("debt_rows", [])
         ],
         used_titles,
@@ -2646,9 +2657,9 @@ def append_result_sheets(
     fee_rows = [
         [
             row.get("label", ""),
-            row.get("claim_count", 0),
+            row.get("claim_count", 0) if debt_requires_claim_count(row.get("field")) else "",
             row.get("debt", 0),
-            row.get("fee", 0),
+            row.get("fee", 0) if debt_requires_claim_count(row.get("field")) else "",
         ]
         for row in fee_estimate.get("rows", [])
     ]
@@ -4226,8 +4237,11 @@ def save_debt(case_id: str):
 
     rows = case["debt_rows"]
     for index, row in enumerate(rows):
-        raw_claim_count = request.form.get(f"claim_count_{index}", row.get("claim_count", ""))
-        claim_count_display, _ = clean_submitted_count(raw_claim_count)
+        if debt_requires_claim_count(row):
+            raw_claim_count = request.form.get(f"claim_count_{index}", row.get("claim_count", ""))
+            claim_count_display, _ = clean_submitted_count(raw_claim_count)
+        else:
+            claim_count_display = ""
         raw_amount = request.form.get(f"debt_amount_{index}", row["debt_amount"])
         amount_display, _ = clean_submitted_number(raw_amount)
         row["claim_count"] = claim_count_display

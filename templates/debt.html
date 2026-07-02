@@ -56,14 +56,18 @@
                     </span>
                   </td>
                   <td class="input-cell">
-                    <input
-                      class="input numeric"
-                      name="claim_count_{{ loop.index0 }}"
-                      type="text"
-                      inputmode="numeric"
-                      value="{{ row.claim_count or '' }}"
-                      placeholder="채권자수 입력"
-                    >
+                    {% if debt_requires_claim_count(row) %}
+                      <input
+                        class="input numeric"
+                        name="claim_count_{{ loop.index0 }}"
+                        type="text"
+                        inputmode="numeric"
+                        value="{{ row.claim_count or '' }}"
+                        placeholder="채권자수 입력"
+                      >
+                    {% else %}
+                      <span class="input-na" aria-label="채권자수 입력 불필요">-</span>
+                    {% endif %}
                   </td>
                   <td class="input-cell">
                     <input

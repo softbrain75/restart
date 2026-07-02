@@ -3453,6 +3453,15 @@ select.input {
   border-color: #d7bf75;
 }
 
+.input-na {
+  align-items: center;
+  color: var(--color-muted);
+  display: flex;
+  font-weight: 800;
+  justify-content: center;
+  min-height: 38px;
+}
+
 .input:focus,
 .select:focus {
   border-color: var(--color-primary);
