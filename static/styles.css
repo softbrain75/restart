@@ -3485,9 +3485,15 @@ select.input {
 
 .sticky-action-bar__inner {
   align-items: center;
-  display: flex;
+  display: grid;
   gap: 8px;
-  justify-content: flex-end;
+  grid-template-columns: repeat(3, minmax(92px, 128px));
+  justify-content: end;
+}
+
+.sticky-action-bar__inner .button {
+  min-width: 0;
+  width: 100%;
 }
 
 .stepper {
@@ -5499,8 +5505,8 @@ form[data-collateral-form] {
   }
 
   .sticky-action-bar__inner {
-    align-items: stretch;
-    flex-direction: column;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    justify-content: stretch;
   }
 
   .sticky-action-bar {
