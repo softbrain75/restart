@@ -84,6 +84,38 @@ SUPPORT_WORK_TYPE_OPTIONS = (
     "상담 및 고객 응대",
     "기타 업무지원",
 )
+SUPPORT_DOCUMENT_TABS = (
+    {
+        "key": "petition",
+        "label": "개시신청서",
+        "status": "진행",
+        "description": "회사 기본정보, 신청 원인, 자산·부채·가치평가 결과를 Word 신청서 초안에 반영합니다.",
+    },
+    {
+        "key": "creditors",
+        "label": "채권자목록",
+        "status": "준비",
+        "description": "회생담보권, 회생채권, 조세채권, 공익채권 목록을 정리합니다.",
+    },
+    {
+        "key": "admission",
+        "label": "시부인표",
+        "status": "준비",
+        "description": "신고채권별 인정 여부와 시인·부인 결과를 관리합니다.",
+    },
+    {
+        "key": "plan",
+        "label": "회생계획안",
+        "status": "준비",
+        "description": "변제계획, 영업계획, 권리변경 내용을 문서화합니다.",
+    },
+    {
+        "key": "plan_summary",
+        "label": "회생계획안 요약표",
+        "status": "준비",
+        "description": "회생계획안의 핵심 변제조건과 채권자별 내용을 요약합니다.",
+    },
+)
 DOCUMENT_FIELDS = (
     ("balance_file", "재무제표"),
     ("income_file", "손익계산서"),
@@ -931,6 +963,7 @@ def inject_auth_context():
         "active_case_type_meta": case_type_meta(active_case_type),
         "kakao_chat_configured": bool(kakao_chat_url()),
         "debt_requires_claim_count": debt_requires_claim_count,
+        "support_document_tabs": SUPPORT_DOCUMENT_TABS,
     }
 
 

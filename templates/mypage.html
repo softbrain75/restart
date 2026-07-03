@@ -62,8 +62,8 @@
   <section class="history-panel" aria-label="분석 이력">
     <div class="history-panel__header">
       {% if user_account_role(current_user) == "support" %}
-        <h2>업무지원 화면 준비 중</h2>
-        <p>향후 고객사별 제출서류 준비 현황과 진행 업무를 이곳에서 관리할 수 있도록 확장할 예정입니다.</p>
+        <h2>업무지원 문서 준비</h2>
+        <p>고객사가 법원에 제출해야 하는 주요 문서를 탭별로 정리하고, 필요한 자료와 입력값을 단계적으로 관리합니다.</p>
       {% else %}
         <h2>분석 이력</h2>
         <p>저장된 분석을 확인하거나 복사해 조건을 바꿔 다시 분석할 수 있습니다.</p>
@@ -71,9 +71,97 @@
     </div>
 
     {% if user_account_role(current_user) == "support" %}
-      <div class="empty-state">
-        <h3>업무지원 전용 기능은 준비 중입니다.</h3>
-        <p>현재는 계정 정보 확인과 이메일 인증을 먼저 사용할 수 있습니다.</p>
+      <div class="support-workspace">
+        <div class="support-document-tabs tabs" role="tablist" aria-label="업무지원 문서 유형">
+          {% for tab in support_document_tabs %}
+            <button
+              class="tab-button support-document-tab{% if loop.first %} is-active{% else %} is-disabled{% endif %}"
+              type="button"
+              role="tab"
+              aria-selected="{{ 'true' if loop.first else 'false' }}"
+              aria-disabled="{{ 'false' if loop.first else 'true' }}"
+            >
+              {{ tab.label }}
+              <span>{{ tab.status }}</span>
+            </button>
+          {% endfor %}
+        </div>
+
+        <section class="support-document-panel" aria-label="개시신청서 준비">
+          <div class="support-document-hero">
+            <div>
+              <span class="support-document-eyebrow">첫 번째 제출 문서</span>
+              <h3>법인회생절차 개시신청서</h3>
+              <p>
+                기존 개시신청서 Word 양식을 표준 템플릿으로 만들고, 회사별 정보와 재무분석 결과를 채워 넣어 초안을 생성하는 흐름으로 준비합니다.
+              </p>
+            </div>
+            <div class="support-document-status">
+              <span>작업 방식</span>
+              <strong>Word 템플릿 자동작성</strong>
+              <p>첨부자료에서 가져올 수 없는 내용은 입력폼으로 보완합니다.</p>
+            </div>
+          </div>
+
+          <div class="support-document-grid">
+            <article class="support-document-card">
+              <h4>필수 첨부자료</h4>
+              <ul>
+                <li>법인등기부등본, 사업자등록증, 정관</li>
+                <li>주주명부, 임직원 명부, 조직도</li>
+                <li>최근 재무상태표, 손익계산서, 표준재무제표</li>
+                <li>채권자 목록, 담보·보증 내역, 강제집행 내역</li>
+                <li>회사소개서, 사업계획 또는 주요 거래처 자료</li>
+              </ul>
+            </article>
+
+            <article class="support-document-card">
+              <h4>직접 입력할 내용</h4>
+              <ul>
+                <li>회생절차에 이르게 된 원인</li>
+                <li>회사의 경쟁력과 향후 사업 전망</li>
+                <li>대표자 경력 및 관리인 선임 의견</li>
+                <li>주요 자산, 소송, 강제집행 관련 보충 설명</li>
+                <li>소명자료 번호와 최종 첨부서류 목록</li>
+              </ul>
+            </article>
+
+            <article class="support-document-card">
+              <h4>자동 반영 예정 데이터</h4>
+              <ul>
+                <li>회사 기본정보와 담당자 정보</li>
+                <li>자산현황, 채무현황, 손익추정 결과</li>
+                <li>청산가치와 계속기업가치 비교</li>
+                <li>변제 가능성, 채권자수, 예상 수수료</li>
+                <li>Word 검토본 생성 및 다운로드</li>
+              </ul>
+            </article>
+          </div>
+
+          <div class="support-document-flow" aria-label="개시신청서 작성 흐름">
+            <div>
+              <strong>1</strong>
+              <span>자료 첨부</span>
+            </div>
+            <div>
+              <strong>2</strong>
+              <span>입력값 보완</span>
+            </div>
+            <div>
+              <strong>3</strong>
+              <span>재무분석 연결</span>
+            </div>
+            <div>
+              <strong>4</strong>
+              <span>Word 초안 생성</span>
+            </div>
+          </div>
+
+          <div class="support-document-actions">
+            <button class="button button-primary" type="button" disabled>개시신청서 입력 화면 준비 중</button>
+            <a class="button button-secondary" href="{{ url_for('profile') }}">담당자 정보 수정</a>
+          </div>
+        </section>
       </div>
     {% elif cases %}
       <div class="history-list">
